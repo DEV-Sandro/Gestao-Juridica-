@@ -1,0 +1,54 @@
+<div style="padding: 30px; background-color: #f5f7fa; min-height: 100vh;">
+
+  <button mat-button (click)="voltar()" style="margin-bottom: 20px;">
+    <mat-icon>arrow_back</mat-icon> Voltar para a Mesa
+  </button>
+
+  <div *ngIf="processo">
+    
+    <div style="margin-bottom: 30px;">
+      <h1 style="margin: 0; color: #1a237e;">{{ processo.cliente }}</h1>
+      <span style="background: #e3f2fd; color: #1565c0; padding: 5px 10px; border-radius: 4px;">
+        {{ processo.tipo }}
+      </span>
+      <span style="margin-left: 10px; color: #666;">Status: {{ processo.status }}</span>
+    </div>
+
+    <mat-tab-group style="background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+      
+      <mat-tab label="📋 Visão Geral">
+        <div style="padding: 30px;">
+          <h3>Dados do Caso</h3>
+          <p><strong>Descrição:</strong> {{ processo.descricao || 'Sem descrição.' }}</p>
+          <p><strong>Data de Início:</strong> (Implementar Data)</p>
+        </div>
+      </mat-tab>
+
+      <mat-tab label="⏳ Prazos e Etapas">
+        <div style="padding: 30px;">
+          <p style="color: gray;">Aqui vamos implementar a Linha do Tempo...</p>
+          <button mat-stroked-button color="primary">+ Nova Etapa</button>
+        </div>
+      </mat-tab>
+
+      <mat-tab label="💰 Financeiro">
+        <div style="padding: 30px;">
+          <p style="color: gray;">Aqui entrarão as parcelas...</p>
+        </div>
+      </mat-tab>
+
+      <mat-tab label="📂 Documentos">
+        <div style="padding: 30px;">
+          <p style="color: gray;">Uploads virão aqui...</p>
+        </div>
+      </mat-tab>
+
+    </mat-tab-group>
+
+  </div>
+
+  <div *ngIf="!processo" style="text-align: center; margin-top: 50px;">
+    Carregando detalhes do caso...
+  </div>
+
+</div>

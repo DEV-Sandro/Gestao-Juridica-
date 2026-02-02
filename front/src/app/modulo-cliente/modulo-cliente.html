@@ -1,0 +1,59 @@
+<div style="padding: 30px; max-width: 600px; margin: auto; font-family: Roboto, sans-serif;">
+  
+  <div style="text-align: center; margin-bottom: 30px;">
+    <h1 style="color: #00796b;">👋 Olá, Cliente</h1>
+    <p style="color: #666;">Bem-vindo ao AdvogaFlow.</p>
+  </div>
+
+  <button *ngIf="!mostraFormulario" 
+          mat-raised-button color="primary" 
+          (click)="mostraFormulario = true"
+          style="width: 100%; height: 50px; font-size: 16px; margin-bottom: 20px;">
+    📝 NOVA SOLICITAÇÃO JURÍDICA
+  </button>
+
+  <mat-card *ngIf="mostraFormulario" style="margin-bottom: 30px; border: 1px solid #00796b;">
+    <mat-card-header>
+      <mat-card-title>Qual sua necessidade?</mat-card-title>
+    </mat-card-header>
+    <mat-card-content style="display: flex; flex-direction: column; gap: 10px; padding-top: 15px;">
+      
+      <mat-form-field appearance="outline">
+        <mat-label>Tipo (ex: Pensão, Contrato)</mat-label>
+        <input matInput [(ngModel)]="novoTipo">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Detalhes (Opcional)</mat-label>
+        <textarea matInput [(ngModel)]="novoDescricao" rows="3"></textarea>
+      </mat-form-field>
+
+      <div style="display: flex; gap: 10px;">
+        <button mat-raised-button color="primary" (click)="enviarSolicitacao()" style="flex: 1;">ENVIAR PARA ADVOGADO</button>
+        <button mat-button color="warn" (click)="mostraFormulario = false">Cancelar</button>
+      </div>
+
+    </mat-card-content>
+  </mat-card>
+
+  <h3 style="color: #444; border-bottom: 1px solid #ddd; padding-bottom: 10px;">Meus Atendimentos</h3>
+
+  <div *ngIf="meusProcessos.length === 0" style="text-align: center; color: #999; margin-top: 20px;">
+    Você ainda não tem solicitações.
+  </div>
+
+  <mat-card *ngFor="let proc of meusProcessos" style="margin-bottom: 15px; border-left: 5px solid #009688;">
+    <mat-card-header>
+      <div mat-card-avatar style="background: #e0f2f1; color: #00796b; display: flex; align-items: center; justify-content: center; font-weight: bold;">⚖️</div>
+      <mat-card-title>{{ proc.tipo }}</mat-card-title>
+      <mat-card-subtitle>
+        Status: <strong>{{ proc.status }}</strong>
+      </mat-card-subtitle>
+    </mat-card-header>
+  </mat-card>
+
+  <div style="text-align: center; margin-top: 30px;">
+    <button mat-button color="warn" (click)="sair()">Sair do Sistema</button>
+  </div>
+
+</div>

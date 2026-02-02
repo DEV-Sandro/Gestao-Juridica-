@@ -1,0 +1,36 @@
+<div style="padding: 50px; max-width: 800px; margin: auto;">
+  
+  <h1 style="color: #3f51b5; font-family: Roboto, sans-serif;">
+    🎓 Central de Ajuda - AdvogaFlow
+  </h1>
+  <p style="color: #666; margin-bottom: 30px;">
+    Tire suas dúvidas sobre o funcionamento do sistema jurídico.
+  </p>
+
+  <mat-accordion>
+    
+    <mat-expansion-panel *ngFor="let item of baseConhecimento">
+      
+      <mat-expansion-panel-header>
+        <mat-panel-title style="font-weight: bold;">
+          {{ item.title }}
+        </mat-panel-title>
+        <mat-panel-description>
+          {{ item.id }}
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+
+      <p style="line-height: 1.6; color: #444;">
+        {{ item.canonical_answer }}
+      </p>
+
+    </mat-expansion-panel>
+
+  </mat-accordion>
+
+  <br><br>
+  <a href="/dashboard" style="text-decoration: none; color: #3f51b5; font-weight: bold;">
+    ⬅ Voltar para o Escritório
+  </a>
+
+</div>

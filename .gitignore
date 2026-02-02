@@ -1,0 +1,19 @@
+# --- BLOQUEIO DE PASTAS PESADAS ---
+node_modules/
+backend/node_modules/
+front/node_modules/
+*/node_modules/
+
+# --- ARQUIVOS DE SISTEMA ---
+.DS_Store
+Thumbs.db
+
+# --- ARQUIVOS DE COMPILAÇÃO ---
+dist/
+/front/dist/
+.angular/
+
+# --- SEGURANÇA (SENHAS) ---
+service-account.json
+backend/service-account.json
+*.env

@@ -1,0 +1,48 @@
+<div style="padding: 50px; max-width: 800px; margin: auto;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <h1>🏛️ Escritório Digital</h1>
+    <button (click)="sair()" style="background: #333; color: white; border: none; padding: 10px; cursor: pointer;">Sair</button>
+  </div>
+
+  <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #ddd;">
+    <h3>{{ idEmEdicao ? 'Editando Processo' : 'Novo Processo' }}</h3>
+    
+    <div style="display: flex; gap: 10px;">
+      <input [(ngModel)]="novoCliente" placeholder="Nome do Cliente" style="padding: 10px; flex: 1;">
+      <input [(ngModel)]="novoTipo" placeholder="Tipo (ex: Divórcio)" style="padding: 10px; flex: 1;">
+      
+      <button (click)="salvar()" 
+              [style.background]="idEmEdicao ? 'blue' : 'green'"
+              style="color: white; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold;">
+        {{ idEmEdicao ? '💾 Salvar Alteração' : '+ Adicionar' }}
+      </button>
+
+      <button *ngIf="idEmEdicao" (click)="cancelarEdicao()" 
+              style="background: gray; color: white; border: none; padding: 10px; cursor: pointer;">
+        Cancelar
+      </button>
+    </div>
+  </div>
+
+  <div *ngFor="let proc of listaDeProcessos" 
+       style="display: flex; justify-content: space-between; align-items: center; background: white; border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 5px;">
+    
+    <div>
+      <h4 style="margin: 0; color: #0056b3;">{{ proc.cliente }}</h4>
+      <p style="margin: 5px 0;">Ação: <strong>{{ proc.tipo }}</strong></p>
+      <small>Status: {{ proc.status || 'Aberto' }}</small>
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+      <button (click)="prepararEdicao(proc)" style="background: #ffc107; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">
+        ✏️ Editar
+      </button>
+
+      <button (click)="deletar(proc.id)" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">
+        🗑️
+      </button>
+    </div>
+
+  </div>
+</div>
