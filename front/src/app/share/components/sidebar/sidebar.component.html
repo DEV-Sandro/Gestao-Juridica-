@@ -1,0 +1,21 @@
+
+<div class="sidebar p-4 h-100">
+    <div class="mb-5">
+        <h5 class="fw-bold text-white mb-4"><i class="bi bi-shield-check"></i> Jurídico Pro</h5>
+        <nav>
+            <a routerLink="/dashboard" routerLinkActive="active-link" class="sidebar-link">
+                <i class="bi bi-speedometer2 me-2"></i> Visão Geral
+            </a>
+            <a routerLink="/clientes" routerLinkActive="active-link" class="sidebar-link">
+                <i class="bi bi-people me-2"></i> Clientes
+            </a>
+            <a routerLink="/casos" routerLinkActive="active-link" class="sidebar-link">
+                <i class="bi bi-folder me-2"></i> Casos
+            </a>
+        </nav>
+    </div>
+    
+    <div class="mt-auto">
+        <button class="btn btn-danger btn-sm w-100 mt-3" (click)="sair()">Sair</button>
+    </div>
+</div>
