@@ -26,7 +26,7 @@ export class AuthService {
   // 👇 NOVO: Manda o Token pro Backend validar
   enviarTokenParaBackend(token: string) {
     // Posta o token na porta 3000
-    return this.http.post('http://localhost:3000/api/login-seguro', { token });
+    return this.http.post('https://gestao-juridica-z85k.onrender.com/api/login-seguro', { token });
   }
 
   async logout() {
@@ -34,33 +34,33 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
   listarEtapas(procId: string) {
-    return this.http.get(`http://localhost:3000/api/processos/${procId}/etapas`);
+    return this.http.get(`https://gestao-juridica-z85k.onrender.com/api/processos/${procId}/etapas`);
   }
 
   pegarTabelasOAB() {
-    return this.http.get('http://localhost:3000/api/honorarios');
+    return this.http.get('https://gestao-juridica-z85k.onrender.com/api/honorarios');
   } 
   criarEtapa(procId: string, dados: any) {
-    return this.http.post(`http://localhost:3000/api/processos/${procId}/etapas`, dados);
+    return this.http.post(`https://gestao-juridica-z85k.onrender.com/api/processos/${procId}/etapas`, dados);
   }
 
   atualizarStatusEtapa(procId: string, etapaId: string, status: string) {
-    return this.http.put(`http://localhost:3000/api/processos/${procId}/etapas/${etapaId}`, { status });
+    return this.http.put(`https://gestao-juridica-z85k.onrender.com/api/processos/${procId}/etapas/${etapaId}`, { status });
   }
   atualizarProcesso(id: string, dados: any) {
-    return this.http.put('http://localhost:3000/api/processos/' + id, dados);
+    return this.http.put('https://gestao-juridica-z85k.onrender.com/api/processos/' + id, dados);
   }
   pegarProcessoPeloId(id: string) {
-    return this.http.get(`http://localhost:3000/api/processos/${id}`);
+    return this.http.get(`https://gestao-juridica-z85k.onrender.com/api/processos/${id}`);
   }
   listarProcessos() {
-    return this.http.get('http://localhost:3000/api/processos');
+    return this.http.get('https://gestao-juridica-z85k.onrender.com/api/processos');
   }
   salvarProcesso(dados: any) {
-    return this.http.post('http://localhost:3000/api/processos', dados);
+    return this.http.post('https://gestao-juridica-z85k.onrender.com/api/processos', dados);
   }
   excluirProcesso(id: string) {
-    return this.http.delete('http://localhost:3000/api/processos/' + id);
+    return this.http.delete('https://gestao-juridica-z85k.onrender.com/api/processos/' + id);
   }
 
 }
