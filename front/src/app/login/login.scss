@@ -1,0 +1,364 @@
+/* ==========================================
+   TELA DE LOGIN SAAS PREMIUM - ADVOGAFLOW
+   ========================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap');
+
+:host {
+  --primary: #0D2A44;        /* Azul Escuro */
+  --secondary: #8DA5A9;      /* Azul Acinzentado */
+  --accent: #CBAC97;         /* Bege Jurídico */
+  --bg-light: #F0E3DD;       /* Off-white elegante */
+  --white: #FFFFFF;
+}
+
+.login-wrapper {
+  display: flex;
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-light);
+}
+
+/* ==========================================
+   LADO ESQUERDO: BRANDING (Azul Escuro)
+   ========================================== */
+.brand-panel {
+  flex: 1;
+  background-color: var(--primary);
+  color: var(--white);
+  padding: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+
+  /* Efeito visual sutil de fundo (estilo Stripe) */
+  &::before {
+    content: '';
+    position: absolute;
+    top: -20%;
+    left: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(203,172,151,0.15) 0%, rgba(13,42,68,0) 70%);
+    border-radius: 50%;
+  }
+
+  .logo-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 1;
+
+    mat-icon {
+      font-size: 36px;
+      width: 36px;
+      height: 36px;
+      color: var(--accent); /* Destaque bege no ícone */
+    }
+    
+    span {
+      font-family: 'Poppins', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+  }
+
+  .brand-text {
+    z-index: 1;
+    max-width: 480px;
+
+    h2 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 42px;
+      font-weight: 600;
+      line-height: 1.2;
+      margin-bottom: 24px;
+      color: var(--white);
+    }
+
+    p {
+      font-size: 18px;
+      color: var(--secondary);
+      line-height: 1.6;
+    }
+  }
+
+  .brand-footer {
+    z-index: 1;
+    font-size: 14px;
+    color: rgba(255,255,255,0.4);
+  }
+}
+
+/* ==========================================
+   LADO DIREITO: FORMULÁRIO (Login)
+   ========================================== */
+.login-panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background-color: var(--bg-light);
+}
+
+/* Animação de entrada suave */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.login-card {
+  background: var(--white);
+  width: 100%;
+  max-width: 440px;
+  padding: 48px;
+  border-radius: 24px;
+  box-shadow: 0 20px 40px rgba(13, 42, 68, 0.08), 0 1px 3px rgba(0,0,0,0.02);
+  animation: fadeInUp 0.6s ease-out forwards;
+
+  .mobile-logo {
+    display: none; /* Só aparece no celular */
+  }
+
+  h3 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--primary);
+    margin: 0 0 8px 0;
+  }
+
+  .subtitle {
+    color: var(--secondary);
+    font-size: 15px;
+    margin-bottom: 32px;
+  }
+}
+
+/* Campos Modernos do Formulário */
+.form-group {
+  margin-bottom: 24px;
+
+  label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--primary);
+    margin-bottom: 8px;
+  }
+
+  .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    .input-icon {
+      position: absolute;
+      left: 16px;
+      color: var(--secondary);
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      transition: color 0.3s ease;
+    }
+
+    input {
+      width: 100%;
+      height: 52px;
+      padding: 0 48px; /* Espaço pros ícones */
+      border: 1px solid rgba(13, 42, 68, 0.15);
+      border-radius: 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      color: var(--primary);
+      background-color: #FAFAFA;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+
+      &::placeholder {
+        color: #A0AAB2;
+      }
+
+      &:focus {
+        outline: none;
+        border-color: var(--accent);
+        background-color: var(--white);
+        box-shadow: 0 0 0 4px rgba(203, 172, 151, 0.2); /* Foco elegante */
+      }
+
+      &:focus + .input-icon, &:focus ~ .input-icon {
+        color: var(--primary);
+      }
+    }
+
+    .btn-toggle-pass {
+      position: absolute;
+      right: 8px;
+      color: var(--secondary);
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      
+      &:hover {
+        background-color: rgba(0,0,0,0.04);
+        color: var(--primary);
+      }
+    }
+  }
+}
+
+.forgot-password {
+  text-align: right;
+  margin-top: 8px;
+  
+  a {
+    color: var(--secondary);
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.2s;
+
+    &:hover {
+      color: var(--primary);
+      text-decoration: underline;
+    }
+  }
+}
+
+/* Botões */
+.btn-primary {
+  width: 100%;
+  height: 52px;
+  background-color: var(--primary);
+  color: var(--white);
+  border: none;
+  border-radius: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(13, 42, 68, 0.2);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(13, 42, 68, 0.3);
+    background-color: #0A2136; /* Azul um pouco mais escuro */
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.btn-google {
+  width: 100%;
+  height: 48px;
+  background-color: var(--white);
+  border: 1px solid rgba(13, 42, 68, 0.15);
+  border-radius: 12px;
+  color: var(--primary);
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  transition: background-color 0.2s ease;
+
+  img {
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover {
+    background-color: #F8F9FA;
+  }
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 24px;
+
+  &::before, &::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid rgba(13, 42, 68, 0.1);
+  }
+
+  span {
+    padding: 0 16px;
+    color: var(--secondary);
+    font-size: 13px;
+  }
+}
+
+.help-link {
+  text-align: center;
+  margin-top: 32px;
+  
+  a {
+    color: var(--secondary);
+    font-size: 14px;
+    text-decoration: none;
+    
+    &:hover {
+      color: var(--primary);
+      text-decoration: underline;
+    }
+  }
+}
+
+/* ==========================================
+   RESPONSIVIDADE (Mobile & Tablet)
+   ========================================== */
+@media (max-width: 900px) {
+  .brand-panel {
+    display: none; /* Esconde o lado azul no celular */
+  }
+  
+  .login-panel {
+    padding: 20px;
+  }
+  
+  .login-card {
+    padding: 32px 24px;
+    
+    .mobile-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 32px;
+      justify-content: center;
+
+      mat-icon {
+        color: var(--primary);
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+      }
+      span {
+        font-family: 'Poppins', sans-serif;
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--primary);
+      }
+    }
+  }
+}

@@ -1,43 +1,44 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common'; // Importante
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../auth.service';
 import { Router } from '@angular/router';
-
-// 👇 Importando os módulos visuais bonitos
-import { MatCardModule } from '@angular/material/card';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon'; // Para colocar ícones se quiser
+import { MatIconModule } from '@angular/material/icon'; // Apenas os ícones pro design novo
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  // 👇 Adicione os módulos aqui na lista de imports
   imports: [
     CommonModule, 
     FormsModule, 
-    MatCardModule, 
-    MatInputModule, 
-    MatButtonModule, 
-    MatFormFieldModule,
     MatIconModule 
   ],
-  templateUrl: './login.html',
-  styleUrls: ['./login.scss']
+  templateUrl: './login.html', // (ou .component.html dependendo de como está seu arquivo)
+  styleUrls: ['./login.scss']  // (ou .component.scss)
 })
 export class LoginComponent {
   email = '';
-  password = '';
-  carregando = false; // Para mostrar um spinner no botão
+  senha = ''; // 👇 Mudamos para 'senha' para casar com o HTML
+  mostrarSenha = false; // Controle do olhinho
+  carregando = false; // Controle do botão de Loading
 
   constructor(private authService: AuthService, private router: Router) {}
 
+  // Função para mostrar/esconder a senha
+  toggleSenha() {
+    this.mostrarSenha = !this.mostrarSenha;
+  }
+
   async entrar() {
+    if (!this.email || !this.senha) {
+      alert('Por favor, preencha email e senha.');
+      return;
+    }
+
     this.carregando = true;
     try {
-      await this.authService.loginEmail(this.email, this.password);
+      // 👇 Agora ele manda this.senha corretamente pro Firebase
+      await this.authService.loginEmail(this.email, this.senha);
       const token = await this.authService.getAuthToken();
       
       if (token) {
@@ -45,7 +46,7 @@ export class LoginComponent {
           next: (resposta: any) => { 
             console.log('Resposta do Servidor:', resposta);
             
-            // 👇 O DIVISOR DE ÁGUAS
+            // O DIVISOR DE ÁGUAS
             if (resposta.role === 'ADMIN') {
               this.router.navigate(['/advogado']); // Vai pra mesa do chefe
             } else {
