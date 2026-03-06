@@ -1,97 +1,203 @@
-<div style="padding: 30px; background-color: #f5f7fa; min-height: 100vh;">
+<div style="min-height: 100vh;">
   
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-    <div>
-      <h1 style="margin: 0; color: #1a237e; font-family: Roboto;">👨‍⚖️ Painel do Advogado</h1>
-      <small style="color: #666;">Bem-vindo, Doutor(a).</small>
+  <header style="background-color: var(--bg-surface); border-bottom: 1px solid var(--border-color); padding: 16px 40px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;">
+    
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="background: var(--brand-primary); color: white; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+        <mat-icon>gavel</mat-icon>
+      </div>
+      <h1 style="font-size: 22px; font-weight: 700; color: var(--text-primary); margin: 0; letter-spacing: -0.5px;">AdvogaFlow</h1>
     </div>
-    <button mat-flat-button color="warn" (click)="sair()">Sair</button>
-  </div>
-
-  <div style="display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap;">
-    <mat-card style="flex: 1; border-left: 5px solid #3f51b5;">
-      <mat-card-header>
-        <mat-card-title style="font-size: 30px;">{{ listaDeProcessos.length }}</mat-card-title>
-        <mat-card-subtitle>Processos Ativos</mat-card-subtitle>
-      </mat-card-header>
-    </mat-card>
     
-    <mat-card style="flex: 1; border-left: 5px solid #4caf50;">
-      <mat-card-header>
-        <mat-card-title style="font-size: 30px;">R$ 0,00</mat-card-title>
-        <mat-card-subtitle>Honorários (Em breve)</mat-card-subtitle>
-      </mat-card-header>
-    </mat-card>
-  </div>
-
-  <div style="display: flex; gap: 30px; align-items: flex-start;">
-    
-    <mat-card style="flex: 1; padding: 20px;">
-      <h3 style="color: #3f51b5; margin-bottom: 15px;">
-        {{ idEmEdicao ? '✏️ Editando Caso' : '➕ Novo Atendimento' }}
-      </h3>
+    <div style="display: flex; gap: 20px; align-items: center;">
       
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-        <mat-form-field appearance="outline">
-          <mat-label>Nome do Cliente</mat-label>
-          <input matInput [(ngModel)]="novoCliente" placeholder="Ex: João Silva">
-        </mat-form-field>
+      <mat-form-field appearance="outline" style="margin-bottom: -1.25em; width: 220px;">
+        <mat-label>Design do Workspace</mat-label>
+        <mat-select (selectionChange)="mudarTema($event.value)" value="claro">
+          <mat-option value="tema-premium">🛡️ Jurídico Premium</mat-option>
+          <mat-option value="tema-elegante">⚖️ Jurídico Elegante</mat-option>
+          <mat-option value="claro">⚪ Claro Minimalista</mat-option>
+          <mat-option value="tema-dark">🌙 Dark Mode</mat-option>
+        </mat-select>
+      </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Tipo da Ação</mat-label>
-          <input matInput [(ngModel)]="novoTipo" placeholder="Ex: Divórcio Consensual">
-        </mat-form-field>
+      <div style="width: 1px; height: 30px; background-color: var(--border-color);"></div>
 
-        <div style="display: flex; gap: 10px;">
-          <button mat-raised-button color="primary" (click)="salvar()" style="flex: 1; height: 50px;">
-            {{ idEmEdicao ? 'SALVAR ALTERAÇÃO' : 'CADASTRAR CASO' }}
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="text-align: right;">
+          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Dra. Advogada</div>
+          <div style="font-size: 12px; color: var(--text-secondary);">Workspace Admin</div>
+        </div>
+        <button mat-icon-button [matMenuTriggerFor]="menu" style="background: var(--bg-main); border: 1px solid var(--border-color);">
+          <mat-icon style="color: var(--text-primary);">person</mat-icon>
+        </button>
+        <mat-menu #menu="matMenu">
+          <button mat-menu-item (click)="sair()"><mat-icon color="warn">logout</mat-icon> Encerrar Sessão</button>
+        </mat-menu>
+      </div>
+
+    </div>
+  </header>
+
+  <main style="padding: 40px; max-width: 1400px; margin: 0 auto;">
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 40px;">
+      
+      <div class="saas-card" style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <div style="color: var(--text-secondary); font-size: 14px; font-weight: 500; margin-bottom: 8px;">Processos Ativos</div>
+          <div style="color: var(--text-primary); font-size: 32px; font-weight: 700; font-family: 'Poppins';">{{ listaDeProcessos.length }}</div>
+        </div>
+        <div style="background: rgba(59, 130, 246, 0.1); color: #3B82F6; padding: 12px; border-radius: 12px;">
+          <mat-icon>folder_open</mat-icon>
+        </div>
+      </div>
+
+      <div class="saas-card" style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <div style="color: var(--text-secondary); font-size: 14px; font-weight: 500; margin-bottom: 8px;">Honorários Previstos</div>
+          <div style="color: var(--text-primary); font-size: 32px; font-weight: 700; font-family: 'Poppins';">R$ 0,00</div>
+        </div>
+        <div style="background: rgba(16, 185, 129, 0.1); color: #10B981; padding: 12px; border-radius: 12px;">
+          <mat-icon>payments</mat-icon>
+        </div>
+      </div>
+
+      <div class="saas-card" style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <div style="color: var(--text-secondary); font-size: 14px; font-weight: 500; margin-bottom: 8px;">Casos Concluídos</div>
+          <div style="color: var(--text-primary); font-size: 32px; font-weight: 700; font-family: 'Poppins';">0</div>
+        </div>
+        <div style="background: rgba(99, 102, 241, 0.1); color: #6366F1; padding: 12px; border-radius: 12px;">
+          <mat-icon>task_alt</mat-icon>
+        </div>
+      </div>
+
+      <div class="saas-card" style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <div style="color: var(--text-secondary); font-size: 14px; font-weight: 500; margin-bottom: 8px;">Prazos Próximos</div>
+          <div style="color: var(--text-primary); font-size: 32px; font-weight: 700; font-family: 'Poppins';">0</div>
+        </div>
+        <div style="background: rgba(245, 158, 11, 0.1); color: #F59E0B; padding: 12px; border-radius: 12px;">
+          <mat-icon>event</mat-icon>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="display: grid; grid-template-columns: 380px 1fr; gap: 32px; align-items: start;">
+      
+      <div class="saas-card">
+        <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 24px; display: flex; align-items: center; gap: 8px;">
+          <mat-icon style="color: var(--brand-accent);">{{ idEmEdicao ? 'edit' : 'add_circle' }}</mat-icon> 
+          {{ idEmEdicao ? 'Editar Processo' : 'Novo Processo' }}
+        </h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <mat-form-field appearance="outline" style="width: 100%;">
+            <mat-label>Nome do Cliente</mat-label>
+            <input matInput [(ngModel)]="novoCliente" placeholder="Ex: João da Silva">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" style="width: 100%;">
+            <mat-label>Tipo da Ação</mat-label>
+            <input matInput [(ngModel)]="novoTipo" placeholder="Ex: Divórcio Consensual">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" style="width: 100%;">
+            <mat-label>Status</mat-label>
+            <mat-select [(ngModel)]="novoStatus">
+              <mat-option value="Aguardando Análise">Aguardando Análise</mat-option>
+              <mat-option value="Em Andamento">Em Andamento</mat-option>
+              <mat-option value="Urgente">Urgente</mat-option>
+              <mat-option value="Concluído">Concluído</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" style="width: 100%;">
+            <mat-label>Prazo Limite</mat-label>
+            <input matInput type="date" [(ngModel)]="novoPrazo">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" style="width: 100%;">
+            <mat-label>Observações</mat-label>
+            <textarea matInput [(ngModel)]="novaObservacao" rows="3" placeholder="Detalhes do caso..."></textarea>
+          </mat-form-field>
+
+          <button mat-raised-button class="btn-saas-primary" (click)="salvar()">
+            {{ idEmEdicao ? 'Atualizar Processo' : 'Criar Processo' }}
           </button>
           
-          <button *ngIf="idEmEdicao" mat-stroked-button (click)="cancelarEdicao()">
+          <button *ngIf="idEmEdicao" mat-button color="warn" (click)="cancelarEdicao()">
             Cancelar
           </button>
         </div>
       </div>
-    </mat-card>
 
-    <div style="flex: 2;">
-      <h3 style="color: #555;">Casos Recentes</h3>
-      
-      <div *ngIf="listaDeProcessos.length === 0" style="color: gray; font-style: italic;">
-        Nenhum processo cadastrado ainda. Use o formulário ao lado.
+      <div class="saas-card" style="padding: 0; overflow: hidden;">
+        <div style="padding: 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+          <h3 style="font-size: 18px; font-weight: 600;">Gestão de Casos</h3>
+          
+          <mat-form-field appearance="outline" style="margin-bottom: -1.25em; width: 200px;">
+            <mat-label>Tabelas OAB</mat-label>
+            <mat-select (selectionChange)="abrirTabelaOAB($event.value)" placeholder="Estado">
+              <mat-option *ngFor="let est of estadosOAB" [value]="est">OAB / {{ est }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="saas-table">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Tipo de Ação</th>
+                <th>Status</th>
+                <th>Prazo</th>
+                <th style="text-align: right;">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="listaDeProcessos.length === 0">
+                <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                  Nenhum processo encontrado. Comece criando um novo caso.
+                </td>
+              </tr>
+              <tr *ngFor="let proc of listaDeProcessos">
+                <td style="font-weight: 500;">{{ proc.cliente }}</td>
+                <td style="color: var(--text-secondary);">{{ proc.tipo }}</td>
+                <td>
+                  <span class="badge" 
+                        [ngClass]="{
+                          'badge-andamento': proc.status === 'Em Andamento',
+                          'badge-analise': proc.status === 'Aguardando Análise',
+                          'badge-concluido': proc.status === 'Concluído',
+                          'badge-urgente': proc.status === 'Urgente'
+                        }">
+                    <mat-icon style="font-size: 14px; width: 14px; height: 14px;">
+                      {{ proc.status === 'Concluído' ? 'check_circle' : (proc.status === 'Urgente' ? 'warning' : 'schedule') }}
+                    </mat-icon>
+                    {{ proc.status || 'Em Andamento' }}
+                  </span>
+                </td>
+                <td style="color: var(--text-secondary);">{{ (proc.prazo | date:'dd/MM/yyyy') || '--' }}</td>
+                <td style="text-align: right;">
+                  <button mat-icon-button style="color: var(--text-secondary);" (click)="abrirCaso(proc.id)" title="Visualizar">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+                  <button mat-icon-button style="color: var(--brand-accent);" (click)="prepararEdicao(proc)" title="Editar">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="deletar(proc.id)" title="Excluir">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <mat-card *ngFor="let proc of listaDeProcessos" style="margin-bottom: 15px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px;">
-          
-          <div>
-            <div style="font-weight: bold; font-size: 16px; color: #333;">{{ proc.cliente }}</div>
-            <div style="color: #666;">{{ proc.tipo }}</div>
-            <div style="margin-top: 5px;">
-              <span style="background: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
-                {{ proc.status }}
-              </span>
-            </div>
-          </div>
-
-          <div>
-            <button mat-icon-button color="primary" (click)="abrirCaso(proc.id)" title="Abrir Detalhes">
-                <mat-icon>visibility</mat-icon>
-            </button>
-
-            <button mat-icon-button color="accent" (click)="prepararEdicao(proc)" title="Editar">
-              <mat-icon>edit</mat-icon>
-            </button>
-
-            <button mat-icon-button color="warn" (click)="deletar(proc.id)" title="Excluir">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </div>
-
-        </div>
-      </mat-card>
     </div>
-
-  </div>
-
+  </main>
 </div>

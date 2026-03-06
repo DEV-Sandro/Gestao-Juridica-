@@ -1,3 +1,167 @@
-@use '@angular/material/prebuilt-themes/indigo-pink.css';
+/* ==========================================
+   ADVOGAFLOW - DESIGN SYSTEM PREMIUM SAAS
+   ========================================== */
 
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap');
+
+/* ==========================================
+   1. SISTEMA DE TEMAS (VARIÁVEIS)
+   ========================================== */
+
+/* 🔵 TEMA 1: Jurídico Premium */
+body.tema-premium {
+  --bg-main: #F8FAFC;
+  --bg-surface: #FFFFFF;
+  --text-primary: #0F172A;
+  --text-secondary: #64748B;
+  --border-color: #E2E8F0;
+  --brand-primary: #0F172A; /* Azul Escuro */
+  --brand-accent: #C9A227;  /* Dourado */
+}
+
+/* ⚖️ TEMA 2: Jurídico Elegante */
+body.tema-elegante {
+  --bg-main: #F0E3DD;       /* Rosa Claro Neutro */
+  --bg-surface: #FFFFFF;
+  --text-primary: #0D2A44;  /* Azul Profundo */
+  --text-secondary: #8DA5A9;/* Azul Acinzentado */
+  --border-color: #CBAC97;  /* Bege Elegante */
+  --brand-primary: #0D2A44;
+  --brand-accent: #CBAC97;
+}
+
+/* ⚪ TEMA 3: Claro Minimalista (Padrão) */
+:root {
+  --bg-main: #F8FAFC;
+  --bg-surface: #FFFFFF;
+  --text-primary: #1E293B;
+  --text-secondary: #64748B;
+  --border-color: #E2E8F0;
+  --brand-primary: #1E293B;
+  --brand-accent: #3B82F6;
+}
+
+/* 🌙 TEMA 4: Dark Mode */
+body.tema-dark {
+  --bg-main: #0B0F19;
+  --bg-surface: #111827;
+  --text-primary: #F9FAFB;
+  --text-secondary: #9CA3AF;
+  --border-color: #1F2937;
+  --brand-primary: #3B82F6;
+  --brand-accent: #60A5FA;
+}
+
+/* ==========================================
+   2. RESET E TIPOGRAFIA GLOBAIS
+   ========================================== */
+body {
+  background-color: var(--bg-main) !important;
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Poppins', sans-serif !important;
+  color: var(--text-primary) !important;
+  margin: 0;
+}
+
+/* ==========================================
+   3. COMPONENTES SAAS (Cards, Botões, Tabelas)
+   ========================================== */
+
+/* Cards Modernos */
+.saas-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  }
+}
+
+/* Botão Principal */
+.btn-saas-primary {
+  background-color: var(--brand-primary) !important;
+  color: #FFFFFF !important;
+  border-radius: 8px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.3px;
+  height: 48px;
+  transition: all 0.2s ease !important;
+  
+  &:hover {
+    filter: brightness(1.2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+}
+
+/* Badges de Status Modernos */
+.badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.badge-andamento { background: rgba(59, 130, 246, 0.1); color: #3B82F6; }
+.badge-analise { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+.badge-concluido { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+.badge-urgente { background: rgba(239, 68, 68, 0.1); color: #EF4444; }
+
+/* Tabela SaaS Moderna */
+.saas-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  
+  th {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  td {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 14px;
+    vertical-align: middle;
+  }
+  
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background-color: rgba(0,0,0,0.01); }
+}
+
+/* ==========================================
+   4. CORREÇÃO DO ANGULAR MATERIAL
+   ========================================== */
+.mat-mdc-text-field-wrapper { background-color: transparent !important; }
+.mdc-notched-outline__leading, .mdc-notched-outline__notch, .mdc-notched-outline__trailing {
+  border-color: var(--border-color) !important;
+}
+.mat-mdc-select-value-text, input.mat-mdc-input-element, textarea.mat-mdc-input-element {
+  color: var(--text-primary) !important;
+  font-family: 'Inter', sans-serif !important;
+}
+.mat-mdc-floating-label { color: var(--text-secondary) !important; }
+.mat-mdc-select-panel { background-color: var(--bg-surface) !important; }
+.mat-mdc-option .mdc-list-item__primary-text { color: var(--text-primary) !important; }

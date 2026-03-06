@@ -184,3 +184,29 @@ app.listen(3000, () => {
     console.log('✅ Servidor AdvogaFlow rodando na porta 3000');
     console.log('📡 Rotas de Prazos e Login Inteligente ATIVAS.');
 });
+// ==========================================
+// 📊 TABELA DE HONORÁRIOS OAB (NOVO!)
+// ==========================================
+// ==========================================
+app.get('/api/honorarios', async (req, res) => {
+    try {
+        const doc = await db.collection('configuracoes').doc('honorarios').get();
+        
+        if (doc.exists) {
+            res.json(doc.data());
+        } else {
+            // 👇 NOVOS LINKS (Apontando para as páginas oficiais em vez do PDF)
+            res.json({
+                'SP': 'https://www.oabsp.org.br/servicos#modal=24-03-14-1158-tabela-de-honorarios',
+                'PR': 'https://honorarios.oabpr.org.br/',
+                'RJ': 'https://www.oabrj.org.br/tabela-honorarios',
+                'MG': 'https://www.oabmg.org.br/servicos/tabeladehonorarios',
+                'SC': 'https://www.oab-sc.org.br/tabela-honorarios',
+                'RS': 'https://www.oabrs.org.br/tabela-honorarios'
+            });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Erro ao buscar tabela de honorários');
+    }
+});

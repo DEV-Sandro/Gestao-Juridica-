@@ -37,6 +37,9 @@ export class AuthService {
     return this.http.get(`http://localhost:3000/api/processos/${procId}/etapas`);
   }
 
+  pegarTabelasOAB() {
+    return this.http.get('http://localhost:3000/api/honorarios');
+  } 
   criarEtapa(procId: string, dados: any) {
     return this.http.post(`http://localhost:3000/api/processos/${procId}/etapas`, dados);
   }
