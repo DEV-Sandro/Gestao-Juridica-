@@ -1,35 +1,40 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AuthService } from '../auth.service';
 import { Router } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon'; // Apenas os ícones pro design novo
+import { AuthService } from '../auth.service';
+
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [
-    CommonModule, 
-    FormsModule, 
-    MatIconModule 
+    CommonModule, FormsModule, MatFormFieldModule,
+    MatInputModule, MatIconModule, MatButtonModule, MatCheckboxModule
   ],
-  templateUrl: './login.html', // (ou .component.html dependendo de como está seu arquivo)
-  styleUrls: ['./login.scss']  // (ou .component.scss)
+  templateUrl: './login.html',
+  styleUrls: ['./login.scss']
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   email = '';
-  senha = ''; // 👇 Mudamos para 'senha' para casar com o HTML
-  mostrarSenha = false; // Controle do olhinho
-  carregando = false; // Controle do botão de Loading
+  senha = ''; 
+  mostrarSenha = false; 
+  carregando = false; 
 
   constructor(private authService: AuthService, private router: Router) {}
 
-  // Função para mostrar/esconder a senha
-  toggleSenha() {
-    this.mostrarSenha = !this.mostrarSenha;
+  ngOnInit() {
+    // Garante que o tema salva será carregado na tela de login
+    const temaSalvo = localStorage.getItem('justapro-theme') || 'corporate';
+    document.body.setAttribute('data-theme', temaSalvo);
   }
 
-  async entrar() {
+  async acessar() { 
     if (!this.email || !this.senha) {
       alert('Por favor, preencha email e senha.');
       return;
@@ -37,28 +42,19 @@ export class LoginComponent {
 
     this.carregando = true;
     try {
-      // 👇 Agora ele manda this.senha corretamente pro Firebase
       await this.authService.loginEmail(this.email, this.senha);
       const token = await this.authService.getAuthToken();
       
       if (token) {
         this.authService.enviarTokenParaBackend(token).subscribe({
           next: (resposta: any) => { 
-            console.log('Resposta do Servidor:', resposta);
-            
-            // O DIVISOR DE ÁGUAS
-            if (resposta.role === 'ADMIN') {
-              this.router.navigate(['/advogado']); // Vai pra mesa do chefe
-            } else {
-              this.router.navigate(['/cliente']); // Vai pra área do cliente
-            }
+            if (resposta.role === 'ADMIN') this.router.navigate(['/advogado']); 
+            else this.router.navigate(['/cliente']); 
           },
-          error: () => {
-            alert('Erro de conexão com o servidor.');
-            this.carregando = false;
-          }
+          error: () => { alert('Erro de conexão com o servidor.'); this.carregando = false; }
         });
       }
+      
     } catch (e) {
       alert('Email ou senha inválidos.');
       this.carregando = false;

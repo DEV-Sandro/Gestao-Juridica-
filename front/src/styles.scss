@@ -1,167 +1,196 @@
+/* ==========================================================================
+   JUSTAPRO - PREMIUM LEGAL SAAS DESIGN SYSTEM
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap');
+
 /* ==========================================
-   ADVOGAFLOW - DESIGN SYSTEM PREMIUM SAAS
+   1. COLOR TOKENS & THEME SYSTEM
    ========================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap');
-
-/* ==========================================
-   1. SISTEMA DE TEMAS (VARIÁVEIS)
-   ========================================== */
-
-/* 🔵 TEMA 1: Jurídico Premium */
-body.tema-premium {
-  --bg-main: #F8FAFC;
-  --bg-surface: #FFFFFF;
-  --text-primary: #0F172A;
-  --text-secondary: #64748B;
-  --border-color: #E2E8F0;
-  --brand-primary: #0F172A; /* Azul Escuro */
-  --brand-accent: #C9A227;  /* Dourado */
+/* ☀️ TEMA 1: LIGHT (Clean & Stripe-like) */
+body[data-theme="light"] {
+  --bg-app: #F3F4F6;             /* Cinza ultra leve, destaca o card */
+  --bg-surface: #FFFFFF;         /* Branco puro */
+  --bg-surface-hover: #F9FAFB;
+  
+  --text-main: #111827;          /* Slate 900 */
+  --text-muted: #6B7280;         /* Slate 500 */
+  
+  --border-subtle: #E5E7EB;      
+  --border-focus: #10B981;       
+  
+  --brand-primary: #0F172A;      
+  --brand-gradient: linear-gradient(135deg, #10B981 0%, #047857 100%); 
+  
+  /* Sombras macias nível Stripe */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --glass-border: 1px solid var(--border-subtle);
 }
 
-/* ⚖️ TEMA 2: Jurídico Elegante */
-body.tema-elegante {
-  --bg-main: #F0E3DD;       /* Rosa Claro Neutro */
-  --bg-surface: #FFFFFF;
-  --text-primary: #0D2A44;  /* Azul Profundo */
-  --text-secondary: #8DA5A9;/* Azul Acinzentado */
-  --border-color: #CBAC97;  /* Bege Elegante */
-  --brand-primary: #0D2A44;
-  --brand-accent: #CBAC97;
-}
-
-/* ⚪ TEMA 3: Claro Minimalista (Padrão) */
-:root {
-  --bg-main: #F8FAFC;
-  --bg-surface: #FFFFFF;
-  --text-primary: #1E293B;
-  --text-secondary: #64748B;
-  --border-color: #E2E8F0;
+/* 🏢 TEMA 2: CORPORATE (Default - Navy) */
+body[data-theme="corporate"] {
+  --bg-app: #0F172A;             
+  --bg-surface: #1E293B;         
+  --bg-surface-hover: #334155;
+  
+  --text-main: #F8FAFC;
+  --text-muted: #94A3B8;
+  
+  --border-subtle: #334155;
+  --border-focus: #10B981;       
+  
   --brand-primary: #1E293B;
-  --brand-accent: #3B82F6;
+  --brand-gradient: linear-gradient(135deg, #10B981 0%, #047857 100%);
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+  --glass-border: 1px solid var(--border-subtle);
 }
 
-/* 🌙 TEMA 4: Dark Mode */
-body.tema-dark {
-  --bg-main: #0B0F19;
-  --bg-surface: #111827;
-  --text-primary: #F9FAFB;
-  --text-secondary: #9CA3AF;
-  --border-color: #1F2937;
-  --brand-primary: #3B82F6;
-  --brand-accent: #60A5FA;
+/* 🌙 TEMA 3: DARK (Linear Style) */
+body[data-theme="dark"] {
+  --bg-app: #09090B;             
+  --bg-surface: #18181B;         
+  --bg-surface-hover: #27272A;
+  
+  --text-main: #FAFAFA;
+  --text-muted: #A1A1AA;
+  
+  --border-subtle: #27272A;
+  --border-focus: #10B981;
+  
+  --brand-primary: #09090B;
+  --brand-gradient: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --glass-border: 1px solid var(--border-subtle);
+}
+
+/* 🚥 STATUS SEMANTIC COLORS */
+:root {
+  --status-urgent: #EF4444;      
+  --status-late: #F59E0B;        
+  --status-success: #10B981;     
+  --status-info: #3B82F6;        
+  
+  --radius-card: 12px;
+  --radius-input: 8px;
 }
 
 /* ==========================================
-   2. RESET E TIPOGRAFIA GLOBAIS
+   2. TYPOGRAPHY & RESET
    ========================================== */
 body {
-  background-color: var(--bg-main) !important;
-  color: var(--text-primary);
+  background-color: var(--bg-app);
+  color: var(--text-main);
   font-family: 'Inter', sans-serif;
-  margin: 0;
+  margin: 0; padding: 0; min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'Poppins', sans-serif !important;
-  color: var(--text-primary) !important;
+h1, h2, h3, h4, h5, .font-heading {
+  font-family: 'Poppins', sans-serif;
+  color: var(--text-main);
   margin: 0;
 }
 
 /* ==========================================
-   3. COMPONENTES SAAS (Cards, Botões, Tabelas)
+   3. SAAS COMPONENTS
    ========================================== */
-
-/* Cards Modernos */
-.saas-card {
+.card-glass {
   background-color: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
-  }
+  border: var(--glass-border);
+  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-card);
 }
 
-/* Botão Principal */
-.btn-saas-primary {
-  background-color: var(--brand-primary) !important;
+.btn-premium {
+  background: var(--brand-gradient) !important;
   color: #FFFFFF !important;
+  border: none !important;
   border-radius: 8px !important;
   font-family: 'Inter', sans-serif !important;
   font-weight: 600 !important;
-  letter-spacing: 0.3px;
-  height: 48px;
-  transition: all 0.2s ease !important;
+  height: 44px !important;
+  transition: opacity 0.2s ease !important;
   
-  &:hover {
-    filter: brightness(1.2);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  }
-}
-
-/* Badges de Status Modernos */
-.badge {
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-  font-family: 'Inter', sans-serif;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-.badge-andamento { background: rgba(59, 130, 246, 0.1); color: #3B82F6; }
-.badge-analise { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
-.badge-concluido { background: rgba(16, 185, 129, 0.1); color: #10B981; }
-.badge-urgente { background: rgba(239, 68, 68, 0.1); color: #EF4444; }
-
-/* Tabela SaaS Moderna */
-.saas-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-  
-  th {
-    padding: 16px;
-    border-bottom: 1px solid var(--border-color);
-    color: var(--text-secondary);
-    font-weight: 500;
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  
-  td {
-    padding: 16px;
-    border-bottom: 1px solid var(--border-color);
-    color: var(--text-primary);
-    font-size: 14px;
-    vertical-align: middle;
-  }
-  
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background-color: rgba(0,0,0,0.01); }
+  &:hover { opacity: 0.9; }
 }
 
 /* ==========================================
-   4. CORREÇÃO DO ANGULAR MATERIAL
+   4. ANGULAR MATERIAL MDC OVERRIDES (FIX DEFINITIVO)
    ========================================== */
-.mat-mdc-text-field-wrapper { background-color: transparent !important; }
-.mdc-notched-outline__leading, .mdc-notched-outline__notch, .mdc-notched-outline__trailing {
-  border-color: var(--border-color) !important;
+
+/* 1. Variáveis Nativas (Garante bordas arredondadas e cores sem quebrar a linha) */
+.mat-mdc-form-field {
+  --mdc-outlined-text-field-container-shape: var(--radius-input) !important;
+  --mdc-outlined-text-field-outline-color: var(--border-subtle) !important;
+  --mdc-outlined-text-field-hover-outline-color: var(--text-muted) !important;
+  --mdc-outlined-text-field-focus-outline-color: var(--border-focus) !important;
+  
+  --mdc-outlined-text-field-label-text-color: var(--text-muted) !important;
+  --mdc-outlined-text-field-focus-label-text-color: var(--border-focus) !important;
+  
+  --mdc-outlined-text-field-input-text-color: var(--text-main) !important;
+  --mdc-outlined-text-field-caret-color: var(--border-focus) !important;
+  width: 100%;
 }
-.mat-mdc-select-value-text, input.mat-mdc-input-element, textarea.mat-mdc-input-element {
-  color: var(--text-primary) !important;
+
+/* 2. Fundo transparente para o SVG da borda respirar perfeitamente */
+.mat-mdc-text-field-wrapper.mdc-text-field--outlined {
+  background-color: transparent !important; 
+  transition: box-shadow 0.2s ease !important;
+}
+
+/* 3. Efeito Glow (SaaS Stripe Style) ao clicar no input */
+.mdc-text-field--focused .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
+  box-shadow: var(--focus-glow) !important; 
+}
+
+/* 4. A VACINA DO CHROME (Mata o fundo azul feio do Autofill) */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 50px var(--bg-surface) inset !important;
+  -webkit-text-fill-color: var(--text-main) !important;
+  transition: background-color 5000s ease-in-out 0s;
+  caret-color: var(--border-focus) !important;
+}
+
+/* 5. Tipografia Limpa e Premium */
+input.mat-mdc-input-element, 
+textarea.mat-mdc-input-element, 
+.mat-mdc-select-value-text {
   font-family: 'Inter', sans-serif !important;
+  font-weight: 500 !important;
+  color: var(--text-main) !important;
 }
-.mat-mdc-floating-label { color: var(--text-secondary) !important; }
-.mat-mdc-select-panel { background-color: var(--bg-surface) !important; }
-.mat-mdc-option .mdc-list-item__primary-text { color: var(--text-primary) !important; }
+
+.mdc-floating-label {
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.3px;
+}
+
+/* 6. Dropdowns Limpos */
+.mat-mdc-menu-panel, .mat-mdc-select-panel {
+  background-color: var(--bg-surface) !important;
+  border: var(--glass-border) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--shadow-dropdown) !important;
+}
+
+.mat-mdc-menu-item, .mat-mdc-option {
+  color: var(--text-main) !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 14px !important;
+  background-color: transparent !important;
+}
+
+.mat-mdc-menu-item:hover, .mat-mdc-option:hover, .mat-mdc-option.mdc-list-item--selected {
+  background-color: var(--bg-surface-hover) !important;
+}

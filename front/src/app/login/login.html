@@ -1,73 +1,36 @@
-<div class="login-wrapper">
-  
-  <div class="brand-panel">
-    <div class="logo-container">
-      <mat-icon>account_balance</mat-icon>
-      <span>AdvogaFlow</span>
-    </div>
+<div class="login-wrapper fade-in">
+  <div class="login-card card-glass">
     
-    <div class="brand-text">
-      <h2>Gestão jurídica inteligente para escritórios modernos.</h2>
-      <p>Organize processos, clientes e honorários em um só lugar, com um software desenhado exclusivamente para a excelência na advocacia.</p>
+    <div class="brand-header">
+      <div class="logo-shield"><mat-icon>balance</mat-icon></div>
+      <h1 class="font-heading">JustaPro</h1>
     </div>
+
+    <form (ngSubmit)="acessar()" class="login-form">
+      <mat-form-field appearance="outline">
+        <mat-label>E-mail Profissional</mat-label>
+        <mat-icon matPrefix class="icon-muted">email</mat-icon>
+        <input matInput type="email" placeholder="nome@escritorio.com" [(ngModel)]="email" name="email" required>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Senha de Acesso</mat-label>
+        <mat-icon matPrefix class="icon-muted">lock</mat-icon>
+        <input matInput [type]="mostrarSenha ? 'text' : 'password'" [(ngModel)]="senha" name="senha" required>
+        <button mat-icon-button matSuffix type="button" (click)="mostrarSenha = !mostrarSenha">
+          <mat-icon class="icon-muted">{{ mostrarSenha ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+      </mat-form-field>
+
+      <div class="form-options">
+        <mat-checkbox color="primary">Lembrar de mim</mat-checkbox>
+        <a href="#" class="forgot-link">Esqueceu a senha?</a>
+      </div>
+
+      <button mat-flat-button class="btn-premium" type="submit" [disabled]="carregando">
+        {{ carregando ? 'Autenticando...' : 'Acessar Workspace' }}
+      </button>
+    </form>
     
-    <div class="brand-footer">
-      <p>&copy; 2026 AdvogaFlow. Tecnologia e Segurança Jurídica.</p>
-    </div>
   </div>
-
-  <div class="login-panel">
-    <div class="login-card">
-      
-      <div class="mobile-logo">
-        <mat-icon>account_balance</mat-icon>
-        <span>AdvogaFlow</span>
-      </div>
-      
-      <h3>Acessar o sistema</h3>
-      <p class="subtitle">Insira suas credenciais para entrar no escritório.</p>
-
-      <button class="btn-google">
-        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google Logo">
-        Continuar com o Google
-      </button>
-
-      <div class="divider">
-        <span>ou acesse com email corporativo</span>
-      </div>
-
-      <div class="form-group">
-        <label>Email corporativo</label>
-        <div class="input-wrapper">
-          <mat-icon class="input-icon">mail_outline</mat-icon>
-          <input type="email" placeholder="contato@escritorio.adv.br" [(ngModel)]="email" />
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label>Sua senha</label>
-        <div class="input-wrapper">
-          <mat-icon class="input-icon">lock_outline</mat-icon>
-          <input [type]="mostrarSenha ? 'text' : 'password'" placeholder="••••••••" [(ngModel)]="senha" (keyup.enter)="entrar()" />
-          
-          <button class="btn-toggle-pass" (click)="toggleSenha()" title="Mostrar senha">
-            <mat-icon>{{ mostrarSenha ? 'visibility_off' : 'visibility' }}</mat-icon>
-          </button>
-        </div>
-        <div class="forgot-password">
-          <a href="#">Esqueci minha senha</a>
-        </div>
-      </div>
-
-      <button class="btn-primary" (click)="entrar()" [disabled]="carregando" [style.opacity]="carregando ? '0.7' : '1'">
-        {{ carregando ? 'Acessando sistema...' : 'Entrar no escritório' }}
-      </button>
-
-      <div class="help-link">
-        <a href="#">Precisa de ajuda? Fale com o suporte.</a>
-      </div>
-
-    </div>
-  </div>
-  
 </div>

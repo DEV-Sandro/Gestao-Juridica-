@@ -1,203 +1,294 @@
-<div style="min-height: 100vh;">
-  
-  <header style="background-color: var(--bg-surface); border-bottom: 1px solid var(--border-color); padding: 16px 40px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;">
-    
-    <div style="display: flex; align-items: center; gap: 12px;">
-      <div style="background: var(--brand-primary); color: white; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-        <mat-icon>gavel</mat-icon>
-      </div>
-      <h1 style="font-size: 22px; font-weight: 700; color: var(--text-primary); margin: 0; letter-spacing: -0.5px;">AdvogaFlow</h1>
+<div class="jp-layout fade-in">
+  <aside class="jp-sidebar">
+    <div class="sidebar-brand">
+      <div class="logo"><mat-icon>balance</mat-icon></div>
+      <span class="font-heading">JustaPro</span>
     </div>
-    
-    <div style="display: flex; gap: 20px; align-items: center;">
-      
-      <mat-form-field appearance="outline" style="margin-bottom: -1.25em; width: 220px;">
-        <mat-label>Design do Workspace</mat-label>
-        <mat-select (selectionChange)="mudarTema($event.value)" value="claro">
-          <mat-option value="tema-premium">🛡️ Jurídico Premium</mat-option>
-          <mat-option value="tema-elegante">⚖️ Jurídico Elegante</mat-option>
-          <mat-option value="claro">⚪ Claro Minimalista</mat-option>
-          <mat-option value="tema-dark">🌙 Dark Mode</mat-option>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item active"><mat-icon>dashboard</mat-icon> Dashboard</a>
+      <a class="nav-item"><mat-icon>folder_special</mat-icon> Casos</a>
+      <a class="nav-item"><mat-icon>people</mat-icon> Clientes</a>
+      <a class="nav-item"><mat-icon>event_note</mat-icon> Agenda</a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <a class="nav-item"><mat-icon>settings</mat-icon> Ajustes</a>
+      <a class="nav-item text-danger" (click)="sair()"><mat-icon>logout</mat-icon> Sair</a>
+    </div>
+  </aside>
+
+  <main class="jp-main">
+    <div class="jp-toast fade-in" *ngIf="notificacaoAtiva && notificacaoAtual">
+      <div class="toast-content">
+        <mat-icon [ngClass]="notificacaoAtual.corCss">{{ notificacaoAtual.icone }}</mat-icon>
+        <div class="toast-texts">
+          <span class="toast-title">{{ notificacaoAtual.texto }}</span>
+          <span class="toast-subtitle">{{ notificacaoAtual.cliente }}</span>
+        </div>
+      </div>
+      <div class="toast-actions">
+        <button mat-flat-button class="btn-premium btn-sm" (click)="abrirNotificacao(notificacaoAtual)">ABRIR</button>
+        <button mat-icon-button class="text-muted" (click)="fecharNotificacao()"><mat-icon>close</mat-icon></button>
+      </div>
+    </div>
+
+    <header class="jp-topbar">
+      <h2 class="page-title font-heading">Gestão de Casos</h2>
+      <div class="topbar-actions">
+        <div class="bell-container" #menuTrigger="matMenuTrigger" [matMenuTriggerFor]="notifMenu">
+          <mat-icon>notifications</mat-icon>
+          <span class="bell-badge" *ngIf="notificacoesNaoLidas > 0">{{ notificacoesNaoLidas }}</span>
+        </div>
+
+        <mat-menu #notifMenu="matMenu" class="custom-menu-panel">
+          <div class="notif-menu-header" (click)="$event.stopPropagation()">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <strong>Notificações</strong>
+              <span class="badge-count" *ngIf="notificacoesNaoLidas > 0">{{ notificacoesNaoLidas }} novas</span>
+            </div>
+            <button mat-icon-button (click)="menuTrigger.closeMenu()" class="text-muted" style="width: 32px; height: 32px; padding: 0;">
+              <mat-icon style="font-size: 18px;">close</mat-icon>
+            </button>
+          </div>
+
+          <div class="notif-list">
+            <div class="notif-item" *ngFor="let n of notificacoes" [class.is-read]="n.lida" (click)="$event.stopPropagation()">
+              <mat-icon [ngClass]="n.lida ? 'text-muted' : n.corCss">{{ n.icone }}</mat-icon>
+              <div class="n-text">
+                <strong [ngClass]="{'text-muted': n.lida}">{{ n.texto }}</strong>
+                <span>{{ n.cliente }}</span>
+              </div>
+              <button mat-button class="text-info" (click)="abrirNotificacao(n)">ABRIR</button>
+            </div>
+            <div class="notif-empty" *ngIf="notificacoes.length === 0">Tudo sob controle hoje! 🎉</div>
+          </div>
+
+          <div class="notif-menu-actions" *ngIf="notificacoes.length > 0">
+            <button mat-button class="text-muted" (click)="marcarTodasComoLidas()">Marcar como lidas</button>
+            <button mat-button color="warn" (click)="limparNotificacoes()">Limpar painel</button>
+          </div>
+        </mat-menu>
+
+        <button mat-button [matMenuTriggerFor]="temaMenu" class="btn-theme"><mat-icon>palette</mat-icon> Tema Visual</button>
+        <mat-menu #temaMenu="matMenu">
+          <button mat-menu-item (click)="mudarTema('light')"><mat-icon>light_mode</mat-icon> Light Mode</button>
+          <button mat-menu-item (click)="mudarTema('corporate')"><mat-icon>business</mat-icon> Corporate Navy</button>
+          <button mat-menu-item (click)="mudarTema('dark')"><mat-icon>dark_mode</mat-icon> Linear Dark</button>
+        </mat-menu>
+
+        <div class="divider"></div>
+
+        <div class="user-menu" [matMenuTriggerFor]="perfilMenu">
+          <div class="user-texts"><span class="name">Dra. Advogada</span><span class="role">Admin</span></div>
+          <div class="avatar"><mat-icon>person</mat-icon></div>
+        </div>
+
+        <mat-menu #perfilMenu="matMenu">
+          <button mat-menu-item (click)="sair()"><mat-icon color="warn">logout</mat-icon> Sair</button>
+        </mat-menu>
+      </div>
+    </header>
+
+    <div class="jp-workspace">
+      <div class="stats-grid">
+        <div class="card-glass stat-card"><div class="stat-header"><span class="stat-title">Ativos</span><div class="stat-icon info"><mat-icon>folder_open</mat-icon></div></div><div class="stat-number">{{ countAtivos }}</div></div>
+        <div class="card-glass stat-card"><div class="stat-header"><span class="stat-title">Honorários</span><div class="stat-icon success"><mat-icon>account_balance_wallet</mat-icon></div></div><div class="stat-number">R$ 0</div></div>
+        <div class="card-glass stat-card"><div class="stat-header"><span class="stat-title">Concluídos</span><div class="stat-icon success"><mat-icon>task_alt</mat-icon></div></div><div class="stat-number">{{ countConcluidos }}</div></div>
+        <div class="card-glass stat-card"><div class="stat-header"><span class="stat-title">Vencendo</span><div class="stat-icon warning"><mat-icon>schedule</mat-icon></div></div><div class="stat-number text-warning">{{ countUrgentes }}</div></div>
+        <div class="card-glass stat-card danger-card"><div class="stat-header"><span class="stat-title text-danger">Atrasados</span><div class="stat-icon danger"><mat-icon>error_outline</mat-icon></div></div><div class="stat-number text-danger">{{ countAtrasados }}</div></div>
+      </div>
+
+      <div class="work-area">
+        <div class="card-glass jp-table-area">
+          <div class="table-toolbar">
+            <h3 class="font-heading m-0">Casos Recentes</h3>
+
+            <div class="toolbar-actions">
+              <div class="filter-pills">
+                <button class="pill" [class.active]="filtroAtual === 'Todos'" (click)="aplicarFiltro('Todos')">Ativos</button>
+                <button class="pill text-danger" [class.active]="filtroAtual === 'Urgente'" (click)="aplicarFiltro('Urgente')">Urgentes</button>
+                <button class="pill text-warning" [class.active]="filtroAtual === 'Atrasado'" (click)="aplicarFiltro('Atrasado')">Atrasados</button>
+                <button class="pill text-info" [class.active]="filtroAtual === 'Em Andamento'" (click)="aplicarFiltro('Em Andamento')">Andamento</button>
+              </div>
+
+              <button mat-stroked-button class="btn-filter" [class.active]="mostrarFiltroAvancado" (click)="toggleFiltroAvancado()">
+                <mat-icon>tune</mat-icon>
+                {{ mostrarFiltroAvancado ? 'Fechar Filtros' : 'Filtros' }}
+                <span *ngIf="temFiltrosAtivos" style="margin-left: 6px; font-weight: 700;">({{ filtrosAtivosCount }})</span>
+              </button>
+
+              <button mat-flat-button class="btn-premium" (click)="abrirNovoProcesso()">
+                <mat-icon style="margin-right:4px;">add</mat-icon>
+                Novo Processo
+              </button>
+            </div>
+          </div>
+
+          <div class="advanced-box fade-in" *ngIf="mostrarFiltroAvancado">
+            <div class="filter-inputs-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Nome do Cliente</mat-label>
+                <mat-icon matPrefix>search</mat-icon>
+                <input matInput [(ngModel)]="filtroNomeCliente" (ngModelChange)="scheduleFiltro()">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Tipo da Ação</mat-label>
+                <mat-icon matPrefix>gavel</mat-icon>
+                <input matInput [(ngModel)]="filtroTipoAcao" (ngModelChange)="scheduleFiltro()">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select [(ngModel)]="filtroStatusAvancado" (selectionChange)="scheduleFiltro()">
+                  <mat-option value="Todos">Todos os Status</mat-option>
+                  <mat-option value="Aguardando Análise">Aguardando Análise</mat-option>
+                  <mat-option value="Em Andamento">Em Andamento</mat-option>
+                  <mat-option value="Urgente">Urgente</mat-option>
+                  <mat-option value="Atrasado">Atrasado</mat-option>
+                  <mat-option value="Concluído">Concluído</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Data Inicial</mat-label>
+                <input matInput [matDatepicker]="pickerIni" [(ngModel)]="filtroDataInicial" (dateChange)="scheduleFiltro()">
+                <mat-datepicker-toggle matIconSuffix [for]="pickerIni"></mat-datepicker-toggle>
+                <mat-datepicker #pickerIni startView="multi-year">
+                  <input matInput
+       [matDatepicker]="pickerIni"
+       [(ngModel)]="filtroDataInicial"
+       (dateChange)="scheduleFiltro()"
+       (focus)="pickerIni.open()">
+                </mat-datepicker>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Data Final</mat-label>
+                <input matInput [matDatepicker]="pickerFim" [(ngModel)]="filtroDataFinal" (dateChange)="scheduleFiltro()">
+                <mat-datepicker-toggle matIconSuffix [for]="pickerFim"></mat-datepicker-toggle>
+                <mat-datepicker #pickerFim startView="multi-year"></mat-datepicker>
+              </mat-form-field>
+            </div>
+
+            <div class="filter-footer-actions" style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+              <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <span style="font-weight:600;">{{ totalResultados }} resultado<span *ngIf="totalResultados !== 1">s</span> encontrado<span *ngIf="totalResultados !== 1">s</span></span>
+                <span *ngIf="temFiltrosAtivos" style="padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; border: 1px solid rgba(255,255,255,.12);">
+                  Filtros ativos: {{ filtrosAtivosCount }}
+                </span>
+              </div>
+
+              <div style="display:flex; gap:8px; align-items:center;">
+                <button *ngIf="temFiltrosAtivos" mat-button color="warn" (click)="limparFiltrosAvancados()">Limpar filtros</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="empty-state" *ngIf="listaDeProcessosFiltrada.length === 0">
+            <mat-icon>inventory_2</mat-icon>
+            <p *ngIf="temFiltrosAtivos">Nenhum processo encontrado com esses filtros.</p>
+            <p *ngIf="!temFiltrosAtivos">Nenhum caso encontrado na base.</p>
+            <button *ngIf="temFiltrosAtivos" mat-stroked-button color="warn" (click)="limparFiltrosAvancados()">Limpar filtros</button>
+          </div>
+
+          <div class="table-scroll" *ngIf="listaDeProcessosFiltrada.length > 0">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:12px; flex-wrap:wrap;">
+              <div style="font-size:13px; opacity:.85;">
+                {{ totalResultados }} resultado<span *ngIf="totalResultados !== 1">s</span> encontrado<span *ngIf="totalResultados !== 1">s</span>
+              </div>
+              <div *ngIf="temFiltrosAtivos" style="font-size:12px; font-weight:700; opacity:.8;">
+                filtros ativos: {{ filtrosAtivosCount }}
+              </div>
+            </div>
+
+            <table class="saas-table">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Tipo de Ação</th>
+                  <th>Status</th>
+                  <th>Prazo</th>
+                  <th class="align-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let proc of listaDeProcessosFiltrada">
+                  <td class="fw-600">{{ proc.cliente }}</td>
+                  <td class="text-muted">{{ proc.tipo }}</td>
+                  <td>
+                    <span class="status-pill" [ngClass]="'pill-' + (proc.statusDinamico | lowercase | slice:0:3)">
+                      <mat-icon>
+                        {{ proc.statusDinamico === 'Concluído' ? 'check_circle' : proc.statusDinamico === 'Atrasado' ? 'error' : proc.statusDinamico === 'Urgente' ? 'notification_important' : 'schedule' }}
+                      </mat-icon>
+                      {{ proc.statusDinamico }}
+                    </span>
+                  </td>
+                  <td class="text-muted">
+                    <span class="text-danger fw-600" *ngIf="proc.statusDinamico === 'Atrasado'">Venceu </span>
+                    <span class="text-warning fw-600" *ngIf="proc.statusDinamico === 'Urgente'">Vence </span>
+                    {{ (proc.prazo | date:'dd/MM/yyyy') || '--' }}
+                  </td>
+                  <td class="align-right">
+                    <button mat-icon-button class="text-muted" (click)="abrirCaso(proc.id)"><mat-icon>visibility</mat-icon></button>
+                    <button mat-icon-button class="text-info" (click)="prepararEdicao(proc)"><mat-icon>edit</mat-icon></button>
+                    <button mat-icon-button class="text-danger" (click)="deletar(proc.id)"><mat-icon>delete_outline</mat-icon></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="overlay fade-in" *ngIf="mostrarFormulario" (click)="fecharFormulario()"></div>
+
+  <div class="jp-drawer card-glass" [class.open]="mostrarFormulario">
+    <div class="drawer-header">
+      <h3 class="font-heading m-0">{{ idEmEdicao ? 'Editar Processo' : 'Novo Processo' }}</h3>
+      <button mat-icon-button (click)="fecharFormulario()"><mat-icon>close</mat-icon></button>
+    </div>
+
+    <div class="drawer-body">
+      <mat-form-field appearance="outline">
+        <mat-label>Nome do Cliente</mat-label>
+        <input matInput [(ngModel)]="novoCliente">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Tipo da Ação</mat-label>
+        <input matInput [(ngModel)]="novoTipo">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Status do Processo</mat-label>
+        <mat-select [(ngModel)]="novoStatus">
+          <mat-option value="Aguardando Análise">Aguardando Análise</mat-option>
+          <mat-option value="Em Andamento">Em Andamento</mat-option>
+          <mat-option value="Urgente" class="text-danger fw-600">Urgente</mat-option>
+          <mat-option value="Concluído">Concluído</mat-option>
         </mat-select>
       </mat-form-field>
 
-      <div style="width: 1px; height: 30px; background-color: var(--border-color);"></div>
+      <mat-form-field appearance="outline">
+        <mat-label>Prazo Limite / Audiência</mat-label>
+        <input matInput [matDatepicker]="pickerDrawer" [(ngModel)]="novoPrazo">
+        <mat-datepicker-toggle matIconSuffix [for]="pickerDrawer"></mat-datepicker-toggle>
+        <mat-datepicker #pickerDrawer startView="multi-year"></mat-datepicker>
+      </mat-form-field>
 
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <div style="text-align: right;">
-          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Dra. Advogada</div>
-          <div style="font-size: 12px; color: var(--text-secondary);">Workspace Admin</div>
-        </div>
-        <button mat-icon-button [matMenuTriggerFor]="menu" style="background: var(--bg-main); border: 1px solid var(--border-color);">
-          <mat-icon style="color: var(--text-primary);">person</mat-icon>
-        </button>
-        <mat-menu #menu="matMenu">
-          <button mat-menu-item (click)="sair()"><mat-icon color="warn">logout</mat-icon> Encerrar Sessão</button>
-        </mat-menu>
-      </div>
-
-    </div>
-  </header>
-
-  <main style="padding: 40px; max-width: 1400px; margin: 0 auto;">
-    
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 40px;">
-      
-      <div class="saas-card" style="display: flex; justify-content: space-between; align-items: flex-start;">
-        <div>
-          <div style="color: var(--text-secondary); font-size: 14px; font-weight: 500; margin-bottom: 8px;">Processos Ativos</div>
-          <div style="color: var(--text-primary); font-size: 32px; font-weight: 700; font-family: 'Poppins';">{{ listaDeProcessos.length }}</div>
-        </div>
-        <div style="background: rgba(59, 130, 246, 0.1); color: #3B82F6; padding: 12px; border-radius: 12px;">
-          <mat-icon>folder_open</mat-icon>
-        </div>
-      </div>
-
-      <div class="saas-card" style="display: flex; justify-content: space-between; align-items: flex-start;">
-        <div>
-          <div style="color: var(--text-secondary); font-size: 14px; font-weight: 500; margin-bottom: 8px;">Honorários Previstos</div>
-          <div style="color: var(--text-primary); font-size: 32px; font-weight: 700; font-family: 'Poppins';">R$ 0,00</div>
-        </div>
-        <div style="background: rgba(16, 185, 129, 0.1); color: #10B981; padding: 12px; border-radius: 12px;">
-          <mat-icon>payments</mat-icon>
-        </div>
-      </div>
-
-      <div class="saas-card" style="display: flex; justify-content: space-between; align-items: flex-start;">
-        <div>
-          <div style="color: var(--text-secondary); font-size: 14px; font-weight: 500; margin-bottom: 8px;">Casos Concluídos</div>
-          <div style="color: var(--text-primary); font-size: 32px; font-weight: 700; font-family: 'Poppins';">0</div>
-        </div>
-        <div style="background: rgba(99, 102, 241, 0.1); color: #6366F1; padding: 12px; border-radius: 12px;">
-          <mat-icon>task_alt</mat-icon>
-        </div>
-      </div>
-
-      <div class="saas-card" style="display: flex; justify-content: space-between; align-items: flex-start;">
-        <div>
-          <div style="color: var(--text-secondary); font-size: 14px; font-weight: 500; margin-bottom: 8px;">Prazos Próximos</div>
-          <div style="color: var(--text-primary); font-size: 32px; font-weight: 700; font-family: 'Poppins';">0</div>
-        </div>
-        <div style="background: rgba(245, 158, 11, 0.1); color: #F59E0B; padding: 12px; border-radius: 12px;">
-          <mat-icon>event</mat-icon>
-        </div>
-      </div>
-
+      <mat-form-field appearance="outline">
+        <mat-label>Observações</mat-label>
+        <textarea matInput [(ngModel)]="novaObservacao" rows="4"></textarea>
+      </mat-form-field>
     </div>
 
-    <div style="display: grid; grid-template-columns: 380px 1fr; gap: 32px; align-items: start;">
-      
-      <div class="saas-card">
-        <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 24px; display: flex; align-items: center; gap: 8px;">
-          <mat-icon style="color: var(--brand-accent);">{{ idEmEdicao ? 'edit' : 'add_circle' }}</mat-icon> 
-          {{ idEmEdicao ? 'Editar Processo' : 'Novo Processo' }}
-        </h3>
-        
-        <div style="display: flex; flex-direction: column; gap: 16px;">
-          <mat-form-field appearance="outline" style="width: 100%;">
-            <mat-label>Nome do Cliente</mat-label>
-            <input matInput [(ngModel)]="novoCliente" placeholder="Ex: João da Silva">
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" style="width: 100%;">
-            <mat-label>Tipo da Ação</mat-label>
-            <input matInput [(ngModel)]="novoTipo" placeholder="Ex: Divórcio Consensual">
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" style="width: 100%;">
-            <mat-label>Status</mat-label>
-            <mat-select [(ngModel)]="novoStatus">
-              <mat-option value="Aguardando Análise">Aguardando Análise</mat-option>
-              <mat-option value="Em Andamento">Em Andamento</mat-option>
-              <mat-option value="Urgente">Urgente</mat-option>
-              <mat-option value="Concluído">Concluído</mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" style="width: 100%;">
-            <mat-label>Prazo Limite</mat-label>
-            <input matInput type="date" [(ngModel)]="novoPrazo">
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" style="width: 100%;">
-            <mat-label>Observações</mat-label>
-            <textarea matInput [(ngModel)]="novaObservacao" rows="3" placeholder="Detalhes do caso..."></textarea>
-          </mat-form-field>
-
-          <button mat-raised-button class="btn-saas-primary" (click)="salvar()">
-            {{ idEmEdicao ? 'Atualizar Processo' : 'Criar Processo' }}
-          </button>
-          
-          <button *ngIf="idEmEdicao" mat-button color="warn" (click)="cancelarEdicao()">
-            Cancelar
-          </button>
-        </div>
-      </div>
-
-      <div class="saas-card" style="padding: 0; overflow: hidden;">
-        <div style="padding: 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-          <h3 style="font-size: 18px; font-weight: 600;">Gestão de Casos</h3>
-          
-          <mat-form-field appearance="outline" style="margin-bottom: -1.25em; width: 200px;">
-            <mat-label>Tabelas OAB</mat-label>
-            <mat-select (selectionChange)="abrirTabelaOAB($event.value)" placeholder="Estado">
-              <mat-option *ngFor="let est of estadosOAB" [value]="est">OAB / {{ est }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-
-        <div style="overflow-x: auto;">
-          <table class="saas-table">
-            <thead>
-              <tr>
-                <th>Cliente</th>
-                <th>Tipo de Ação</th>
-                <th>Status</th>
-                <th>Prazo</th>
-                <th style="text-align: right;">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngIf="listaDeProcessos.length === 0">
-                <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-secondary);">
-                  Nenhum processo encontrado. Comece criando um novo caso.
-                </td>
-              </tr>
-              <tr *ngFor="let proc of listaDeProcessos">
-                <td style="font-weight: 500;">{{ proc.cliente }}</td>
-                <td style="color: var(--text-secondary);">{{ proc.tipo }}</td>
-                <td>
-                  <span class="badge" 
-                        [ngClass]="{
-                          'badge-andamento': proc.status === 'Em Andamento',
-                          'badge-analise': proc.status === 'Aguardando Análise',
-                          'badge-concluido': proc.status === 'Concluído',
-                          'badge-urgente': proc.status === 'Urgente'
-                        }">
-                    <mat-icon style="font-size: 14px; width: 14px; height: 14px;">
-                      {{ proc.status === 'Concluído' ? 'check_circle' : (proc.status === 'Urgente' ? 'warning' : 'schedule') }}
-                    </mat-icon>
-                    {{ proc.status || 'Em Andamento' }}
-                  </span>
-                </td>
-                <td style="color: var(--text-secondary);">{{ (proc.prazo | date:'dd/MM/yyyy') || '--' }}</td>
-                <td style="text-align: right;">
-                  <button mat-icon-button style="color: var(--text-secondary);" (click)="abrirCaso(proc.id)" title="Visualizar">
-                    <mat-icon>visibility</mat-icon>
-                  </button>
-                  <button mat-icon-button style="color: var(--brand-accent);" (click)="prepararEdicao(proc)" title="Editar">
-                    <mat-icon>edit</mat-icon>
-                  </button>
-                  <button mat-icon-button color="warn" (click)="deletar(proc.id)" title="Excluir">
-                    <mat-icon>delete_outline</mat-icon>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
+    <div class="drawer-footer">
+      <button mat-button (click)="fecharFormulario()">Cancelar</button>
+      <button mat-flat-button class="btn-premium" (click)="salvar()">{{ idEmEdicao ? 'Salvar Alterações' : 'Cadastrar' }}</button>
     </div>
-  </main>
+  </div>
 </div>

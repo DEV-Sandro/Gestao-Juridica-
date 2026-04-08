@@ -1,54 +1,167 @@
-<div style="padding: 30px; background-color: #f5f7fa; min-height: 100vh;">
-
+<div style="padding: 30px; min-height: 100vh;">
   <button mat-button (click)="voltar()" style="margin-bottom: 20px;">
-    <mat-icon>arrow_back</mat-icon> Voltar para a Mesa
+    <mat-icon>arrow_back</mat-icon>
+    Voltar para a Mesa
   </button>
 
-  <div *ngIf="processo">
-    
-    <div style="margin-bottom: 30px;">
-      <h1 style="margin: 0; color: #1a237e;">{{ processo.cliente }}</h1>
-      <span style="background: #e3f2fd; color: #1565c0; padding: 5px 10px; border-radius: 4px;">
-        {{ processo.tipo }}
-      </span>
-      <span style="margin-left: 10px; color: #666;">Status: {{ processo.status }}</span>
+  <div *ngIf="processo; else carregando">
+    <div class="card-glass" style="padding: 24px; margin-bottom: 20px; border-radius: 18px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:24px; flex-wrap:wrap;">
+        <div>
+          <div style="font-size: 13px; opacity: .75; margin-bottom: 8px;">Detalhes do Processo</div>
+          <h1 style="margin: 0 0 8px 0;">{{ processo.cliente }}</h1>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <span style="padding: 6px 12px; border-radius: 999px; font-weight: 700;">
+              {{ processo.tipo }}
+            </span>
+            <span [class]="statusClasse" style="font-weight: 700;">
+              {{ processo.statusVisual }}
+            </span>
+          </div>
+        </div>
+
+        <div style="text-align:right; min-width:220px;">
+          <div style="font-size: 12px; opacity:.7;">Prazo</div>
+          <div style="font-size: 24px; font-weight: 800;">{{ prazoFormatado }}</div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;">
+        <button mat-stroked-button (click)="alterarStatus('Em Andamento')">
+          <mat-icon>sync</mat-icon>
+          Em andamento
+        </button>
+        <button mat-stroked-button (click)="alterarStatus('Urgente')">
+          <mat-icon>priority_high</mat-icon>
+          Marcar urgente
+        </button>
+        <button mat-flat-button color="primary" (click)="marcarComoConcluido()">
+          <mat-icon>task_alt</mat-icon>
+          Marcar como concluído
+        </button>
+        <button mat-stroked-button color="warn" (click)="deletarProcesso()">
+          <mat-icon>delete_outline</mat-icon>
+          Deletar
+        </button>
+      </div>
     </div>
 
-    <mat-tab-group style="background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-      
-      <mat-tab label="📋 Visão Geral">
-        <div style="padding: 30px;">
-          <h3>Dados do Caso</h3>
-          <p><strong>Descrição:</strong> {{ processo.descricao || 'Sem descrição.' }}</p>
-          <p><strong>Data de Início:</strong> (Implementar Data)</p>
+    <div style="display:grid; grid-template-columns: 1.2fr .8fr; gap:20px; align-items:start;">
+      <div style="display:grid; gap:20px;">
+        <div class="card-glass" style="padding: 22px; border-radius: 18px;">
+          <h3 style="margin-top:0;">Informações do Processo</h3>
+
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
+            <div>
+              <div style="font-size:12px; opacity:.7;">Cliente</div>
+              <div style="font-weight:700;">{{ processo.cliente }}</div>
+            </div>
+            <div>
+              <div style="font-size:12px; opacity:.7;">Tipo</div>
+              <div style="font-weight:700;">{{ processo.tipo }}</div>
+            </div>
+            <div>
+              <div style="font-size:12px; opacity:.7;">Status</div>
+              <div style="font-weight:700;">{{ processo.statusVisual }}</div>
+            </div>
+            <div>
+              <div style="font-size:12px; opacity:.7;">Prazo</div>
+              <div style="font-weight:700;">{{ prazoFormatado }}</div>
+            </div>
+            <div>
+              <div style="font-size:12px; opacity:.7;">Criado em</div>
+              <div style="font-weight:700;">{{ processo.criadoEm | date:'dd/MM/yyyy HH:mm' }}</div>
+            </div>
+            <div>
+              <div style="font-size:12px; opacity:.7;">Última atualização</div>
+              <div style="font-weight:700;">{{ processo.atualizadoEm | date:'dd/MM/yyyy HH:mm' }}</div>
+            </div>
+          </div>
         </div>
-      </mat-tab>
 
-      <mat-tab label="⏳ Prazos e Etapas">
-        <div style="padding: 30px;">
-          <p style="color: gray;">Aqui vamos implementar a Linha do Tempo...</p>
-          <button mat-stroked-button color="primary">+ Nova Etapa</button>
+        <div class="card-glass" style="padding: 22px; border-radius: 18px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:12px;">
+            <h3 style="margin:0;">Observações</h3>
+            <button mat-flat-button color="primary" (click)="atualizarObservacoes()">
+              Salvar observações
+            </button>
+          </div>
+
+          <mat-form-field appearance="outline" style="width:100%;">
+            <mat-label>Observações do processo</mat-label>
+            <textarea matInput [(ngModel)]="processo.descricao" rows="6"></textarea>
+          </mat-form-field>
         </div>
-      </mat-tab>
 
-      <mat-tab label="💰 Financeiro">
-        <div style="padding: 30px;">
-          <p style="color: gray;">Aqui entrarão as parcelas...</p>
+        <div class="card-glass" style="padding: 22px; border-radius: 18px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:12px; flex-wrap:wrap;">
+            <h3 style="margin:0;">Prazos e Etapas</h3>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 180px auto; gap:12px; margin-bottom:18px;">
+            <mat-form-field appearance="outline">
+              <mat-label>Título da etapa</mat-label>
+              <input matInput [(ngModel)]="novaEtapaTitulo">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Data limite</mat-label>
+              <input matInput [(ngModel)]="novaEtapaData" type="date">
+            </mat-form-field>
+
+            <div style="display:flex; align-items:center;">
+              <button mat-flat-button color="primary" (click)="adicionarEtapa()">Nova etapa</button>
+            </div>
+          </div>
+
+          <div *ngIf="listaEtapas.length === 0" style="opacity:.75;">
+            Nenhuma etapa cadastrada ainda.
+          </div>
+
+          <div *ngFor="let etapa of listaEtapas" style="display:flex; justify-content:space-between; align-items:center; gap:16px; padding:14px 0; border-bottom:1px solid rgba(255,255,255,.08);">
+            <div>
+              <div style="font-weight:700;">{{ etapa.titulo }}</div>
+              <div style="font-size:13px; opacity:.75;">
+                {{ etapa.dataLimite | date:'dd/MM/yyyy' }}
+                <span *ngIf="estaAtrasado(etapa.dataLimite, etapa.status)" class="text-danger" style="font-weight:700;"> • atrasada</span>
+              </div>
+            </div>
+
+            <label style="display:flex; align-items:center; gap:8px;">
+              <mat-checkbox [checked]="etapa.status === 'CONCLUIDO'" (change)="concluirEtapa(etapa)"></mat-checkbox>
+              <span>{{ etapa.status === 'CONCLUIDO' ? 'Concluída' : 'Pendente' }}</span>
+            </label>
+          </div>
         </div>
-      </mat-tab>
+      </div>
 
-      <mat-tab label="📂 Documentos">
-        <div style="padding: 30px;">
-          <p style="color: gray;">Uploads virão aqui...</p>
+      <div style="display:grid; gap:20px;">
+        <div class="card-glass" style="padding: 22px; border-radius: 18px;">
+          <h3 style="margin-top:0;">Histórico</h3>
+
+          <div *ngIf="historico.length === 0" style="opacity:.75;">
+            Nenhum evento no histórico ainda.
+          </div>
+
+          <div *ngFor="let item of historico; let last = last" style="display:flex; gap:12px; align-items:flex-start; padding: 10px 0;">
+            <div style="width: 34px; height: 34px; min-width:34px; border-radius: 999px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,.12);">
+              <mat-icon style="font-size:18px; width:18px; height:18px;">{{ item.icone }}</mat-icon>
+            </div>
+
+            <div style="flex:1;">
+              <div style="font-weight:700;">{{ item.titulo }}</div>
+              <div style="font-size:13px; opacity:.75; margin: 4px 0;">{{ item.descricao }}</div>
+              <div style="font-size:12px; opacity:.6;">{{ item.data | date:'dd/MM/yyyy HH:mm' }}</div>
+            </div>
+          </div>
         </div>
-      </mat-tab>
-
-    </mat-tab-group>
-
+      </div>
+    </div>
   </div>
 
-  <div *ngIf="!processo" style="text-align: center; margin-top: 50px;">
-    Carregando detalhes do caso...
-  </div>
-
+  <ng-template #carregando>
+    <div style="text-align:center; margin-top: 50px;">
+      Carregando detalhes do caso...
+    </div>
+  </ng-template>
 </div>
