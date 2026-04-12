@@ -1,0 +1,183 @@
+<div class="perfil-page fade-in">
+  <header class="perfil-topbar">
+    <a routerLink="/advogado" class="btn-back">
+      <mat-icon>arrow_back</mat-icon>
+      <span>Voltar</span>
+    </a>
+    <div>
+      <h2 class="page-title font-heading">Meu Perfil</h2>
+      <p>Atualize sua presença profissional e mantenha sua identidade consistente em todo o JustaPro.</p>
+    </div>
+  </header>
+
+  <div class="perfil-content">
+    <section class="card-glass avatar-card">
+      <div class="avatar-area">
+        <div class="avatar-wrapper">
+          <img
+            *ngIf="previewUrl; else mostrarAvatarAtual"
+            [src]="previewUrl"
+            alt="Pré-visualização da nova foto"
+            class="avatar-lg avatar-preview"
+          />
+
+          <ng-template #mostrarAvatarAtual>
+            <img *ngIf="user?.photoURL; else semFoto" [src]="user?.photoURL" alt="Foto atual" class="avatar-lg" />
+            <ng-template #semFoto>
+              <div class="avatar-lg avatar-fallback">
+                {{ iniciais(user?.displayName || user?.email) }}
+              </div>
+            </ng-template>
+          </ng-template>
+
+          <div class="avatar-overlay" *ngIf="uploadando || preparandoImagem || removendoFoto">
+            <mat-spinner diameter="40" strokeWidth="4"></mat-spinner>
+            <span class="overlay-percent" *ngIf="uploadando">{{ uploadProgress }}%</span>
+            <span class="overlay-percent" *ngIf="!uploadando && preparandoImagem">Ajustando</span>
+            <span class="overlay-percent" *ngIf="!uploadando && removendoFoto">Removendo</span>
+          </div>
+        </div>
+
+        <mat-progress-bar
+          *ngIf="uploadando"
+          mode="determinate"
+          [value]="uploadProgress"
+          class="upload-bar"
+        ></mat-progress-bar>
+      </div>
+
+      <div class="avatar-info">
+        <div class="avatar-copy">
+          <span class="eyebrow">Identidade visual</span>
+          <h3 class="font-heading">{{ user?.displayName || 'Sem nome definido' }}</h3>
+          <p>{{ user?.email }}</p>
+        </div>
+
+        <div class="profile-badges">
+          <span class="role-badge" [class.admin]="user?.role === 'ADMIN'">
+            <mat-icon>{{ user?.role === 'ADMIN' ? 'shield' : 'gavel' }}</mat-icon>
+            {{ user?.role === 'ADMIN' ? 'Administrador' : 'Advogado' }}
+          </span>
+          <span class="meta-badge" *ngIf="cargo">{{ cargo }}</span>
+          <span class="meta-badge" *ngIf="oab">{{ oab }}</span>
+        </div>
+
+        <div class="feedback-box" *ngIf="uploadFeedback" [ngClass]="uploadFeedback.tone">
+          <mat-icon>
+            {{ uploadFeedback.tone === 'success' ? 'check_circle' : uploadFeedback.tone === 'error' ? 'error' : 'info' }}
+          </mat-icon>
+          <span>{{ uploadFeedback.text }}</span>
+        </div>
+
+        <div class="avatar-actions" *ngIf="!previewUrl && !uploadando && !preparandoImagem && !removendoFoto">
+          <label class="btn-upload">
+            <mat-icon>photo_camera</mat-icon>
+            <span>Trocar foto</span>
+            <input
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/webp"
+              (change)="selecionarArquivoPremium($event)"
+              hidden
+            />
+          </label>
+          <button
+            mat-stroked-button
+            type="button"
+            class="btn-remove-photo"
+            *ngIf="user?.photoURL"
+            (click)="removerFoto()"
+            [disabled]="removendoFoto || uploadando || preparandoImagem"
+          >
+            <mat-icon>delete_outline</mat-icon>
+            Remover foto
+          </button>
+          <small class="upload-hint">JPG, PNG ou WEBP • máximo de 5MB</small>
+        </div>
+
+        <div class="avatar-actions preview-actions" *ngIf="previewUrl && !uploadando && !preparandoImagem && !removendoFoto">
+          <div class="selected-file">
+            <mat-icon>image</mat-icon>
+            <span>{{ arquivoSelecionadoLabel }}</span>
+          </div>
+
+          <div class="preview-buttons">
+            <button
+              mat-flat-button
+              class="btn-premium"
+              type="button"
+              (click)="confirmarUpload()"
+              [disabled]="uploadando || preparandoImagem || removendoFoto"
+            >
+              <mat-icon>cloud_upload</mat-icon>
+              Enviar foto
+            </button>
+
+            <button
+              mat-stroked-button
+              class="btn-cancel"
+              type="button"
+              (click)="cancelarPreview()"
+              [disabled]="uploadando || preparandoImagem || removendoFoto"
+            >
+              <mat-icon>close</mat-icon>
+              Cancelar
+            </button>
+          </div>
+        </div>
+
+        <div class="avatar-actions" *ngIf="uploadando || preparandoImagem || removendoFoto">
+          <span class="upload-status">
+            <mat-icon class="spinning">sync</mat-icon>
+            <span *ngIf="uploadando">Enviando imagem... {{ uploadProgress }}%</span>
+            <span *ngIf="!uploadando && preparandoImagem">Preparando enquadramento da imagem...</span>
+            <span *ngIf="!uploadando && removendoFoto">Removendo foto atual...</span>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card-glass dados-card">
+      <div class="card-header">
+        <div>
+          <span class="eyebrow">Dados profissionais</span>
+          <h3 class="font-heading m-0">Informações públicas do usuário</h3>
+        </div>
+        <span class="text-muted">Campos usados em perfil, equipe e identificação dos processos.</span>
+      </div>
+
+      <div class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Nome de exibição</mat-label>
+          <mat-icon matPrefix>badge</mat-icon>
+          <input matInput [(ngModel)]="displayName" placeholder="Dra. Maria Silva" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Cargo</mat-label>
+          <mat-icon matPrefix>work</mat-icon>
+          <input matInput [(ngModel)]="cargo" placeholder="Advogada Sênior" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>OAB</mat-label>
+          <mat-icon matPrefix>verified</mat-icon>
+          <input matInput [(ngModel)]="oab" placeholder="OAB/SP 000000" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Telefone</mat-label>
+          <mat-icon matPrefix>phone</mat-icon>
+          <input matInput [(ngModel)]="telefone" placeholder="(11) 90000-0000" />
+        </mat-form-field>
+      </div>
+
+      <div class="card-footer">
+        <button mat-flat-button class="btn-premium" type="button" (click)="salvar()" [disabled]="salvando">
+          <mat-icon *ngIf="!salvando">save</mat-icon>
+          <mat-spinner *ngIf="salvando" diameter="18"></mat-spinner>
+          {{ salvando ? 'Salvando...' : 'Salvar alterações' }}
+        </button>
+      </div>
+    </section>
+  </div>
+</div>

@@ -1,0 +1,143 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.fade-in {
+  animation: fadeIn 220ms ease forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.invite-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px 16px;
+}
+
+.invite-card {
+  width: min(920px, 100%);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.invite-header {
+  max-width: 640px;
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2rem, 4vw, 2.8rem);
+  }
+
+  p {
+    margin: 12px 0 0;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+}
+
+.eyebrow {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.invite-loading,
+.invite-status {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: center;
+  padding: 16px 18px;
+  border-radius: 20px;
+  border: 1px solid var(--border-subtle);
+}
+
+.invite-loading {
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.invite-status {
+  strong {
+    display: block;
+  }
+
+  span {
+    color: var(--text-muted);
+  }
+}
+
+.status-success {
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.status-warning {
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.status-error {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.status-info {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.paste-box,
+.invite-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.password-hint {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+@media (max-width: 720px) {
+  .invite-card {
+    padding: 24px 18px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,93 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================================
+    // HELPERS
+    // ============================================================
+    function autenticado() {
+      return request.auth != null;
+    }
+
+    function meuUid() {
+      return request.auth.uid;
+    }
+
+    function ehAdmin() {
+      return autenticado()
+        && exists(/databases/$(database)/documents/usuarios/$(meuUid()))
+        && get(/databases/$(database)/documents/usuarios/$(meuUid())).data.role == 'ADMIN';
+    }
+
+    function ehAdvogado() {
+      return autenticado()
+        && exists(/databases/$(database)/documents/usuarios/$(meuUid()))
+        && (get(/databases/$(database)/documents/usuarios/$(meuUid())).data.role == 'ADVOGADO'
+            || get(/databases/$(database)/documents/usuarios/$(meuUid())).data.role == 'ADMIN');
+    }
+
+    // ============================================================
+    // USUÁRIOS
+    // ============================================================
+    // Cada usuário lê seu próprio doc; admin lê todos.
+    // Escrita só via backend (admin SDK ignora rules), nunca direto pelo cliente.
+    match /usuarios/{uid} {
+      allow read: if autenticado() && (meuUid() == uid || ehAdmin());
+      allow write: if false;
+    }
+
+    // ============================================================
+    // PROCESSOS
+    // ============================================================
+    // Clientes leem só os próprios; advogados/admin leem todos.
+    // Escrita só via backend.
+    match /processos/{processoId} {
+      allow read: if autenticado() && (
+        ehAdvogado() ||
+        resource.data.clienteId == meuUid()
+      );
+      allow write: if false;
+
+      // ETAPAS (subcoleção)
+      match /etapas/{etapaId} {
+        allow read: if autenticado() && (
+          ehAdvogado() ||
+          get(/databases/$(database)/documents/processos/$(processoId)).data.clienteId == meuUid()
+        );
+        allow write: if false;
+      }
+    }
+
+    // ============================================================
+    // AUDITORIA — só leitura para admin, escrita só via backend
+    // ============================================================
+    match /auditoria/{eventoId} {
+      allow read: if ehAdmin();
+      allow write: if false;
+    }
+
+    // ============================================================
+    // CONFIGURAÇÕES — só admin lê e só backend escreve
+    // ============================================================
+    match /configuracoes/{docId} {
+      allow read: if ehAdmin();
+      allow write: if false;
+    }
+
+    // ============================================================
+    // TEMPLATES (Feature 2 — gerador de documentos, futuro)
+    // ============================================================
+    match /templates/{templateId} {
+      allow read: if ehAdvogado();
+      allow write: if false;
+    }
+
+    // ============================================================
+    // FALLBACK — bloqueia tudo o resto
+    // ============================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

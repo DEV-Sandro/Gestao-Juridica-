@@ -3,6 +3,10 @@ node_modules/
 backend/node_modules/
 front/node_modules/
 */node_modules/
+front/.angular/
+front/.tmp-docx-check/
+front/.vscode/
+.firebase/
 
 # --- ARQUIVOS DE SISTEMA ---
 .DS_Store
@@ -12,8 +16,10 @@ Thumbs.db
 dist/
 /front/dist/
 .angular/
+firebase-debug.log*
 
 # --- SEGURANÇA (SENHAS) ---
 service-account.json
 backend/service-account.json
 *.env
+backend/src/package-lock.json

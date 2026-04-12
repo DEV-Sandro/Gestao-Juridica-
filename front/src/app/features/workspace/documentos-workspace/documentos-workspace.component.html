@@ -1,0 +1,141 @@
+<section class="docs-page">
+  <div class="docs-hero card-glass">
+    <div>
+      <span class="eyebrow">Biblioteca juridica</span>
+      <h2 class="font-heading">Documentos editaveis prontos para fechamento externo</h2>
+      <p>
+        Escolha um modelo, selecione o cliente e gere um arquivo DOCX com os dados ja
+        pre-preenchidos para finalizar no editor de sua preferencia.
+      </p>
+      <p class="helper-copy">
+        Campos ainda nao cadastrados no sistema saem com linha de preenchimento no documento.
+      </p>
+    </div>
+
+    <a mat-stroked-button routerLink="/advogado/clientes">
+      <mat-icon>groups</mat-icon>
+      Gerenciar clientes
+    </a>
+  </div>
+
+  <div class="docs-grid">
+    <article class="card-glass template-panel">
+      <div class="panel-header">
+        <div>
+          <span class="eyebrow">Modelos</span>
+          <h3 class="font-heading">Templates iniciais</h3>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="template-card"
+        *ngFor="let template of templates"
+        [class.active]="template.id === templateSelecionado.id"
+        (click)="selecionarTemplate(template)"
+      >
+        <strong>{{ template.title }}</strong>
+        <span>{{ template.description }}</span>
+      </button>
+    </article>
+
+    <article class="card-glass document-panel">
+      <div class="panel-header">
+        <div>
+          <span class="eyebrow">Montagem</span>
+          <h3 class="font-heading">{{ templateSelecionado.title }}</h3>
+        </div>
+      </div>
+
+      <div class="loading" *ngIf="carregandoClientes">
+        <mat-spinner diameter="30"></mat-spinner>
+        <span>Carregando base de clientes...</span>
+      </div>
+
+      <div class="empty-state" *ngIf="!carregandoClientes && clientes.length === 0">
+        <mat-icon>description</mat-icon>
+        <p>Cadastre ao menos um cliente para habilitar os modelos juridicos.</p>
+        <a mat-flat-button class="btn-premium" routerLink="/advogado/clientes">Cadastrar cliente</a>
+      </div>
+
+      <ng-container *ngIf="!carregandoClientes && clientes.length > 0">
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Cliente</mat-label>
+            <mat-icon matPrefix>person_search</mat-icon>
+            <mat-select [(ngModel)]="clienteId">
+              <mat-option *ngFor="let cliente of clientes" [value]="cliente.id">
+                {{ cliente.nome }} {{ cliente.cpf ? '• ' + cliente.cpf : '' }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Referencia do processo</mat-label>
+            <mat-icon matPrefix>folder_copy</mat-icon>
+            <input matInput [(ngModel)]="referenciaProcesso" placeholder="Ex.: Proc. 0001234-56" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Objeto / assunto</mat-label>
+            <mat-icon matPrefix>gavel</mat-icon>
+            <input matInput [(ngModel)]="objetoContrato" placeholder="Ex.: acao trabalhista" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Local da assinatura</mat-label>
+            <mat-icon matPrefix>place</mat-icon>
+            <input matInput [(ngModel)]="localAssinatura" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Valor dos honorarios</mat-label>
+            <mat-icon matPrefix>payments</mat-icon>
+            <input matInput [(ngModel)]="contratoValor" placeholder="Ex.: 4.500,00" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Valor por extenso</mat-label>
+            <mat-icon matPrefix>text_fields</mat-icon>
+            <input matInput [(ngModel)]="contratoValorExtenso" placeholder="Ex.: quatro mil e quinhentos" />
+          </mat-form-field>
+        </div>
+
+        <div class="client-summary" *ngIf="clienteSelecionado as cliente">
+          <div class="summary-item">
+            <span>Cliente</span>
+            <strong>{{ cliente.nome }}</strong>
+          </div>
+          <div class="summary-item">
+            <span>CPF</span>
+            <strong>{{ cliente.cpf || 'Nao informado' }}</strong>
+          </div>
+          <div class="summary-item">
+            <span>Contato</span>
+            <strong>{{ cliente.email || cliente.telefone || 'Nao informado' }}</strong>
+          </div>
+          <div class="summary-item wide">
+            <span>Endereco</span>
+            <strong>{{ enderecoResumo(cliente) }}</strong>
+          </div>
+        </div>
+
+        <div class="template-preview">
+          <span class="eyebrow">Estrutura do modelo</span>
+          <div class="preview-section" *ngFor="let section of templateSelecionado.sections">
+            <strong *ngIf="section.heading">{{ section.heading }}</strong>
+            <p *ngFor="let paragraph of section.paragraphs">{{ paragraph }}</p>
+          </div>
+        </div>
+
+        <div class="panel-footer">
+          <button mat-flat-button class="btn-premium" type="button" (click)="gerarDocumento()" [disabled]="gerando">
+            <mat-spinner *ngIf="gerando" diameter="18"></mat-spinner>
+            <mat-icon *ngIf="!gerando">download</mat-icon>
+            {{ gerando ? 'Gerando DOCX...' : 'Baixar DOCX editavel' }}
+          </button>
+        </div>
+      </ng-container>
+    </article>
+  </div>
+</section>

@@ -1,167 +1,595 @@
-<div style="padding: 30px; min-height: 100vh;">
-  <button mat-button (click)="voltar()" style="margin-bottom: 20px;">
+<div class="details-page fade-in">
+  <button mat-button type="button" class="back-link" (click)="voltar()">
     <mat-icon>arrow_back</mat-icon>
-    Voltar para a Mesa
+    Voltar para processos
   </button>
 
-  <div *ngIf="processo; else carregando">
-    <div class="card-glass" style="padding: 24px; margin-bottom: 20px; border-radius: 18px;">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:24px; flex-wrap:wrap;">
-        <div>
-          <div style="font-size: 13px; opacity: .75; margin-bottom: 8px;">Detalhes do Processo</div>
-          <h1 style="margin: 0 0 8px 0;">{{ processo.cliente }}</h1>
-          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            <span style="padding: 6px 12px; border-radius: 999px; font-weight: 700;">
-              {{ processo.tipo }}
-            </span>
-            <span [class]="statusClasse" style="font-weight: 700;">
-              {{ processo.statusVisual }}
-            </span>
-          </div>
+  <ng-container *ngIf="processo; else carregandoTpl">
+    <section class="hero-card card-glass">
+      <div class="hero-copy">
+        <div class="hero-meta">
+          <span class="status-badge" [ngClass]="statusBadgeClass(processo.statusDinamico)">
+            <mat-icon>{{ statusIcon(processo.statusDinamico) }}</mat-icon>
+            {{ processo.statusDinamico }}
+          </span>
+
+          <span class="commitment-pill">
+            <mat-icon>{{ compromissoIcon(processo.categoriaCompromisso) }}</mat-icon>
+            {{ categoriaCompromissoLabel }}
+          </span>
         </div>
 
-        <div style="text-align:right; min-width:220px;">
-          <div style="font-size: 12px; opacity:.7;">Prazo</div>
-          <div style="font-size: 24px; font-weight: 800;">{{ prazoFormatado }}</div>
+        <h1 class="font-heading">{{ processo.tipo }}</h1>
+        <p>{{ processo.cliente }}</p>
+
+        <div class="hero-highlights">
+          <div>
+            <span class="highlight-label">Prazo</span>
+            <strong>{{ prazoFormatado }}</strong>
+            <small>{{ resumoPrazo }}</small>
+          </div>
+
+          <div>
+            <span class="highlight-label">Local</span>
+            <strong>{{ processo.localCompromisso || 'Nao informado' }}</strong>
+            <small>{{ processo.categoriaCompromissoLabel }}</small>
+          </div>
         </div>
       </div>
 
-      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;">
-        <button mat-stroked-button (click)="alterarStatus('Em Andamento')">
-          <mat-icon>sync</mat-icon>
-          Em andamento
+      <div class="hero-actions">
+        <button mat-stroked-button type="button" [disabled]="atualizandoPrioridade" (click)="alternarUrgenciaManual()">
+          <mat-icon>{{ processo.urgenteManual ? 'flag' : 'outlined_flag' }}</mat-icon>
+          {{ processo.urgenteManual ? 'Remover urgencia manual' : 'Marcar como urgente' }}
         </button>
-        <button mat-stroked-button (click)="alterarStatus('Urgente')">
-          <mat-icon>priority_high</mat-icon>
-          Marcar urgente
-        </button>
-        <button mat-flat-button color="primary" (click)="marcarComoConcluido()">
+
+        <button mat-flat-button class="btn-premium" type="button" *ngIf="!processoConcluido" (click)="marcarComoConcluido()">
           <mat-icon>task_alt</mat-icon>
-          Marcar como concluído
+          Marcar concluido
         </button>
-        <button mat-stroked-button color="warn" (click)="deletarProcesso()">
+
+        <button mat-stroked-button type="button" *ngIf="processoConcluido" (click)="retomarProcesso()">
+          <mat-icon>refresh</mat-icon>
+          Retomar processo
+        </button>
+
+        <button mat-stroked-button type="button" class="danger-action" (click)="deletarProcesso()">
           <mat-icon>delete_outline</mat-icon>
-          Deletar
+          Remover
         </button>
       </div>
-    </div>
+    </section>
 
-    <div style="display:grid; grid-template-columns: 1.2fr .8fr; gap:20px; align-items:start;">
-      <div style="display:grid; gap:20px;">
-        <div class="card-glass" style="padding: 22px; border-radius: 18px;">
-          <h3 style="margin-top:0;">Informações do Processo</h3>
-
-          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
+    <section class="details-grid">
+      <div class="details-main">
+        <article class="card-glass info-card">
+          <div class="section-header">
             <div>
-              <div style="font-size:12px; opacity:.7;">Cliente</div>
-              <div style="font-weight:700;">{{ processo.cliente }}</div>
-            </div>
-            <div>
-              <div style="font-size:12px; opacity:.7;">Tipo</div>
-              <div style="font-weight:700;">{{ processo.tipo }}</div>
-            </div>
-            <div>
-              <div style="font-size:12px; opacity:.7;">Status</div>
-              <div style="font-weight:700;">{{ processo.statusVisual }}</div>
-            </div>
-            <div>
-              <div style="font-size:12px; opacity:.7;">Prazo</div>
-              <div style="font-weight:700;">{{ prazoFormatado }}</div>
-            </div>
-            <div>
-              <div style="font-size:12px; opacity:.7;">Criado em</div>
-              <div style="font-weight:700;">{{ processo.criadoEm | date:'dd/MM/yyyy HH:mm' }}</div>
-            </div>
-            <div>
-              <div style="font-size:12px; opacity:.7;">Última atualização</div>
-              <div style="font-weight:700;">{{ processo.atualizadoEm | date:'dd/MM/yyyy HH:mm' }}</div>
+              <span class="eyebrow">Resumo executivo</span>
+              <h2 class="font-heading">Informacoes do processo</h2>
             </div>
           </div>
-        </div>
 
-        <div class="card-glass" style="padding: 22px; border-radius: 18px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:12px;">
-            <h3 style="margin:0;">Observações</h3>
-            <button mat-flat-button color="primary" (click)="atualizarObservacoes()">
-              Salvar observações
-            </button>
+          <div class="info-grid">
+            <div class="info-item">
+              <span>Cliente</span>
+              <strong>{{ processo.cliente }}</strong>
+            </div>
+
+            <div class="info-item">
+              <span>Status base</span>
+              <strong>{{ processo.statusBase }}</strong>
+            </div>
+
+            <div class="info-item">
+              <span>Compromisso</span>
+              <strong>{{ processo.categoriaCompromissoLabel }}</strong>
+            </div>
+
+            <div class="info-item">
+              <span>Local</span>
+              <strong>{{ processo.localCompromisso || 'Nao informado' }}</strong>
+            </div>
+
+            <div class="info-item">
+              <span>Criado em</span>
+              <strong>{{ processo.criadoEm | date: 'dd/MM/yyyy HH:mm' }}</strong>
+            </div>
+
+            <div class="info-item">
+              <span>Ultima atualizacao</span>
+              <strong>{{ processo.atualizadoEm | date: 'dd/MM/yyyy HH:mm' }}</strong>
+            </div>
+          </div>
+        </article>
+
+        <article class="card-glass budget-card">
+          <div class="section-header">
+            <div>
+              <span class="eyebrow">Financeiro juridico</span>
+              <h2 class="font-heading">Orcamento do processo</h2>
+            </div>
+
+            <span class="status-badge" [ngClass]="orcamentoStatusBadgeClass(orcamentoAtual?.status)">
+              <mat-icon>{{ orcamentoStatusIcon(orcamentoAtual?.status) }}</mat-icon>
+              {{ orcamentoStatusTexto(orcamentoAtual?.status) }}
+            </span>
           </div>
 
-          <mat-form-field appearance="outline" style="width:100%;">
-            <mat-label>Observações do processo</mat-label>
-            <textarea matInput [(ngModel)]="processo.descricao" rows="6"></textarea>
-          </mat-form-field>
-        </div>
+          <p class="section-helper">
+            Registre valor, escopo e andamento comercial sem sair do processo. Quando o cliente aceitar, o contrato de honorarios aproveita os mesmos dados.
+          </p>
 
-        <div class="card-glass" style="padding: 22px; border-radius: 18px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:12px; flex-wrap:wrap;">
-            <h3 style="margin:0;">Prazos e Etapas</h3>
+          <div class="budget-summary">
+            <div class="budget-summary-item">
+              <span>Valor atual</span>
+              <strong>{{ valorOrcamentoFormatado(orcamentoAtual?.valor) }}</strong>
+              <small>{{ orcamentoAtual?.descricaoServico || 'Escopo ainda nao definido.' }}</small>
+            </div>
+
+            <div class="budget-summary-item">
+              <span>Criado em</span>
+              <strong>{{ orcamentoAtual?.criadoEm ? (orcamentoAtual?.criadoEm | date: 'dd/MM/yyyy HH:mm') : '--' }}</strong>
+              <small>Ultima atualizacao: {{ orcamentoAtual?.atualizadoEm ? (orcamentoAtual?.atualizadoEm | date: 'dd/MM/yyyy HH:mm') : '--' }}</small>
+            </div>
+
+            <div class="budget-summary-item">
+              <span>Resposta do cliente</span>
+              <strong>{{ orcamentoAtual?.respostaClienteEm ? (orcamentoAtual?.respostaClienteEm | date: 'dd/MM/yyyy HH:mm') : 'Pendente' }}</strong>
+              <small>UF de apoio OAB: {{ orcamentoForm.estadoOab || 'Nao definida' }}</small>
+            </div>
           </div>
 
-          <div style="display:grid; grid-template-columns: 1fr 180px auto; gap:12px; margin-bottom:18px;">
+          <div class="budget-grid">
             <mat-form-field appearance="outline">
-              <mat-label>Título da etapa</mat-label>
-              <input matInput [(ngModel)]="novaEtapaTitulo">
+              <mat-label>Honorarios</mat-label>
+              <mat-icon matPrefix>payments</mat-icon>
+              <input matInput [(ngModel)]="orcamentoForm.valor" placeholder="Ex: 3.500,00" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>Data limite</mat-label>
-              <input matInput [(ngModel)]="novaEtapaData" type="date">
+              <mat-label>Status do orcamento</mat-label>
+              <mat-select [(ngModel)]="orcamentoForm.status">
+                <mat-option *ngFor="let opcao of orcamentoStatusOptions" [value]="opcao.value">
+                  {{ opcao.label }}
+                </mat-option>
+              </mat-select>
             </mat-form-field>
 
-            <div style="display:flex; align-items:center;">
-              <button mat-flat-button color="primary" (click)="adicionarEtapa()">Nova etapa</button>
-            </div>
-          </div>
+            <div class="oab-panel">
+              <div class="oab-panel-copy" [class.is-error]="!!erroTabelasOab">
+                <span class="eyebrow">Tabela OAB de referencia</span>
+                <strong>Consulta rapida da tabela OAB</strong>
+                <small *ngIf="carregandoHonorarios">Carregando links oficiais da OAB...</small>
+                <small *ngIf="!carregandoHonorarios && oabEstadosDisponiveis.length > 0">
+                  Escolha a UF de referencia e abra a tabela oficial em uma nova aba.
+                </small>
+                <small *ngIf="!carregandoHonorarios && oabEstadosDisponiveis.length === 0">
+                  Nenhum link da OAB foi encontrado na configuracao atual.
+                </small>
+                <small *ngIf="erroTabelasOab">{{ erroTabelasOab }}</small>
+                <small *ngIf="!carregandoHonorarios && !erroTabelasOab && orcamentoForm.estadoOab && !linkTabelaOabSelecionada">
+                  A UF selecionada nao possui link valido na configuracao atual.
+                </small>
+                <small *ngIf="linkTabelaOabSelecionada">Link oficial pronto para abertura.</small>
+              </div>
 
-          <div *ngIf="listaEtapas.length === 0" style="opacity:.75;">
-            Nenhuma etapa cadastrada ainda.
-          </div>
+              <div class="oab-panel-actions">
+                <mat-form-field appearance="outline" class="oab-field">
+                  <mat-label>UF de referencia</mat-label>
+                  <mat-select [(ngModel)]="orcamentoForm.estadoOab">
+                    <mat-option *ngFor="let estado of oabEstadosDisponiveis" [value]="estado">
+                      {{ estado }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
 
-          <div *ngFor="let etapa of listaEtapas" style="display:flex; justify-content:space-between; align-items:center; gap:16px; padding:14px 0; border-bottom:1px solid rgba(255,255,255,.08);">
-            <div>
-              <div style="font-weight:700;">{{ etapa.titulo }}</div>
-              <div style="font-size:13px; opacity:.75;">
-                {{ etapa.dataLimite | date:'dd/MM/yyyy' }}
-                <span *ngIf="estaAtrasado(etapa.dataLimite, etapa.status)" class="text-danger" style="font-weight:700;"> • atrasada</span>
+                <button
+                  mat-stroked-button
+                  class="oab-trigger"
+                  type="button"
+                  (click)="consultarTabelaOab()"
+                  [disabled]="carregandoHonorarios || oabEstadosDisponiveis.length === 0 || !orcamentoForm.estadoOab"
+                >
+                  <mat-icon>open_in_new</mat-icon>
+                  Abrir tabela
+                </button>
               </div>
             </div>
 
-            <label style="display:flex; align-items:center; gap:8px;">
-              <mat-checkbox [checked]="etapa.status === 'CONCLUIDO'" (change)="concluirEtapa(etapa)"></mat-checkbox>
-              <span>{{ etapa.status === 'CONCLUIDO' ? 'Concluída' : 'Pendente' }}</span>
-            </label>
-          </div>
-        </div>
-      </div>
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>Escopo do servico</mat-label>
+              <textarea matInput rows="4" [(ngModel)]="orcamentoForm.descricaoServico" placeholder="Descreva o trabalho juridico, entregaveis e limites do servico."></textarea>
+            </mat-form-field>
 
-      <div style="display:grid; gap:20px;">
-        <div class="card-glass" style="padding: 22px; border-radius: 18px;">
-          <h3 style="margin-top:0;">Histórico</h3>
-
-          <div *ngIf="historico.length === 0" style="opacity:.75;">
-            Nenhum evento no histórico ainda.
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>Observacoes do orcamento</mat-label>
+              <textarea matInput rows="3" [(ngModel)]="orcamentoForm.observacoes" placeholder="Registre contexto comercial, condicoes combinadas ou pontos de negociacao."></textarea>
+            </mat-form-field>
           </div>
 
-          <div *ngFor="let item of historico; let last = last" style="display:flex; gap:12px; align-items:flex-start; padding: 10px 0;">
-            <div style="width: 34px; height: 34px; min-width:34px; border-radius: 999px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,.12);">
-              <mat-icon style="font-size:18px; width:18px; height:18px;">{{ item.icone }}</mat-icon>
+          <div class="budget-actions">
+            <button mat-stroked-button type="button" (click)="salvarOrcamento('SALVAR_RASCUNHO')" [disabled]="salvandoOrcamento || convertendoOrcamento">
+              <mat-icon>draft</mat-icon>
+              Salvar rascunho
+            </button>
+
+            <button mat-flat-button class="btn-premium" type="button" (click)="salvarOrcamento('AGUARDAR_RESPOSTA')" [disabled]="salvandoOrcamento || convertendoOrcamento">
+              <mat-icon>schedule_send</mat-icon>
+              Salvar e aguardar resposta
+            </button>
+
+            <button mat-stroked-button type="button" (click)="salvarOrcamento('MARCAR_ACEITO')" [disabled]="salvandoOrcamento || convertendoOrcamento">
+              <mat-icon>thumb_up</mat-icon>
+              Marcar aceito
+            </button>
+
+            <button mat-stroked-button type="button" (click)="salvarOrcamento('MARCAR_RECUSADO')" [disabled]="salvandoOrcamento || convertendoOrcamento">
+              <mat-icon>thumb_down</mat-icon>
+              Marcar recusado
+            </button>
+
+            <button mat-stroked-button type="button" class="contract-action" (click)="converterOrcamentoEmContrato()" [disabled]="!podeConverterOrcamento || salvandoOrcamento || convertendoOrcamento">
+              <mat-icon>description</mat-icon>
+              {{ convertendoOrcamento ? 'Gerando contrato...' : 'Converter em contrato' }}
+            </button>
+          </div>
+        </article>
+
+        <article class="card-glass note-card">
+          <div class="section-header">
+            <div>
+              <span class="eyebrow">Contexto</span>
+              <h2 class="font-heading">Observacoes estrategicas</h2>
             </div>
 
-            <div style="flex:1;">
-              <div style="font-weight:700;">{{ item.titulo }}</div>
-              <div style="font-size:13px; opacity:.75; margin: 4px 0;">{{ item.descricao }}</div>
-              <div style="font-size:12px; opacity:.6;">{{ item.data | date:'dd/MM/yyyy HH:mm' }}</div>
+            <button mat-flat-button class="btn-premium" type="button" [disabled]="salvandoObservacoes" (click)="salvarObservacao()">
+              <mat-icon>save</mat-icon>
+              {{ salvandoObservacoes ? 'Salvando...' : 'Salvar observacao' }}
+            </button>
+          </div>
+
+          <div class="summary-note" *ngIf="processo.descricao">
+            <span class="eyebrow">Resumo interno atual</span>
+            <p>{{ processo.descricao }}</p>
+          </div>
+
+          <p class="section-helper">
+            Registre observacoes curtas e objetivas. Cada anotacao entra imediatamente na timeline com autor e horario.
+          </p>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Nova observacao interna</mat-label>
+            <textarea matInput class="observation-input" [(ngModel)]="novaObservacao" rows="5" placeholder="Escreva uma anotacao objetiva que faca sentido para o proximo passo do processo."></textarea>
+          </mat-form-field>
+        </article>
+
+        <article class="card-glass docs-card">
+          <div class="section-header">
+            <div>
+              <span class="eyebrow">Documentos</span>
+              <h2 class="font-heading">Templates juridicos do processo</h2>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <ng-template #carregando>
-    <div style="text-align:center; margin-top: 50px;">
-      Carregando detalhes do caso...
+          <div class="linked-client-card" *ngIf="clienteDetalhe as cliente">
+            <div>
+              <span class="highlight-label">Cliente vinculado</span>
+              <strong>{{ cliente.nome }}</strong>
+              <small>{{ cliente.cpf || cliente.email || cliente.telefone || 'Cadastro pronto para preenchimento automatico.' }}</small>
+            </div>
+            <div>
+              <span class="highlight-label">Referencia usada</span>
+              <strong>{{ processo.id }}</strong>
+              <small>{{ processo.tipo }}</small>
+            </div>
+          </div>
+
+          <p class="section-helper">
+            Os arquivos sao gerados a partir dos modelos DOCX reais do escritorio. Quando houver orcamento aceito, o contrato de honorarios aproveita automaticamente valor e escopo.
+          </p>
+
+          <div class="docs-list">
+            <button
+              type="button"
+              class="doc-template-card"
+              *ngFor="let template of templatesDocumentos"
+              [disabled]="gerandoDocumento"
+              (click)="gerarDocumento(template)"
+            >
+              <div>
+                <strong>{{ template.title }}</strong>
+                <span>{{ template.description }}</span>
+              </div>
+              <mat-icon>download</mat-icon>
+            </button>
+          </div>
+        </article>
+
+        <article class="card-glass etapa-card">
+          <div class="section-header">
+            <div class="section-header-copy">
+              <span class="eyebrow">Execucao</span>
+              <h2 class="font-heading">Etapas e tarefas</h2>
+              <p class="section-helper stage-section-helper">
+                Acompanhe o andamento do processo e registre novas acoes.
+              </p>
+            </div>
+
+            <button mat-flat-button class="btn-premium stage-section-action" type="button" (click)="abrirNovaEtapa()">
+              <mat-icon>add</mat-icon>
+              Nova tarefa
+            </button>
+          </div>
+
+          <div class="stage-empty" *ngIf="listaEtapas.length === 0">
+            <mat-icon>calendar_month</mat-icon>
+            <p>Nenhuma tarefa cadastrada ainda para este processo.</p>
+          </div>
+
+          <div class="stage-list" *ngIf="listaEtapas.length > 0">
+            <article class="stage-card" *ngFor="let etapa of listaEtapas" [ngClass]="etapaCardClass(etapa)">
+              <div class="stage-card-top">
+                <div class="stage-card-copy">
+                  <strong>{{ etapa.titulo }}</strong>
+                  <div class="stage-card-meta">
+                    <span class="commitment-pill">
+                      <mat-icon>{{ compromissoIcon(etapa.tipo) }}</mat-icon>
+                      {{ categoriaEtapaLabel(etapa.tipo) }}
+                    </span>
+
+                    <span class="status-badge" [ngClass]="etapaCardClass(etapa)">
+                      <mat-icon>{{ etapaStatusIcone(etapa) }}</mat-icon>
+                      {{ etapaStatusLabel(etapa) }}
+                    </span>
+
+                    <span class="stage-manual-pill" *ngIf="etapa.urgenteManual && etapa.status !== 'CONCLUIDO'">
+                      <mat-icon>flag</mat-icon>
+                      Prioridade manual
+                    </span>
+                  </div>
+
+                  <p class="stage-card-summary">{{ etapaResumoAuxiliar(etapa) }}</p>
+                </div>
+
+                <div class="stage-card-actions">
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    class="stage-quick-action"
+                    [disabled]="processandoEtapaId === etapa.id || etapa.status === 'CONCLUIDO'"
+                    (click)="alternarUrgenciaEtapa(etapa)"
+                  >
+                    <mat-icon>{{ etapa.urgenteManual ? 'outlined_flag' : 'flag' }}</mat-icon>
+                    {{ etapaUrgenciaTexto(etapa) }}
+                  </button>
+
+                  <button
+                    mat-flat-button
+                    class="btn-premium stage-quick-action"
+                    type="button"
+                    [disabled]="processandoEtapaId === etapa.id"
+                    (click)="alternarStatusEtapa(etapa)"
+                  >
+                    <mat-icon>{{ etapa.status === 'CONCLUIDO' ? 'replay_circle_filled' : 'task_alt' }}</mat-icon>
+                    {{ etapaAcaoPrincipal(etapa) }}
+                  </button>
+
+                  <button mat-icon-button type="button" [disabled]="processandoEtapaId === etapa.id" (click)="editarEtapa(etapa)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+
+                  <button mat-icon-button type="button" class="danger-action" [disabled]="processandoEtapaId === etapa.id" (click)="excluirEtapa(etapa)">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </div>
+              </div>
+
+              <p class="stage-card-note" *ngIf="etapa.observacao">{{ etapa.observacao }}</p>
+
+              <div class="stage-card-footer">
+                <div class="stage-detail">
+                  <mat-icon>calendar_month</mat-icon>
+                  <span>{{ etapa.dataLimite | date: 'dd/MM/yyyy' }}</span>
+                </div>
+
+                <div class="stage-detail" *ngIf="etapa.local">
+                  <mat-icon>place</mat-icon>
+                  <span>{{ etapa.local }}</span>
+                </div>
+
+                <div class="stage-detail" *ngIf="etapa.atualizadoEm">
+                  <mat-icon>history</mat-icon>
+                  <span>Atualizada em {{ etapa.atualizadoEm | date: 'dd/MM/yyyy HH:mm' }}</span>
+                </div>
+              </div>
+            </article>
+          </div>
+        </article>
+      </div>
+
+      <aside class="details-side">
+        <article class="card-glass timeline-card">
+          <div class="section-header">
+            <div>
+              <span class="eyebrow">Historico real</span>
+              <h2 class="font-heading">Timeline do processo</h2>
+              <p class="section-helper timeline-helper" *ngIf="historico.length > 0">{{ timelineResumoTexto }}</p>
+            </div>
+
+            <button
+              mat-stroked-button
+              type="button"
+              class="timeline-toggle"
+              *ngIf="historicoOcultoCount > 0"
+              (click)="alternarTimeline()"
+            >
+              <mat-icon>{{ timelineExpandida ? 'unfold_less' : 'unfold_more' }}</mat-icon>
+              {{ timelineExpandida ? 'Mostrar menos' : 'Ver historico completo' }}
+            </button>
+          </div>
+
+          <div class="timeline-empty" *ngIf="historico.length === 0">
+            <mat-icon>history</mat-icon>
+            <p>Nenhum evento de historico disponivel ainda.</p>
+          </div>
+
+          <div class="timeline-shell" *ngIf="historico.length > 0" [class.is-expanded]="timelineExpandida">
+            <div class="timeline" [class.is-expanded]="timelineExpandida">
+              <article class="timeline-item" *ngFor="let item of historicoVisivel" [ngClass]="timelineToneClass(item)">
+                <div class="timeline-dot">
+                  <mat-icon>{{ item.icone }}</mat-icon>
+                </div>
+
+                <div class="timeline-content">
+                  <strong>{{ item.titulo }}</strong>
+                  <p>{{ item.descricao }}</p>
+                  <small *ngIf="item.autor">{{ item.autor }}</small>
+                  <small>{{ item.data | date: 'dd/MM/yyyy HH:mm' }}</small>
+                </div>
+              </article>
+            </div>
+
+            <div class="timeline-footer" *ngIf="historicoOcultoCount > 0">
+              <div class="timeline-dot">
+                <mat-icon>{{ timelineExpandida ? 'history_toggle_off' : 'more_horiz' }}</mat-icon>
+              </div>
+
+              <div class="timeline-content timeline-summary-card">
+                <strong>{{ timelineExpandida ? 'Historico completo exibido' : historicoOcultoCount + ' atividade(s) adicionais no historico' }}</strong>
+                <p>
+                  {{ timelineExpandida ? 'Use o modo resumido para voltar a uma leitura mais leve da tela.' : 'Expanda a timeline apenas quando precisar aprofundar a analise do caso.' }}
+                </p>
+                <button mat-button type="button" (click)="alternarTimeline()">
+                  {{ timelineExpandida ? 'Voltar ao resumo' : 'Expandir timeline' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </article>
+      </aside>
+    </section>
+  </ng-container>
+
+  <ng-template #carregandoTpl>
+    <div class="loading-card card-glass">
+      <mat-icon>hourglass_top</mat-icon>
+      <p>Carregando detalhes do processo...</p>
     </div>
   </ng-template>
+
+  <div class="overlay" [class.open]="etapaDrawerAberto" (click)="cancelarEdicaoEtapa()"></div>
+
+  <aside class="stage-editor card-glass" [class.open]="etapaDrawerAberto" [attr.aria-hidden]="!etapaDrawerAberto">
+    <div class="drawer-header">
+      <div>
+        <span class="eyebrow">{{ editandoEtapa ? 'Editar tarefa' : 'Nova tarefa' }}</span>
+        <h3 class="font-heading">{{ editandoEtapa ? 'Atualize a tarefa selecionada' : 'Cadastrar nova tarefa do processo' }}</h3>
+        <p class="drawer-intro">Mantenha titulo, prazo, referencia operacional e prioridade no mesmo fluxo, sem deixar o painel apertado.</p>
+      </div>
+
+      <button mat-icon-button type="button" (click)="cancelarEdicaoEtapa()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="drawer-body">
+      <section class="stage-drawer-section">
+        <div class="stage-drawer-head">
+          <span class="eyebrow">Planejamento</span>
+          <h4 class="font-heading">Contexto da tarefa</h4>
+          <p>Defina o compromisso, a referencia e o nivel de prioridade para a execucao juridica.</p>
+        </div>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Titulo da tarefa</mat-label>
+          <mat-icon matPrefix>assignment</mat-icon>
+          <input
+            #etapaTituloInput
+            matInput
+            [(ngModel)]="novaEtapaTitulo"
+            placeholder="Ex: Protocolar manifestacao, audiencia de conciliacao..."
+          />
+        </mat-form-field>
+
+        <div class="stage-drawer-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Tipo</mat-label>
+            <mat-select [(ngModel)]="novoTipoEtapa">
+              <mat-option value="PRAZO">Prazo</mat-option>
+              <mat-option value="AUDIENCIA">Audiencia</mat-option>
+              <mat-option value="EVENTO">Evento</mat-option>
+              <mat-option value="DOCUMENTO">Documento</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Status</mat-label>
+            <mat-select [ngModel]="novoStatusEtapa" (ngModelChange)="aoAlterarStatusEtapaForm($event)">
+              <mat-option value="PENDENTE">Pendente</mat-option>
+              <mat-option value="CONCLUIDO">Concluida</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="stage-drawer-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Data da etapa</mat-label>
+            <mat-icon matPrefix>calendar_month</mat-icon>
+            <input matInput [(ngModel)]="novaEtapaData" type="date" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Local ou referencia</mat-label>
+            <mat-icon matPrefix>place</mat-icon>
+            <input matInput [(ngModel)]="novoLocalEtapa" placeholder="Forum, link da audiencia, numero da diligencia..." />
+          </mat-form-field>
+        </div>
+      </section>
+
+      <section class="stage-drawer-section">
+        <div class="stage-drawer-head">
+          <span class="eyebrow">Operacao</span>
+          <h4 class="font-heading">Notas e prioridade</h4>
+          <p>Registre o ponto de atencao para quem assumir o proximo passo do processo.</p>
+        </div>
+
+        <div class="stage-drawer-flags">
+          <button
+            mat-stroked-button
+            type="button"
+            class="stage-flag-button"
+            [class.active]="novaEtapaUrgente"
+            [disabled]="novoStatusEtapa === 'CONCLUIDO'"
+            (click)="alternarUrgenciaEtapaForm()"
+          >
+            <mat-icon>{{ novaEtapaUrgente ? 'flag' : 'outlined_flag' }}</mat-icon>
+            {{ novaEtapaUrgente ? 'Urgencia manual ativa' : 'Marcar urgencia manual' }}
+          </button>
+
+          <span class="stage-flag-helper" *ngIf="novoStatusEtapa === 'CONCLUIDO'">
+            Etapas concluidas nao mantem urgencia ativa.
+          </span>
+        </div>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Observacao operacional</mat-label>
+          <textarea
+            matInput
+            rows="5"
+            [(ngModel)]="novaObservacaoEtapa"
+            placeholder="Ex: levar documentos originais, confirmar sala virtual, anexar comprovante..."
+          ></textarea>
+        </mat-form-field>
+      </section>
+    </div>
+
+    <div class="drawer-footer">
+      <button mat-button type="button" (click)="cancelarEdicaoEtapa()">Cancelar</button>
+      <button mat-flat-button class="btn-premium" type="button" [disabled]="salvandoEtapa" (click)="salvarEtapa()">
+        <mat-icon>{{ editandoEtapa ? 'save' : 'add_circle' }}</mat-icon>
+        {{ salvandoEtapa ? 'Salvando...' : editandoEtapa ? 'Salvar tarefa' : 'Criar tarefa' }}
+      </button>
+    </div>
+  </aside>
 </div>

@@ -1,0 +1,76 @@
+/* ==========================================================================
+   CONVIDAR MEMBRO DIALOG - JUSTAPRO
+   ========================================================================== */
+.convite-dialog {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-surface);
+  color: var(--text-main);
+  min-width: 420px;
+  max-width: 520px;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.convite-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 24px;
+  border-bottom: var(--glass-border);
+
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-main);
+  }
+
+  span {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .btn-close {
+    color: var(--text-muted);
+  }
+}
+
+.convite-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.erro {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--status-urgent);
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+}
+
+.convite-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: var(--glass-border);
+  background-color: var(--bg-app);
+
+  button {
+    min-width: 120px;
+  }
+}
+
+.text-muted { color: var(--text-muted); }
+.m-0 { margin: 0; }

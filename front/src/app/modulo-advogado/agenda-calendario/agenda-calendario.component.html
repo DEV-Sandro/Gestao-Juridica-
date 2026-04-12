@@ -1,0 +1,129 @@
+<section class="agenda-shell">
+  <header class="agenda-header">
+    <div>
+      <span class="agenda-eyebrow">Agenda juridica</span>
+      <h3 class="font-heading">Calendario premium de compromissos</h3>
+      <p>Visual maior, estados criticos destacados e leitura operacional imediata.</p>
+    </div>
+
+    <div class="agenda-controls">
+      <button mat-stroked-button type="button" (click)="irParaHoje()">Hoje</button>
+
+      <div class="month-switch">
+        <button mat-icon-button type="button" (click)="irParaMesAnterior()" aria-label="Mes anterior">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <strong>{{ monthLabel }}</strong>
+        <button mat-icon-button type="button" (click)="irParaMesSeguinte()" aria-label="Proximo mes">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="agenda-meta">
+    <div class="agenda-kpis">
+      <div class="meta-pill">
+        <span>Total</span>
+        <strong>{{ totalEventosNoMes }}</strong>
+      </div>
+      <div class="meta-pill is-urgent">
+        <span>Urgentes</span>
+        <strong>{{ totalUrgentesNoMes }}</strong>
+      </div>
+      <div class="meta-pill is-overdue">
+        <span>Atrasados</span>
+        <strong>{{ totalAtrasadosNoMes }}</strong>
+      </div>
+    </div>
+
+    <div class="agenda-legend">
+      <span class="legend-pill is-overdue">Atrasado</span>
+      <span class="legend-pill is-urgent">Urgente</span>
+      <span class="legend-pill is-progress">Em andamento</span>
+      <span class="legend-pill is-complete">Concluido</span>
+    </div>
+  </div>
+
+  <div class="agenda-layout">
+    <div class="calendar-card">
+      <div class="weekday-row">
+        <span *ngFor="let label of weekdayLabels">{{ label }}</span>
+      </div>
+
+      <div class="days-grid">
+        <button
+          type="button"
+          class="day-cell"
+          *ngFor="let day of days; trackBy: trackByDay"
+          [class.is-outside]="!day.inCurrentMonth"
+          [class.is-selected]="day.isSelected"
+          [class.is-today]="day.isToday"
+          [class.has-urgent]="day.hasUrgent"
+          [class.has-overdue]="day.hasOverdue"
+          [attr.aria-label]="labelAcessivelDia(day)"
+          (click)="selecionarDia(day)"
+        >
+          <div class="day-head">
+            <span class="day-number">{{ day.date.getDate() }}</span>
+            <span class="event-count" *ngIf="day.events.length">{{ day.events.length }}</span>
+          </div>
+
+          <div class="day-events">
+            <span
+              class="event-chip"
+              *ngFor="let evento of day.events | slice: 0 : 2"
+              [ngClass]="statusClass(evento.status)"
+              (click)="selecionarEvento(evento, $event)"
+            >
+              <mat-icon>{{ evento.icon }}</mat-icon>
+              {{ evento.tipoLabel }}
+            </span>
+
+            <span class="more-events" *ngIf="day.events.length > 2">
+              +{{ day.events.length - 2 }} mais
+            </span>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <aside class="day-panel">
+      <div class="day-panel-header">
+        <span class="day-panel-eyebrow">Dia selecionado</span>
+        <h4 class="font-heading">{{ formatarCabecalhoDia() }}</h4>
+        <small>{{ eventosSelecionados.length }} compromisso<span *ngIf="eventosSelecionados.length !== 1">s</span></small>
+      </div>
+
+      <div class="day-panel-empty" *ngIf="eventosSelecionados.length === 0">
+        <mat-icon>event_busy</mat-icon>
+        <p>Nenhum compromisso cadastrado para este dia.</p>
+      </div>
+
+      <button
+        type="button"
+        class="day-event"
+        *ngFor="let evento of eventosSelecionados"
+        [ngClass]="statusClass(evento.status)"
+        (click)="selecionarEvento(evento)"
+      >
+        <div class="day-event-icon">
+          <mat-icon>{{ evento.icon }}</mat-icon>
+        </div>
+
+        <div class="day-event-content">
+          <div class="day-event-topline">
+            <strong>{{ evento.titulo }}</strong>
+            <span class="event-type">{{ evento.tipoLabel }}</span>
+          </div>
+
+          <span>{{ evento.subtitulo }}</span>
+          <small>{{ evento.detalhe }}</small>
+          <small *ngIf="evento.localCompromisso">{{ evento.localCompromisso }}</small>
+        </div>
+
+        <mat-icon class="event-forward">arrow_outward</mat-icon>
+      </button>
+    </aside>
+  </div>
+</section>

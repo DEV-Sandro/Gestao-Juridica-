@@ -19,6 +19,8 @@ async function authMiddleware(req, res, next) {
     req.user = {
       uid: decoded.uid,
       email: decoded.email || null,
+      displayName: userData.displayName || decoded.name || null,
+      photoURL: userData.photoURL || decoded.picture || null,
       role: userData.role || 'CLIENT'
     };
 

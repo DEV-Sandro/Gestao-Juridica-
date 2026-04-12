@@ -1,0 +1,189 @@
+<section class="clientes-page">
+  <div class="clientes-hero card-glass">
+    <div>
+      <span class="eyebrow">Carteira ativa</span>
+      <h2 class="font-heading">Clientes prontos para operacao e documentos</h2>
+      <p>
+        Cadastre dados essenciais do cliente para reaproveitar em atendimento, processos e
+        geracao de documentos juridicos.
+      </p>
+    </div>
+
+    <button mat-flat-button class="btn-premium" type="button" (click)="novoCliente()">
+      <mat-icon>person_add</mat-icon>
+      Novo cliente
+    </button>
+  </div>
+
+  <div class="clientes-grid">
+    <article class="card-glass clientes-list">
+      <div class="panel-header">
+        <div>
+          <span class="eyebrow">Base cadastrada</span>
+          <h3 class="font-heading">Clientes</h3>
+        </div>
+        <span class="panel-counter">{{ clientesFiltrados.length }} de {{ clientes.length }}</span>
+      </div>
+
+      <mat-form-field appearance="outline" class="saas-search-field">
+        <mat-label>Pesquisar cliente</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [(ngModel)]="buscaCliente" (ngModelChange)="onBuscaClienteChange()" placeholder="Nome, CPF ou e-mail" />
+      </mat-form-field>
+
+      <div class="loading" *ngIf="carregando">
+        <mat-spinner diameter="30"></mat-spinner>
+        <span>Carregando clientes...</span>
+      </div>
+
+      <div class="empty-state" *ngIf="!carregando && clientes.length === 0">
+        <mat-icon>groups</mat-icon>
+        <p>Cadastre o primeiro cliente para habilitar o pre-preenchimento de documentos.</p>
+      </div>
+
+      <div class="empty-state" *ngIf="!carregando && clientes.length > 0 && clientesFiltrados.length === 0">
+        <mat-icon>person_search</mat-icon>
+        <p>Nenhum cliente encontrado para a pesquisa informada.</p>
+      </div>
+
+      <button
+        type="button"
+        class="cliente-card"
+        *ngFor="let cliente of clientesPaginados"
+        [class.active]="cliente.id === clienteSelecionadoId"
+        (click)="selecionarCliente(cliente)"
+      >
+        <div>
+          <strong>{{ cliente.nome }}</strong>
+          <span>{{ cliente.cpf || 'CPF nao informado' }}</span>
+        </div>
+        <small>{{ cliente.email || cliente.telefone || 'Sem contato principal' }}</small>
+      </button>
+
+      <div class="saas-pagination" *ngIf="!carregando && clientesFiltrados.length > 0">
+        <span class="saas-pagination-summary">{{ resumoPaginacao }}</span>
+
+        <div class="saas-pagination-actions">
+          <button mat-stroked-button type="button" (click)="paginaAnterior()" [disabled]="paginaAtual === 1">
+            Anterior
+          </button>
+
+          <span class="saas-pagination-current">Pagina {{ paginaAtual }} de {{ totalPaginas }}</span>
+
+          <button mat-stroked-button type="button" (click)="proximaPagina()" [disabled]="paginaAtual === totalPaginas">
+            Proxima
+          </button>
+        </div>
+      </div>
+    </article>
+
+    <article class="card-glass cliente-editor">
+      <div class="panel-header">
+        <div>
+          <span class="eyebrow">Ficha do cliente</span>
+          <h3 class="font-heading">{{ clienteSelecionadoId ? 'Editar cadastro' : 'Novo cadastro' }}</h3>
+        </div>
+        <span class="editor-state" *ngIf="clienteSelecionadoId">Cadastro ativo</span>
+      </div>
+
+      <p class="editor-helper">
+        Campos sem icone agora mantem o mesmo conforto visual dos campos com prefixo. O cadastro tambem pode ser arquivado sem perder historico juridico.
+      </p>
+
+      <div class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Nome completo</mat-label>
+          <mat-icon matPrefix>badge</mat-icon>
+          <input matInput [(ngModel)]="form.nome" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>CPF</mat-label>
+          <mat-icon matPrefix>fingerprint</mat-icon>
+          <input matInput [(ngModel)]="form.cpf" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>E-mail</mat-label>
+          <mat-icon matPrefix>email</mat-icon>
+          <input matInput [(ngModel)]="form.email" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Telefone</mat-label>
+          <mat-icon matPrefix>phone</mat-icon>
+          <input matInput [(ngModel)]="form.telefone" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Documento auxiliar</mat-label>
+          <mat-icon matPrefix>id_card</mat-icon>
+          <input matInput [(ngModel)]="form.documentoSecundario" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>CEP</mat-label>
+          <mat-icon matPrefix>markunread_mailbox</mat-icon>
+          <input matInput [(ngModel)]="form.cep" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>Endereco</mat-label>
+          <mat-icon matPrefix>home</mat-icon>
+          <input matInput [(ngModel)]="form.endereco" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Numero</mat-label>
+          <input matInput [(ngModel)]="form.numero" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Complemento</mat-label>
+          <input matInput [(ngModel)]="form.complemento" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Bairro</mat-label>
+          <input matInput [(ngModel)]="form.bairro" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Cidade</mat-label>
+          <input matInput [(ngModel)]="form.cidade" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>UF</mat-label>
+          <input matInput [(ngModel)]="form.estado" maxlength="2" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>Observacoes internas</mat-label>
+          <textarea matInput rows="4" [(ngModel)]="form.observacoes"></textarea>
+        </mat-form-field>
+      </div>
+
+      <div class="editor-footer">
+        <button
+          mat-stroked-button
+          type="button"
+          class="danger-action"
+          *ngIf="clienteSelecionadoId"
+          (click)="excluirCliente()"
+          [disabled]="excluindo || salvando"
+        >
+          <mat-spinner *ngIf="excluindo" diameter="18"></mat-spinner>
+          <mat-icon *ngIf="!excluindo">archive</mat-icon>
+          {{ excluindo ? 'Arquivando...' : 'Arquivar cliente' }}
+        </button>
+
+        <button mat-flat-button class="btn-premium" type="button" (click)="salvar()" [disabled]="salvando || excluindo">
+          <mat-spinner *ngIf="salvando" diameter="18"></mat-spinner>
+          <mat-icon *ngIf="!salvando">save</mat-icon>
+          {{ salvando ? 'Salvando...' : 'Salvar cliente' }}
+        </button>
+      </div>
+    </article>
+  </div>
+</section>

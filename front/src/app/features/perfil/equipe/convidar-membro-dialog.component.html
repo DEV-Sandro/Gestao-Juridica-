@@ -1,0 +1,60 @@
+<div class="convite-dialog">
+  <header class="convite-header">
+    <div>
+      <h3 class="font-heading m-0">Convidar membro</h3>
+      <span class="text-muted">Sera gerado um link seguro de ativacao para compartilhar com o membro</span>
+    </div>
+    <button mat-icon-button class="btn-close" (click)="fechar()" [disabled]="enviando">
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <div class="convite-body">
+    <mat-form-field appearance="outline">
+      <mat-label>Nome completo</mat-label>
+      <mat-icon matPrefix>person</mat-icon>
+      <input matInput [(ngModel)]="displayName" placeholder="Dr. Joao Silva" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>E-mail</mat-label>
+      <mat-icon matPrefix>email</mat-icon>
+      <input matInput type="email" [(ngModel)]="email" placeholder="joao@escritorio.com" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Funcao no escritorio</mat-label>
+      <mat-icon matPrefix>shield</mat-icon>
+      <mat-select [(ngModel)]="role">
+        <mat-option value="ADVOGADO">Advogado(a)</mat-option>
+        <mat-option value="ADMIN">Administrador(a)</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Cargo (opcional)</mat-label>
+      <mat-icon matPrefix>work</mat-icon>
+      <input matInput [(ngModel)]="cargo" placeholder="Socio, estagiario..." />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>OAB (opcional)</mat-label>
+      <mat-icon matPrefix>verified</mat-icon>
+      <input matInput [(ngModel)]="oab" placeholder="OAB/SP 000000" />
+    </mat-form-field>
+
+    <div class="erro" *ngIf="erro">
+      <mat-icon>error_outline</mat-icon>
+      {{ erro }}
+    </div>
+  </div>
+
+  <footer class="convite-footer">
+    <button mat-button (click)="fechar()" [disabled]="enviando">Cancelar</button>
+    <button mat-flat-button class="btn-premium" (click)="enviar()" [disabled]="enviando">
+      <mat-icon *ngIf="!enviando" style="margin-right: 4px">send</mat-icon>
+      <mat-spinner *ngIf="enviando" diameter="18" style="margin-right: 8px"></mat-spinner>
+      {{ enviando ? 'Enviando...' : 'Gerar convite' }}
+    </button>
+  </footer>
+</div>

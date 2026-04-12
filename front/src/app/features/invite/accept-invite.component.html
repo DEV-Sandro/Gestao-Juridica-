@@ -1,0 +1,140 @@
+<div class="invite-page fade-in">
+  <section class="invite-card card-glass">
+    <a routerLink="/login" class="btn-back">
+      <mat-icon>arrow_back</mat-icon>
+      Voltar ao login
+    </a>
+
+    <div class="invite-header">
+      <span class="eyebrow">Convite de equipe</span>
+      <h1 class="font-heading">Finalize sua conta no JustaPro</h1>
+      <p>
+        Conclua a criacao da senha e confirme seus dados basicos para entrar no workspace
+        juridico.
+      </p>
+    </div>
+
+    <div class="invite-loading" *ngIf="carregando">
+      <mat-spinner diameter="34"></mat-spinner>
+      <span>Validando convite...</span>
+    </div>
+
+    <ng-container *ngIf="!carregando">
+      <div class="invite-status status-success" *ngIf="summary?.canAccept">
+        <mat-icon>verified_user</mat-icon>
+        <div>
+          <strong>Convite valido</strong>
+          <span>{{ summary?.email }} • expira em {{ summary?.expiresAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+      </div>
+
+      <div class="invite-status status-warning" *ngIf="!token && summary?.status === 'PENDING'">
+        <mat-icon>mail_outline</mat-icon>
+        <div>
+          <strong>Convite identificado para {{ emailPendente }}</strong>
+          <span>Por seguranca, precisamos do link do convite enviado ao e-mail para concluir a conta.</span>
+        </div>
+      </div>
+
+      <div class="invite-status status-error" *ngIf="summary?.status === 'EXPIRED'">
+        <mat-icon>schedule</mat-icon>
+        <div>
+          <strong>Convite expirado</strong>
+          <span>Solicite um novo convite ao administrador do escritorio.</span>
+        </div>
+      </div>
+
+      <div class="invite-status status-error" *ngIf="summary?.status === 'INVALID'">
+        <mat-icon>error_outline</mat-icon>
+        <div>
+          <strong>Convite invalido</strong>
+          <span>Confira o link recebido ou solicite um novo convite.</span>
+        </div>
+      </div>
+
+      <div class="invite-status status-info" *ngIf="summary?.status === 'ACCEPTED'">
+        <mat-icon>task_alt</mat-icon>
+        <div>
+          <strong>Convite ja utilizado</strong>
+          <span>Esta conta ja foi ativada. Entre pelo login normal.</span>
+        </div>
+      </div>
+
+      <div class="paste-box" *ngIf="!token && summary?.status === 'PENDING'">
+        <mat-form-field appearance="outline">
+          <mat-label>Link completo do convite</mat-label>
+          <mat-icon matPrefix>link</mat-icon>
+          <input
+            matInput
+            [(ngModel)]="linkConvite"
+            placeholder="https://.../convite/aceitar?token=..."
+          />
+        </mat-form-field>
+
+        <button mat-flat-button class="btn-premium" type="button" (click)="validarLinkColado()">
+          <mat-icon>key</mat-icon>
+          Validar convite
+        </button>
+      </div>
+
+      <form class="invite-form" *ngIf="summary?.canAccept" (ngSubmit)="aceitarConvite()">
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Nome completo</mat-label>
+            <mat-icon matPrefix>person</mat-icon>
+            <input matInput [(ngModel)]="displayName" name="displayName" required />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Telefone</mat-label>
+            <mat-icon matPrefix>phone</mat-icon>
+            <input matInput [(ngModel)]="telefone" name="telefone" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Cargo</mat-label>
+            <mat-icon matPrefix>work</mat-icon>
+            <input matInput [(ngModel)]="cargo" name="cargo" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>OAB</mat-label>
+            <mat-icon matPrefix>verified</mat-icon>
+            <input matInput [(ngModel)]="oab" name="oab" />
+          </mat-form-field>
+        </div>
+
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Criar senha</mat-label>
+            <mat-icon matPrefix>lock</mat-icon>
+            <input matInput type="password" [(ngModel)]="password" name="password" required />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Confirmar senha</mat-label>
+            <mat-icon matPrefix>lock_reset</mat-icon>
+            <input
+              matInput
+              type="password"
+              [(ngModel)]="confirmPassword"
+              name="confirmPassword"
+              required
+            />
+          </mat-form-field>
+        </div>
+
+        <div class="password-hint">
+          A senha deve ter pelo menos 8 caracteres, com letra maiuscula, minuscula, numero e
+          caractere especial.
+        </div>
+
+        <button mat-flat-button class="btn-premium" type="submit" [disabled]="salvando">
+          <mat-spinner *ngIf="salvando" diameter="18"></mat-spinner>
+          <mat-icon *ngIf="!salvando">check_circle</mat-icon>
+          {{ salvando ? 'Ativando conta...' : 'Concluir cadastro' }}
+        </button>
+      </form>
+    </ng-container>
+  </section>
+</div>

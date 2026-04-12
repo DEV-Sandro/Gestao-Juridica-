@@ -7,75 +7,32 @@ const router = express.Router();
 
 router.use(authMiddleware);
 
-/**
- * @swagger
- * tags:
- *   name: Processos
- *   description: Gestão de processos jurídicos
- */
-
-/**
- * @swagger
- * /api/processos:
- *   get:
- *     summary: Lista processos
- *     tags: [Processos]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Lista retornada com sucesso
- */
 router.get('/', controller.listar);
-
-/**
- * @swagger
- * /api/processos/{id}:
- *   get:
- *     summary: Busca um processo por ID
- *     tags: [Processos]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- */
 router.get('/:id', controller.buscarPorId);
+router.get('/:id/historico', controller.listarHistorico);
+router.get('/:id/etapas', controller.listarEtapas);
 
-/**
- * @swagger
- * /api/processos:
- *   post:
- *     summary: Cria um novo processo
- *     tags: [Processos]
- *     security:
- *       - bearerAuth: []
- */
 router.post('/', roleMiddleware('ADVOGADO', 'ADMIN'), controller.criar);
-
-/**
- * @swagger
- * /api/processos/{id}:
- *   put:
- *     summary: Atualiza um processo
- *     tags: [Processos]
- *     security:
- *       - bearerAuth: []
- */
 router.put('/:id', roleMiddleware('ADVOGADO', 'ADMIN'), controller.atualizar);
-
-/**
- * @swagger
- * /api/processos/{id}:
- *   delete:
- *     summary: Remove um processo logicamente
- *     tags: [Processos]
- *     security:
- *       - bearerAuth: []
- */
+router.put('/:id/orcamento', roleMiddleware('ADVOGADO', 'ADMIN'), controller.atualizarOrcamento);
+router.post(
+  '/:id/orcamento/converter-contrato',
+  roleMiddleware('ADVOGADO', 'ADMIN'),
+  controller.converterOrcamentoEmContrato
+);
+router.post(
+  '/:id/documentos/registrar',
+  roleMiddleware('ADVOGADO', 'ADMIN'),
+  controller.registrarDocumentoGerado
+);
 router.delete('/:id', roleMiddleware('ADVOGADO', 'ADMIN'), controller.deletar);
+
+router.post('/:id/etapas', roleMiddleware('ADVOGADO', 'ADMIN'), controller.criarEtapa);
+router.put(
+  '/:id/etapas/:etapaId',
+  roleMiddleware('ADVOGADO', 'ADMIN'),
+  controller.atualizarEtapa
+);
+router.delete('/:id/etapas/:etapaId', roleMiddleware('ADVOGADO', 'ADMIN'), controller.deletarEtapa);
 
 module.exports = router;

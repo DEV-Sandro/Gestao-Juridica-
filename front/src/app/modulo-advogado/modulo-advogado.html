@@ -1,294 +1,847 @@
-<div class="jp-layout fade-in">
-  <aside class="jp-sidebar">
+﻿<div class="jp-layout fade-in">
+  <aside class="jp-sidebar" aria-label="Menu lateral do workspace">
     <div class="sidebar-brand">
-      <div class="logo"><mat-icon>balance</mat-icon></div>
-      <span class="font-heading">JustaPro</span>
+      <div class="brand-mark">
+        <mat-icon>balance</mat-icon>
+      </div>
+      <div>
+        <strong class="font-heading">JustaPro</strong>
+        <span>Gestao juridica premium</span>
+      </div>
     </div>
 
     <nav class="sidebar-nav">
-      <a class="nav-item active"><mat-icon>dashboard</mat-icon> Dashboard</a>
-      <a class="nav-item"><mat-icon>folder_special</mat-icon> Casos</a>
-      <a class="nav-item"><mat-icon>people</mat-icon> Clientes</a>
-      <a class="nav-item"><mat-icon>event_note</mat-icon> Agenda</a>
+      <a
+        class="nav-item"
+        routerLink="/advogado/dashboard"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        #dashLink="routerLinkActive"
+        [attr.aria-current]="dashLink.isActive ? 'page' : null"
+      >
+        <mat-icon>dashboard</mat-icon>
+        <span>Dashboard</span>
+      </a>
+
+      <a
+        class="nav-item"
+        routerLink="/advogado/processos"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        #processosLink="routerLinkActive"
+        [attr.aria-current]="processosLink.isActive ? 'page' : null"
+      >
+        <mat-icon>folder_special</mat-icon>
+        <span>Processos</span>
+      </a>
+
+      <a
+        class="nav-item"
+        routerLink="/advogado/clientes"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        #clientesLink="routerLinkActive"
+        [attr.aria-current]="clientesLink.isActive ? 'page' : null"
+      >
+        <mat-icon>people</mat-icon>
+        <span>Clientes</span>
+      </a>
+
+      <a
+        class="nav-item"
+        routerLink="/advogado/agenda"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        #agendaLink="routerLinkActive"
+        [attr.aria-current]="agendaLink.isActive ? 'page' : null"
+      >
+        <mat-icon>calendar_month</mat-icon>
+        <span>Agenda</span>
+      </a>
+
+      <a
+        class="nav-item"
+        routerLink="/advogado/documentos"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        #docsLink="routerLinkActive"
+        [attr.aria-current]="docsLink.isActive ? 'page' : null"
+      >
+        <mat-icon>description</mat-icon>
+        <span>Documentos</span>
+      </a>
     </nav>
 
     <div class="sidebar-bottom">
-      <a class="nav-item"><mat-icon>settings</mat-icon> Ajustes</a>
-      <a class="nav-item text-danger" (click)="sair()"><mat-icon>logout</mat-icon> Sair</a>
+      <a class="nav-item" routerLink="/perfil" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <mat-icon>person</mat-icon>
+        <span>Meu perfil</span>
+      </a>
+
+      <a
+        class="nav-item"
+        routerLink="/equipe"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        *ngIf="currentUser?.role === 'ADMIN'"
+      >
+        <mat-icon>groups</mat-icon>
+        <span>Equipe</span>
+      </a>
+
+      <button type="button" class="nav-item text-danger" (click)="sair()">
+        <mat-icon>logout</mat-icon>
+        <span>Sair</span>
+      </button>
     </div>
   </aside>
 
   <main class="jp-main">
-    <div class="jp-toast fade-in" *ngIf="notificacaoAtiva && notificacaoAtual">
+    <div class="jp-toast" *ngIf="notificacaoAtiva && notificacaoAtual">
       <div class="toast-content">
-        <mat-icon [ngClass]="notificacaoAtual.corCss">{{ notificacaoAtual.icone }}</mat-icon>
-        <div class="toast-texts">
-          <span class="toast-title">{{ notificacaoAtual.texto }}</span>
-          <span class="toast-subtitle">{{ notificacaoAtual.cliente }}</span>
+        <div class="toast-icon" [ngClass]="notificacaoAtual.classe">
+          <mat-icon>{{ notificacaoAtual.icone }}</mat-icon>
+        </div>
+        <div>
+          <strong>{{ notificacaoAtual.texto }}</strong>
+          <span>{{ notificacaoAtual.detalhe }}</span>
         </div>
       </div>
+
       <div class="toast-actions">
-        <button mat-flat-button class="btn-premium btn-sm" (click)="abrirNotificacao(notificacaoAtual)">ABRIR</button>
-        <button mat-icon-button class="text-muted" (click)="fecharNotificacao()"><mat-icon>close</mat-icon></button>
+        <button mat-flat-button class="btn-premium btn-sm" type="button" (click)="abrirNotificacao(notificacaoAtual)">
+          Abrir
+        </button>
+        <button mat-icon-button type="button" (click)="fecharNotificacao()">
+          <mat-icon>close</mat-icon>
+        </button>
       </div>
     </div>
 
     <header class="jp-topbar">
-      <h2 class="page-title font-heading">Gestão de Casos</h2>
+      <div class="topbar-copy">
+        <span class="eyebrow">Operacao juridica</span>
+        <h1 class="font-heading">{{ topbarTitulo }}</h1>
+        <p class="topbar-description">{{ topbarDescricao }}</p>
+      </div>
+
       <div class="topbar-actions">
-        <div class="bell-container" #menuTrigger="matMenuTrigger" [matMenuTriggerFor]="notifMenu">
+        <button type="button" class="icon-action" aria-label="Notificacoes" (click)="togglePainelNotificacoes()">
           <mat-icon>notifications</mat-icon>
-          <span class="bell-badge" *ngIf="notificacoesNaoLidas > 0">{{ notificacoesNaoLidas }}</span>
-        </div>
+          <span class="icon-badge" *ngIf="notificacoesNaoLidas > 0">{{ notificacoesNaoLidas }}</span>
+        </button>
 
-        <mat-menu #notifMenu="matMenu" class="custom-menu-panel">
-          <div class="notif-menu-header" (click)="$event.stopPropagation()">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <strong>Notificações</strong>
-              <span class="badge-count" *ngIf="notificacoesNaoLidas > 0">{{ notificacoesNaoLidas }} novas</span>
-            </div>
-            <button mat-icon-button (click)="menuTrigger.closeMenu()" class="text-muted" style="width: 32px; height: 32px; padding: 0;">
-              <mat-icon style="font-size: 18px;">close</mat-icon>
-            </button>
-          </div>
+        <button mat-button class="theme-trigger" [matMenuTriggerFor]="temaMenu" type="button">
+          <mat-icon>palette</mat-icon>
+          {{ temaAtualLabel }}
+        </button>
 
-          <div class="notif-list">
-            <div class="notif-item" *ngFor="let n of notificacoes" [class.is-read]="n.lida" (click)="$event.stopPropagation()">
-              <mat-icon [ngClass]="n.lida ? 'text-muted' : n.corCss">{{ n.icone }}</mat-icon>
-              <div class="n-text">
-                <strong [ngClass]="{'text-muted': n.lida}">{{ n.texto }}</strong>
-                <span>{{ n.cliente }}</span>
-              </div>
-              <button mat-button class="text-info" (click)="abrirNotificacao(n)">ABRIR</button>
-            </div>
-            <div class="notif-empty" *ngIf="notificacoes.length === 0">Tudo sob controle hoje! 🎉</div>
-          </div>
-
-          <div class="notif-menu-actions" *ngIf="notificacoes.length > 0">
-            <button mat-button class="text-muted" (click)="marcarTodasComoLidas()">Marcar como lidas</button>
-            <button mat-button color="warn" (click)="limparNotificacoes()">Limpar painel</button>
-          </div>
-        </mat-menu>
-
-        <button mat-button [matMenuTriggerFor]="temaMenu" class="btn-theme"><mat-icon>palette</mat-icon> Tema Visual</button>
         <mat-menu #temaMenu="matMenu">
-          <button mat-menu-item (click)="mudarTema('light')"><mat-icon>light_mode</mat-icon> Light Mode</button>
-          <button mat-menu-item (click)="mudarTema('corporate')"><mat-icon>business</mat-icon> Corporate Navy</button>
-          <button mat-menu-item (click)="mudarTema('dark')"><mat-icon>dark_mode</mat-icon> Linear Dark</button>
+          <button mat-menu-item type="button" *ngFor="let option of themeOptions" (click)="mudarTema(option.value)">
+            <mat-icon>{{ option.icon }}</mat-icon>
+            {{ option.label }}
+          </button>
         </mat-menu>
 
-        <div class="divider"></div>
+        <button class="user-menu topbar-user" type="button" [matMenuTriggerFor]="perfilMenu">
+          <div class="user-texts">
+            <strong>{{ currentUser?.displayName || 'Usuario' }}</strong>
+            <span>{{ currentUser?.cargo || currentUser?.role || 'Equipe juridica' }}</span>
+          </div>
 
-        <div class="user-menu" [matMenuTriggerFor]="perfilMenu">
-          <div class="user-texts"><span class="name">Dra. Advogada</span><span class="role">Admin</span></div>
-          <div class="avatar"><mat-icon>person</mat-icon></div>
-        </div>
+          <div class="avatar" [class.has-image]="currentUser?.photoURL">
+            <img *ngIf="currentUser?.photoURL; else avatarFallback" [src]="currentUser?.photoURL" alt="Avatar do usuario" />
+            <ng-template #avatarFallback>
+              <span>{{ iniciaisDoNome(currentUser?.displayName || currentUser?.email) }}</span>
+            </ng-template>
+          </div>
+        </button>
 
         <mat-menu #perfilMenu="matMenu">
-          <button mat-menu-item (click)="sair()"><mat-icon color="warn">logout</mat-icon> Sair</button>
+          <button mat-menu-item type="button" routerLink="/perfil">
+            <mat-icon>person</mat-icon>
+            Meu perfil
+          </button>
+
+          <button mat-menu-item type="button" routerLink="/equipe" *ngIf="currentUser?.role === 'ADMIN'">
+            <mat-icon>groups</mat-icon>
+            Gestao da equipe
+          </button>
+
+          <button mat-menu-item type="button" (click)="sair()">
+            <mat-icon>logout</mat-icon>
+            Sair
+          </button>
         </mat-menu>
       </div>
     </header>
 
-    <div class="jp-workspace">
-      <div class="stats-grid">
-        <div class="card-glass stat-card"><div class="stat-header"><span class="stat-title">Ativos</span><div class="stat-icon info"><mat-icon>folder_open</mat-icon></div></div><div class="stat-number">{{ countAtivos }}</div></div>
-        <div class="card-glass stat-card"><div class="stat-header"><span class="stat-title">Honorários</span><div class="stat-icon success"><mat-icon>account_balance_wallet</mat-icon></div></div><div class="stat-number">R$ 0</div></div>
-        <div class="card-glass stat-card"><div class="stat-header"><span class="stat-title">Concluídos</span><div class="stat-icon success"><mat-icon>task_alt</mat-icon></div></div><div class="stat-number">{{ countConcluidos }}</div></div>
-        <div class="card-glass stat-card"><div class="stat-header"><span class="stat-title">Vencendo</span><div class="stat-icon warning"><mat-icon>schedule</mat-icon></div></div><div class="stat-number text-warning">{{ countUrgentes }}</div></div>
-        <div class="card-glass stat-card danger-card"><div class="stat-header"><span class="stat-title text-danger">Atrasados</span><div class="stat-icon danger"><mat-icon>error_outline</mat-icon></div></div><div class="stat-number text-danger">{{ countAtrasados }}</div></div>
-      </div>
+    <section class="workspace-actions">
+      <button mat-flat-button class="btn-premium" type="button" (click)="abrirNovoProcesso()">
+        <mat-icon>add</mat-icon>
+        Novo processo
+      </button>
 
-      <div class="work-area">
-        <div class="card-glass jp-table-area">
-          <div class="table-toolbar">
-            <h3 class="font-heading m-0">Casos Recentes</h3>
+      <button mat-stroked-button type="button" class="secondary-action" (click)="abrirNovoCliente()">
+        <mat-icon>person_add</mat-icon>
+        Novo cliente
+      </button>
 
-            <div class="toolbar-actions">
-              <div class="filter-pills">
-                <button class="pill" [class.active]="filtroAtual === 'Todos'" (click)="aplicarFiltro('Todos')">Ativos</button>
-                <button class="pill text-danger" [class.active]="filtroAtual === 'Urgente'" (click)="aplicarFiltro('Urgente')">Urgentes</button>
-                <button class="pill text-warning" [class.active]="filtroAtual === 'Atrasado'" (click)="aplicarFiltro('Atrasado')">Atrasados</button>
-                <button class="pill text-info" [class.active]="filtroAtual === 'Em Andamento'" (click)="aplicarFiltro('Em Andamento')">Andamento</button>
-              </div>
+      <button mat-stroked-button type="button" class="secondary-action" (click)="abrirCentralDocumentos()">
+        <mat-icon>description</mat-icon>
+        Documentos
+      </button>
+    </section>
 
-              <button mat-stroked-button class="btn-filter" [class.active]="mostrarFiltroAvancado" (click)="toggleFiltroAvancado()">
-                <mat-icon>tune</mat-icon>
-                {{ mostrarFiltroAvancado ? 'Fechar Filtros' : 'Filtros' }}
-                <span *ngIf="temFiltrosAtivos" style="margin-left: 6px; font-weight: 700;">({{ filtrosAtivosCount }})</span>
-              </button>
+    <nav class="mobile-quick-nav" aria-label="Navegacao principal">
+      <a class="quick-link" routerLink="/advogado/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <mat-icon>dashboard</mat-icon>
+        <span>Dashboard</span>
+      </a>
+      <a class="quick-link" routerLink="/advogado/processos" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <mat-icon>folder_special</mat-icon>
+        <span>Processos</span>
+      </a>
+      <a class="quick-link" routerLink="/advogado/clientes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <mat-icon>people</mat-icon>
+        <span>Clientes</span>
+      </a>
+      <a class="quick-link" routerLink="/advogado/agenda" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <mat-icon>calendar_month</mat-icon>
+        <span>Agenda</span>
+      </a>
+      <a class="quick-link" routerLink="/advogado/documentos" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <mat-icon>description</mat-icon>
+        <span>Docs</span>
+      </a>
+    </nav>
 
-              <button mat-flat-button class="btn-premium" (click)="abrirNovoProcesso()">
-                <mat-icon style="margin-right:4px;">add</mat-icon>
-                Novo Processo
-              </button>
+    <section class="jp-workspace" *ngIf="activeSidebarSection === 'dashboard'">
+      <section class="summary-banner card-glass" *ngIf="resumoDiario.visivel">
+        <div class="summary-copy">
+          <span class="eyebrow">Resumo automatico do dia</span>
+          <h2 class="font-heading">{{ resumoDiario.texto }}</h2>
+          <p>Os atalhos abaixo levam direto para a fila mais critica.</p>
+        </div>
+
+        <div class="summary-actions">
+          <button mat-stroked-button type="button" *ngIf="resumoDiario.atrasados > 0" (click)="irParaProcessosAtrasados()">
+            <mat-icon>error</mat-icon>
+            {{ resumoDiario.atrasados }} atrasados
+          </button>
+
+          <button mat-stroked-button type="button" *ngIf="resumoDiario.urgentes > 0" (click)="irParaProcessosUrgentes()">
+            <mat-icon>priority_high</mat-icon>
+            {{ resumoDiario.urgentes }} urgentes
+          </button>
+
+          <button mat-stroked-button type="button" *ngIf="resumoDiario.hoje > 0" (click)="irParaVencimentosDeHoje()">
+            <mat-icon>today</mat-icon>
+            {{ resumoDiario.hoje }} vencem hoje
+          </button>
+
+          <button mat-flat-button class="btn-premium" type="button" (click)="fecharResumoDiario()">
+            Entendi
+          </button>
+        </div>
+      </section>
+
+      <section class="stats-grid">
+        <article class="card-glass stat-card" *ngFor="let kpi of kpis">
+          <div class="stat-topline">
+            <span>{{ kpi.titulo }}</span>
+            <div class="stat-icon" [ngClass]="kpi.classe">
+              <mat-icon>{{ kpi.icone }}</mat-icon>
             </div>
           </div>
 
-          <div class="advanced-box fade-in" *ngIf="mostrarFiltroAvancado">
-            <div class="filter-inputs-grid">
-              <mat-form-field appearance="outline">
-                <mat-label>Nome do Cliente</mat-label>
-                <mat-icon matPrefix>search</mat-icon>
-                <input matInput [(ngModel)]="filtroNomeCliente" (ngModelChange)="scheduleFiltro()">
-              </mat-form-field>
+          <strong>{{ kpi.valor }}</strong>
+          <small>{{ kpi.apoio }}</small>
+        </article>
+      </section>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Tipo da Ação</mat-label>
-                <mat-icon matPrefix>gavel</mat-icon>
-                <input matInput [(ngModel)]="filtroTipoAcao" (ngModelChange)="scheduleFiltro()">
-              </mat-form-field>
+      <section class="overview-grid dashboard-grid">
+        <article class="card-glass overview-card priorities-card">
+          <div class="panel-header">
+            <div>
+              <span class="eyebrow">Fila critica</span>
+              <h3 class="font-heading">Processos prioritarios</h3>
+            </div>
+            <span class="panel-counter">{{ processosPrioritarios.length }} em foco</span>
+          </div>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Status</mat-label>
-                <mat-select [(ngModel)]="filtroStatusAvancado" (selectionChange)="scheduleFiltro()">
-                  <mat-option value="Todos">Todos os Status</mat-option>
-                  <mat-option value="Aguardando Análise">Aguardando Análise</mat-option>
-                  <mat-option value="Em Andamento">Em Andamento</mat-option>
-                  <mat-option value="Urgente">Urgente</mat-option>
-                  <mat-option value="Atrasado">Atrasado</mat-option>
-                  <mat-option value="Concluído">Concluído</mat-option>
-                </mat-select>
-              </mat-form-field>
+          <div class="priority-empty" *ngIf="processosPrioritarios.length === 0">
+            <mat-icon>verified</mat-icon>
+            <p>Nenhum processo critico na fila principal neste momento.</p>
+          </div>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Data Inicial</mat-label>
-                <input matInput [matDatepicker]="pickerIni" [(ngModel)]="filtroDataInicial" (dateChange)="scheduleFiltro()">
-                <mat-datepicker-toggle matIconSuffix [for]="pickerIni"></mat-datepicker-toggle>
-                <mat-datepicker #pickerIni startView="multi-year">
-                  <input matInput
-       [matDatepicker]="pickerIni"
-       [(ngModel)]="filtroDataInicial"
-       (dateChange)="scheduleFiltro()"
-       (focus)="pickerIni.open()">
-                </mat-datepicker>
-              </mat-form-field>
+          <button
+            type="button"
+            class="priority-item"
+            *ngFor="let proc of processosPrioritarios; trackBy: trackByProcesso"
+            (click)="abrirCaso(proc.id)"
+          >
+            <div class="priority-head">
+              <span class="status-badge" [ngClass]="statusBadgeClass(proc.statusDinamico)">
+                <mat-icon>{{ statusIcon(proc.statusDinamico) }}</mat-icon>
+                {{ proc.statusDinamico }}
+              </span>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Data Final</mat-label>
-                <input matInput [matDatepicker]="pickerFim" [(ngModel)]="filtroDataFinal" (dateChange)="scheduleFiltro()">
-                <mat-datepicker-toggle matIconSuffix [for]="pickerFim"></mat-datepicker-toggle>
-                <mat-datepicker #pickerFim startView="multi-year"></mat-datepicker>
-              </mat-form-field>
+              <span class="commitment-pill">
+                <mat-icon>{{ compromissoIcon(proc.categoriaCompromisso) }}</mat-icon>
+                {{ proc.categoriaCompromissoLabel }}
+              </span>
             </div>
 
-            <div class="filter-footer-actions" style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
-              <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                <span style="font-weight:600;">{{ totalResultados }} resultado<span *ngIf="totalResultados !== 1">s</span> encontrado<span *ngIf="totalResultados !== 1">s</span></span>
-                <span *ngIf="temFiltrosAtivos" style="padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; border: 1px solid rgba(255,255,255,.12);">
-                  Filtros ativos: {{ filtrosAtivosCount }}
+            <strong>{{ proc.tipo }}</strong>
+            <span>{{ proc.cliente }}</span>
+            <small>{{ formatarResumoPrazo(proc) }}</small>
+
+            <div class="priority-actions">
+              <button
+                mat-stroked-button
+                type="button"
+                class="priority-toggle"
+                [disabled]="!podeAlternarUrgencia(proc) || processoEmAcaoId === proc.id"
+                (click)="alternarUrgencia(proc, $event)"
+              >
+                <mat-icon>{{ proc.urgenteManual ? 'flag' : 'outlined_flag' }}</mat-icon>
+                {{ proc.urgenteManual ? 'Urgente manual' : 'Marcar urgente' }}
+              </button>
+
+              <mat-icon class="priority-arrow">arrow_outward</mat-icon>
+            </div>
+          </button>
+        </article>
+
+        <article class="card-glass overview-card commitments-card">
+          <div class="panel-header">
+            <div>
+              <span class="eyebrow">Proximos compromissos</span>
+              <h3 class="font-heading">Linha do tempo imediata</h3>
+            </div>
+            <button mat-button type="button" routerLink="/advogado/agenda">Abrir agenda</button>
+          </div>
+
+          <div class="priority-empty" *ngIf="proximosCompromissos.length === 0">
+            <mat-icon>event_available</mat-icon>
+            <p>Nenhum compromisso futuro pendente na agenda.</p>
+          </div>
+
+          <div class="commitment-grid" *ngIf="proximosCompromissos.length > 0">
+            <button
+              type="button"
+              class="commitment-card"
+              *ngFor="let evento of proximosCompromissos"
+              (click)="abrirEventoAgenda(evento)"
+            >
+              <div class="commitment-card-top">
+                <span class="commitment-pill">
+                  <mat-icon>{{ compromissoIcon(evento.tipo) }}</mat-icon>
+                  {{ evento.tipoLabel }}
+                </span>
+
+                <span class="status-badge" [ngClass]="statusBadgeClass(evento.status)">
+                  <mat-icon>{{ evento.icon }}</mat-icon>
+                  {{ evento.statusLabel }}
                 </span>
               </div>
 
-              <div style="display:flex; gap:8px; align-items:center;">
-                <button *ngIf="temFiltrosAtivos" mat-button color="warn" (click)="limparFiltrosAvancados()">Limpar filtros</button>
+              <div class="commitment-card-copy">
+                <strong>{{ evento.titulo }}</strong>
+                <span>{{ evento.subtitulo }}</span>
               </div>
-            </div>
+
+              <div class="commitment-card-footer">
+                <div class="commitment-date">
+                  <mat-icon>calendar_month</mat-icon>
+                  <span>{{ evento.data | date: 'dd/MM/yyyy' }}</span>
+                </div>
+
+                <div class="commitment-location" *ngIf="evento.localCompromisso">
+                  <mat-icon>place</mat-icon>
+                  <span>{{ evento.localCompromisso }}</span>
+                </div>
+              </div>
+            </button>
+          </div>
+        </article>
+      </section>
+    </section>
+
+    <section class="jp-workspace" *ngIf="activeSidebarSection === 'agenda'">
+      <section class="card-glass agenda-dedicated-card">
+        <app-agenda-calendario [eventos]="agendaEventos" (abrirEvento)="abrirEventoAgenda($event)"></app-agenda-calendario>
+      </section>
+    </section>
+
+    <section class="jp-workspace" *ngIf="activeSidebarSection === 'clientes'">
+      <app-clientes-workspace></app-clientes-workspace>
+    </section>
+
+    <section class="jp-workspace" *ngIf="activeSidebarSection === 'documentos'">
+      <app-documentos-workspace></app-documentos-workspace>
+    </section>
+
+    <section class="jp-workspace" *ngIf="activeSidebarSection === 'processos'">
+      <section class="card-glass table-card" id="section-processos">
+        <div class="table-toolbar">
+          <div class="table-toolbar-copy">
+            <span class="eyebrow">Operacao diaria</span>
+            <h3 class="font-heading">Lista de processos</h3>
+            <p>Centralize a busca, a leitura da fila e as acoes do caso em um unico ponto de trabalho.</p>
           </div>
 
-          <div class="empty-state" *ngIf="listaDeProcessosFiltrada.length === 0">
-            <mat-icon>inventory_2</mat-icon>
-            <p *ngIf="temFiltrosAtivos">Nenhum processo encontrado com esses filtros.</p>
-            <p *ngIf="!temFiltrosAtivos">Nenhum caso encontrado na base.</p>
-            <button *ngIf="temFiltrosAtivos" mat-stroked-button color="warn" (click)="limparFiltrosAvancados()">Limpar filtros</button>
-          </div>
+          <div class="toolbar-actions">
+            <mat-form-field appearance="outline" class="saas-search-field process-search-field">
+              <mat-label>Pesquisar cliente</mat-label>
+              <mat-icon matPrefix>search</mat-icon>
+              <input matInput [(ngModel)]="filtroNomeCliente" (ngModelChange)="scheduleFiltro()" placeholder="Nome do cliente" />
+            </mat-form-field>
 
-          <div class="table-scroll" *ngIf="listaDeProcessosFiltrada.length > 0">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:12px; flex-wrap:wrap;">
-              <div style="font-size:13px; opacity:.85;">
-                {{ totalResultados }} resultado<span *ngIf="totalResultados !== 1">s</span> encontrado<span *ngIf="totalResultados !== 1">s</span>
-              </div>
-              <div *ngIf="temFiltrosAtivos" style="font-size:12px; font-weight:700; opacity:.8;">
-                filtros ativos: {{ filtrosAtivosCount }}
-              </div>
+            <div class="filter-pills">
+              <button type="button" class="pill" [class.active]="filtroAtual === 'Todos'" (click)="aplicarFiltro('Todos')">
+                Todos
+              </button>
+              <button type="button" class="pill" [class.active]="filtroAtual === 'Aguardando Análise'" (click)="aplicarFiltro('Aguardando Análise')">
+                Analise
+              </button>
+              <button type="button" class="pill" [class.active]="filtroAtual === 'Em Andamento'" (click)="aplicarFiltro('Em Andamento')">
+                Em andamento
+              </button>
+              <button type="button" class="pill" [class.active]="filtroAtual === 'Urgente'" (click)="aplicarFiltro('Urgente')">
+                Urgentes
+              </button>
+              <button type="button" class="pill" [class.active]="filtroAtual === 'Atrasado'" (click)="aplicarFiltro('Atrasado')">
+                Atrasados
+              </button>
             </div>
 
-            <table class="saas-table">
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Tipo de Ação</th>
-                  <th>Status</th>
-                  <th>Prazo</th>
-                  <th class="align-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let proc of listaDeProcessosFiltrada">
-                  <td class="fw-600">{{ proc.cliente }}</td>
-                  <td class="text-muted">{{ proc.tipo }}</td>
-                  <td>
-                    <span class="status-pill" [ngClass]="'pill-' + (proc.statusDinamico | lowercase | slice:0:3)">
-                      <mat-icon>
-                        {{ proc.statusDinamico === 'Concluído' ? 'check_circle' : proc.statusDinamico === 'Atrasado' ? 'error' : proc.statusDinamico === 'Urgente' ? 'notification_important' : 'schedule' }}
-                      </mat-icon>
-                      {{ proc.statusDinamico }}
-                    </span>
-                  </td>
-                  <td class="text-muted">
-                    <span class="text-danger fw-600" *ngIf="proc.statusDinamico === 'Atrasado'">Venceu </span>
-                    <span class="text-warning fw-600" *ngIf="proc.statusDinamico === 'Urgente'">Vence </span>
-                    {{ (proc.prazo | date:'dd/MM/yyyy') || '--' }}
-                  </td>
-                  <td class="align-right">
-                    <button mat-icon-button class="text-muted" (click)="abrirCaso(proc.id)"><mat-icon>visibility</mat-icon></button>
-                    <button mat-icon-button class="text-info" (click)="prepararEdicao(proc)"><mat-icon>edit</mat-icon></button>
-                    <button mat-icon-button class="text-danger" (click)="deletar(proc.id)"><mat-icon>delete_outline</mat-icon></button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <button mat-stroked-button type="button" class="filter-toggle" [class.active]="mostrarFiltroAvancado" (click)="toggleFiltroAvancado()">
+              <mat-icon>tune</mat-icon>
+              {{ mostrarFiltroAvancado ? 'Fechar filtros' : 'Abrir filtros' }}
+              <span *ngIf="temFiltrosAtivos">({{ filtrosAtivosCount }})</span>
+            </button>
           </div>
         </div>
-      </div>
-    </div>
+
+        <div class="advanced-box" *ngIf="mostrarFiltroAvancado">
+          <div class="filter-inputs-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Tipo de acao</mat-label>
+              <mat-icon matPrefix>gavel</mat-icon>
+              <input matInput [(ngModel)]="filtroTipoAcao" (ngModelChange)="scheduleFiltro()" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Status</mat-label>
+              <mat-select [(ngModel)]="filtroStatusAvancado" (selectionChange)="scheduleFiltro()">
+                <mat-option value="Todos">Todos os status</mat-option>
+                <mat-option value="Aguardando Análise">Aguardando analise</mat-option>
+                <mat-option value="Em Andamento">Em andamento</mat-option>
+                <mat-option value="Urgente">Urgente</mat-option>
+                <mat-option value="Atrasado">Atrasado</mat-option>
+                <mat-option value="Concluído">Concluido</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Compromisso</mat-label>
+              <mat-select [(ngModel)]="filtroCategoriaCompromisso" (selectionChange)="scheduleFiltro()">
+                <mat-option value="Todos">Todos</mat-option>
+                <mat-option value="PRAZO">Prazo</mat-option>
+                <mat-option value="AUDIENCIA">Audiencia</mat-option>
+                <mat-option value="EVENTO">Evento</mat-option>
+                <mat-option value="DOCUMENTO">Documento</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Data inicial</mat-label>
+              <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="filtroDataInicial" (dateChange)="scheduleFiltro()" />
+              <mat-datepicker-toggle matIconSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+              <mat-datepicker #pickerInicio></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Data final</mat-label>
+              <input matInput [matDatepicker]="pickerFim" [(ngModel)]="filtroDataFinal" (dateChange)="scheduleFiltro()" />
+              <mat-datepicker-toggle matIconSuffix [for]="pickerFim"></mat-datepicker-toggle>
+              <mat-datepicker #pickerFim></mat-datepicker>
+            </mat-form-field>
+          </div>
+
+          <div class="filter-footer">
+            <span>{{ totalResultados }} resultado<span *ngIf="totalResultados !== 1">s</span> encontrado<span *ngIf="totalResultados !== 1">s</span></span>
+            <button mat-button type="button" *ngIf="temFiltrosAtivos" (click)="limparFiltrosAvancados()">
+              Limpar filtros
+            </button>
+          </div>
+        </div>
+
+        <div class="empty-state" *ngIf="listaDeProcessosFiltrada.length === 0">
+          <mat-icon>inventory_2</mat-icon>
+          <p *ngIf="temFiltrosAtivos">Nenhum processo encontrado com os filtros atuais.</p>
+          <p *ngIf="!temFiltrosAtivos">Nenhum processo disponivel na base neste momento.</p>
+        </div>
+
+        <div class="table-scroll" *ngIf="listaDeProcessosFiltrada.length > 0">
+          <table class="saas-table">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Processo</th>
+                <th>Compromisso</th>
+                <th>Status</th>
+                <th>Prazo</th>
+                <th class="align-right">Acoes</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr *ngFor="let proc of processosPaginados; trackBy: trackByProcesso">
+                <td>
+                  <div class="table-primary">{{ proc.cliente }}</div>
+                  <div class="table-secondary" *ngIf="proc.localCompromisso">{{ proc.localCompromisso }}</div>
+                </td>
+
+                <td>
+                  <div class="table-primary">{{ proc.tipo }}</div>
+                  <div class="table-secondary">{{ proc.descricao || 'Sem observacoes adicionais.' }}</div>
+                </td>
+
+                <td>
+                  <span class="commitment-pill">
+                    <mat-icon>{{ compromissoIcon(proc.categoriaCompromisso) }}</mat-icon>
+                    {{ proc.categoriaCompromissoLabel }}
+                  </span>
+                </td>
+
+                <td>
+                  <span class="status-badge" [ngClass]="statusBadgeClass(proc.statusDinamico)">
+                    <mat-icon>{{ statusIcon(proc.statusDinamico) }}</mat-icon>
+                    {{ proc.statusDinamico }}
+                  </span>
+                </td>
+
+                <td>
+                  <div class="table-primary">{{ proc.prazo ? (proc.prazo | date: 'dd/MM/yyyy') : '--' }}</div>
+                  <div class="table-secondary" [ngClass]="statusTextClass(proc.statusDinamico)">
+                    {{ formatarResumoPrazo(proc) }}
+                  </div>
+                </td>
+
+                <td class="align-right">
+                  <div class="row-actions">
+                    <button
+                      mat-icon-button
+                      type="button"
+                      class="icon-btn"
+                      [disabled]="!podeAlternarUrgencia(proc) || processoEmAcaoId === proc.id"
+                      (click)="alternarUrgencia(proc, $event)"
+                    >
+                      <mat-icon>{{ proc.urgenteManual ? 'flag' : 'outlined_flag' }}</mat-icon>
+                    </button>
+
+                    <button mat-icon-button type="button" class="icon-btn" (click)="prepararEdicao(proc)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+
+                    <button mat-icon-button type="button" class="icon-btn" (click)="abrirCaso(proc.id)">
+                      <mat-icon>visibility</mat-icon>
+                    </button>
+
+                    <button mat-icon-button type="button" class="icon-btn danger" (click)="deletar(proc.id)">
+                      <mat-icon>delete_outline</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="saas-pagination" *ngIf="listaDeProcessosFiltrada.length > 0">
+          <span class="saas-pagination-summary">{{ resumoPaginacaoProcessos }}</span>
+
+          <div class="saas-pagination-actions">
+            <button mat-stroked-button type="button" (click)="paginaAnteriorProcessos()" [disabled]="paginaAtualProcessos === 1">
+              Anterior
+            </button>
+
+            <span class="saas-pagination-current">Pagina {{ paginaAtualProcessos }} de {{ totalPaginasProcessos }}</span>
+
+            <button mat-stroked-button type="button" (click)="proximaPaginaProcessos()" [disabled]="paginaAtualProcessos === totalPaginasProcessos">
+              Proxima
+            </button>
+          </div>
+        </div>
+      </section>
+    </section>
   </main>
 
-  <div class="overlay fade-in" *ngIf="mostrarFormulario" (click)="fecharFormulario()"></div>
+  <div class="overlay overlay-soft" [class.open]="painelNotificacoesAberto" (click)="fecharPainelNotificacoes()"></div>
 
-  <div class="jp-drawer card-glass" [class.open]="mostrarFormulario">
+  <aside class="notif-panel card-glass" [class.open]="painelNotificacoesAberto" [attr.aria-hidden]="!painelNotificacoesAberto">
+    <div class="notif-panel-header">
+      <div>
+        <span class="eyebrow">Central de alertas</span>
+        <h3 class="font-heading">Notificacoes</h3>
+        <p *ngIf="notificacoesNaoLidas > 0">{{ notificacoesNaoLidas }} item(ns) exigem leitura.</p>
+        <p *ngIf="notificacoesNaoLidas === 0">Tudo sob controle neste momento.</p>
+      </div>
+
+      <button mat-icon-button type="button" (click)="fecharPainelNotificacoes()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="notif-panel-actions">
+      <button
+        mat-stroked-button
+        type="button"
+        class="secondary-action"
+        *ngIf="notificacoesNaoLidas > 0"
+        (click)="marcarTodasComoLidas()"
+      >
+        <mat-icon>drafts</mat-icon>
+        Marcar todas como lidas
+      </button>
+    </div>
+
+    <div class="notif-panel-empty" *ngIf="notificacoesAgrupadas.length === 0">
+      <mat-icon>task_alt</mat-icon>
+      <p>Nenhuma notificacao critica aberta.</p>
+    </div>
+
+    <div class="notif-panel-scroll" *ngIf="notificacoesAgrupadas.length > 0">
+      <section class="notif-group" *ngFor="let grupo of notificacoesAgrupadas">
+        <div class="notif-group-header">
+          <span class="notif-group-title">{{ grupo.titulo }}</span>
+          <span class="notif-group-count">{{ grupo.itens.length }}</span>
+        </div>
+
+        <button
+          type="button"
+          class="notif-card"
+          *ngFor="let notificacao of grupo.itens; trackBy: trackByNotificacao"
+          [class.is-read]="notificacao.lida"
+          (click)="abrirNotificacao(notificacao)"
+        >
+          <div class="notif-card-icon" [ngClass]="notificacao.classe">
+            <mat-icon>{{ notificacao.icone }}</mat-icon>
+          </div>
+
+          <div class="notif-card-copy">
+            <div class="notif-card-head">
+              <strong>{{ notificacao.texto }}</strong>
+              <span class="notif-unread-dot" *ngIf="!notificacao.lida"></span>
+            </div>
+            <span>{{ notificacao.detalhe }}</span>
+            <small>{{ tempoRelativo(notificacao.timestamp) }}</small>
+          </div>
+        </button>
+      </section>
+    </div>
+  </aside>
+
+  <div class="overlay" [class.open]="mostrarFormulario" (click)="fecharFormulario()"></div>
+
+  <aside class="jp-drawer process-drawer card-glass" [class.open]="mostrarFormulario" [attr.aria-hidden]="!mostrarFormulario">
     <div class="drawer-header">
-      <h3 class="font-heading m-0">{{ idEmEdicao ? 'Editar Processo' : 'Novo Processo' }}</h3>
-      <button mat-icon-button (click)="fecharFormulario()"><mat-icon>close</mat-icon></button>
+      <div>
+        <span class="eyebrow">{{ idEmEdicao ? 'Editar processo' : 'Novo processo' }}</span>
+        <h3 class="font-heading">{{ idEmEdicao ? 'Atualize o caso selecionado' : 'Cadastrar novo caso' }}</h3>
+        <p class="drawer-intro">Organize cliente, contexto juridico e compromisso principal em um painel lateral mais claro e confortavel.</p>
+      </div>
+
+      <button mat-icon-button type="button" (click)="fecharFormulario()">
+        <mat-icon>close</mat-icon>
+      </button>
     </div>
 
     <div class="drawer-body">
-      <mat-form-field appearance="outline">
-        <mat-label>Nome do Cliente</mat-label>
-        <input matInput [(ngModel)]="novoCliente">
-      </mat-form-field>
+      <section class="drawer-section">
+        <div class="drawer-section-head">
+          <span class="eyebrow">Secao 1</span>
+          <h4 class="font-heading">Dados do cliente</h4>
+          <p>Se o cliente ja existir, vinculamos. Se nao existir, o cadastro e criado automaticamente.</p>
+        </div>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Tipo da Ação</mat-label>
-        <input matInput [(ngModel)]="novoTipo">
-      </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Localizar cliente</mat-label>
+          <mat-icon matPrefix>search</mat-icon>
+          <input matInput [(ngModel)]="buscaCliente" placeholder="Nome, CPF, CNPJ ou e-mail" />
+        </mat-form-field>
+        <div class="client-search-panel" *ngIf="!clienteSelecionadoId">
+          <div class="client-search-helper" *ngIf="!buscaCliente.trim()">
+            Digite nome, CPF/CNPJ ou e-mail para localizar um cadastro existente antes de seguir com o preenchimento manual.
+          </div>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Status do Processo</mat-label>
-        <mat-select [(ngModel)]="novoStatus">
-          <mat-option value="Aguardando Análise">Aguardando Análise</mat-option>
-          <mat-option value="Em Andamento">Em Andamento</mat-option>
-          <mat-option value="Urgente" class="text-danger fw-600">Urgente</mat-option>
-          <mat-option value="Concluído">Concluído</mat-option>
-        </mat-select>
-      </mat-form-field>
+          <div class="client-search-loading" *ngIf="carregandoClientes">Buscando base de clientes...</div>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Prazo Limite / Audiência</mat-label>
-        <input matInput [matDatepicker]="pickerDrawer" [(ngModel)]="novoPrazo">
-        <mat-datepicker-toggle matIconSuffix [for]="pickerDrawer"></mat-datepicker-toggle>
-        <mat-datepicker #pickerDrawer startView="multi-year"></mat-datepicker>
-      </mat-form-field>
+          <div class="client-search-results" *ngIf="clientesBuscaDrawer.length > 0">
+            <button
+              type="button"
+              class="client-search-option"
+              *ngFor="let cliente of clientesBuscaDrawer"
+              (click)="selecionarClienteExistente(cliente.id)"
+            >
+              <div class="client-search-copy">
+                <strong>{{ cliente.nome }}</strong>
+                <span>{{ cliente.cpf || cliente.documentoSecundario || 'Documento nao informado' }}</span>
+              </div>
+              <small>{{ cliente.email || cliente.telefone || 'Sem contato principal' }}</small>
+            </button>
+          </div>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Observações</mat-label>
-        <textarea matInput [(ngModel)]="novaObservacao" rows="4"></textarea>
-      </mat-form-field>
+          <div class="client-search-empty" *ngIf="mostrarBuscaClienteVazia">
+            <strong>Nenhum cliente encontrado.</strong>
+            <span>Podemos seguir com o cadastro manual usando os campos abaixo.</span>
+            <button mat-button type="button" (click)="continuarCadastroManualCliente()">
+              Continuar cadastro manual
+            </button>
+          </div>
+        </div>
+
+        <div class="linked-client" *ngIf="clienteSelecionadoId">
+          <div>
+            <strong>Cliente vinculado</strong>
+            <span>Os ajustes abaixo atualizam o cadastro e o relacionamento com este processo.</span>
+          </div>
+
+          <button mat-button type="button" (click)="desvincularClienteSelecionado()">Usar outro cliente</button>
+        </div>
+
+        <div class="drawer-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Nome do cliente</mat-label>
+            <input matInput [(ngModel)]="clienteForm.nome" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>CPF ou CNPJ</mat-label>
+            <input matInput [(ngModel)]="clienteForm.cpfCnpj" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Telefone</mat-label>
+            <input matInput [(ngModel)]="clienteForm.telefone" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>E-mail</mat-label>
+            <input matInput [(ngModel)]="clienteForm.email" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="drawer-span-2">
+            <mat-label>Endereco</mat-label>
+            <input matInput [(ngModel)]="clienteForm.endereco" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Numero</mat-label>
+            <input matInput [(ngModel)]="clienteForm.numero" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Complemento</mat-label>
+            <input matInput [(ngModel)]="clienteForm.complemento" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Bairro</mat-label>
+            <input matInput [(ngModel)]="clienteForm.bairro" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Cidade</mat-label>
+            <input matInput [(ngModel)]="clienteForm.cidade" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>UF</mat-label>
+            <input matInput [(ngModel)]="clienteForm.estado" maxlength="2" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>CEP</mat-label>
+            <input matInput [(ngModel)]="clienteForm.cep" />
+          </mat-form-field>
+        </div>
+      </section>
+
+      <section class="drawer-section">
+        <div class="drawer-section-head">
+          <span class="eyebrow">Secao 2</span>
+          <h4 class="font-heading">Dados do processo</h4>
+          <p>Organize o fluxo com tipo, compromisso, prioridade e contexto interno do caso.</p>
+        </div>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Processo ou assunto</mat-label>
+            <input matInput [(ngModel)]="novoTipo" />
+          </mat-form-field>
+
+        <div class="drawer-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Status base</mat-label>
+            <mat-select [(ngModel)]="novoStatus">
+              <mat-option value="Aguardando Análise">Aguardando analise</mat-option>
+              <mat-option value="Em Andamento">Em andamento</mat-option>
+              <mat-option value="Concluído">Concluido</mat-option>
+              <mat-option value="Cancelado">Cancelado</mat-option>
+              <mat-option value="Indeferido">Indeferido</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Tipo de compromisso</mat-label>
+            <mat-select [(ngModel)]="novaCategoriaCompromisso">
+              <mat-option value="PRAZO">Prazo</mat-option>
+              <mat-option value="AUDIENCIA">Audiencia</mat-option>
+              <mat-option value="EVENTO">Evento</mat-option>
+              <mat-option value="DOCUMENTO">Documento</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="drawer-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Data do compromisso</mat-label>
+            <input matInput [matDatepicker]="pickerDrawer" [(ngModel)]="novoPrazo" />
+            <mat-datepicker-toggle matIconSuffix [for]="pickerDrawer"></mat-datepicker-toggle>
+            <mat-datepicker #pickerDrawer></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Local ou referencia</mat-label>
+            <input matInput [(ngModel)]="novoLocalCompromisso" placeholder="Forum central, videoconferencia, cliente..." />
+          </mat-form-field>
+        </div>
+
+        <label class="urgent-toggle">
+          <mat-checkbox [(ngModel)]="urgenteManualForm" [disabled]="novoStatus === 'Concluído'">
+            Prioridade manual
+          </mat-checkbox>
+          <span>Quando ativada, o caso permanece urgente ate voce remover essa marcacao.</span>
+        </label>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Observacao interna</mat-label>
+          <textarea matInput [(ngModel)]="novaObservacao" rows="5"></textarea>
+        </mat-form-field>
+      </section>
     </div>
 
     <div class="drawer-footer">
-      <button mat-button (click)="fecharFormulario()">Cancelar</button>
-      <button mat-flat-button class="btn-premium" (click)="salvar()">{{ idEmEdicao ? 'Salvar Alterações' : 'Cadastrar' }}</button>
+      <button mat-button type="button" (click)="fecharFormulario()">Cancelar</button>
+      <button mat-flat-button class="btn-premium" type="button" [disabled]="salvandoProcesso" (click)="salvar()">
+        <mat-icon>{{ idEmEdicao ? 'save' : 'add_circle' }}</mat-icon>
+        {{ salvandoProcesso ? 'Salvando...' : idEmEdicao ? 'Salvar alteracoes' : 'Criar processo' }}
+      </button>
     </div>
-  </div>
+  </aside>
 </div>
+
+

@@ -1,63 +1,88 @@
-import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { AuthService } from '../auth.service';
-
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatIconModule } from '@angular/material/icon';
+import { Router, RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+
+import { AuthService } from '../auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, MatFormFieldModule,
-    MatInputModule, MatIconModule, MatButtonModule, MatCheckboxModule
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    MatFormFieldModule,
+    MatInputModule,
+    MatIconModule,
+    MatButtonModule,
+    MatCheckboxModule,
+    MatSnackBarModule
   ],
   templateUrl: './login.html',
   styleUrls: ['./login.scss']
 })
 export class LoginComponent implements OnInit {
-  email = '';
-  senha = ''; 
-  mostrarSenha = false; 
-  carregando = false; 
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private snack = inject(MatSnackBar);
 
-  constructor(private authService: AuthService, private router: Router) {}
+  email = '';
+  senha = '';
+  mostrarSenha = false;
+  carregando = false;
 
   ngOnInit() {
-    // Garante que o tema salva será carregado na tela de login
     const temaSalvo = localStorage.getItem('justapro-theme') || 'corporate';
     document.body.setAttribute('data-theme', temaSalvo);
+    document.documentElement.style.colorScheme = temaSalvo === 'light' ? 'light' : 'dark';
   }
 
-  async acessar() { 
+  async acessar() {
     if (!this.email || !this.senha) {
-      alert('Por favor, preencha email e senha.');
+      this.notificar('Preencha e-mail e senha para continuar.');
       return;
     }
 
     this.carregando = true;
+
     try {
       await this.authService.loginEmail(this.email, this.senha);
       const token = await this.authService.getAuthToken();
-      
+
       if (token) {
-        this.authService.enviarTokenParaBackend(token).subscribe({
-          next: (resposta: any) => { 
-            if (resposta.role === 'ADMIN') this.router.navigate(['/advogado']); 
-            else this.router.navigate(['/cliente']); 
-          },
-          error: () => { alert('Erro de conexão com o servidor.'); this.carregando = false; }
-        });
+        const resposta = await firstValueFrom(this.authService.enviarTokenParaBackend(token));
+        await this.router.navigate([resposta.role === 'CLIENT' ? '/cliente' : '/advogado/dashboard']);
       }
-      
-    } catch (e) {
-      alert('Email ou senha inválidos.');
+    } catch (error: any) {
+      const convite = await firstValueFrom(this.authService.verificarConvitePorEmail(this.email.trim())).catch(
+        () => null
+      );
+
+      if (convite?.status === 'PENDING') {
+        this.notificar('Este e-mail possui convite pendente. Continue a ativacao da conta.');
+        await this.router.navigate(['/convite/aceitar'], {
+          queryParams: { email: this.email.trim() }
+        });
+      } else {
+        this.notificar('E-mail ou senha invalidos.');
+      }
+    } finally {
       this.carregando = false;
     }
+  }
+
+  private notificar(mensagem: string): void {
+    this.snack.open(mensagem, 'Fechar', {
+      duration: 3600,
+      panelClass: ['snack-error']
+    });
   }
 }
