@@ -1,196 +1,565 @@
-/* ==========================================================================
-   JUSTAPRO - PREMIUM LEGAL SAAS DESIGN SYSTEM
-   ========================================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap');
 
-/* ==========================================
-   1. COLOR TOKENS & THEME SYSTEM
-   ========================================== */
-
-/* ☀️ TEMA 1: LIGHT (Clean & Stripe-like) */
-body[data-theme="light"] {
-  --bg-app: #F3F4F6;             /* Cinza ultra leve, destaca o card */
-  --bg-surface: #FFFFFF;         /* Branco puro */
-  --bg-surface-hover: #F9FAFB;
-  
-  --text-main: #111827;          /* Slate 900 */
-  --text-muted: #6B7280;         /* Slate 500 */
-  
-  --border-subtle: #E5E7EB;      
-  --border-focus: #10B981;       
-  
-  --brand-primary: #0F172A;      
-  --brand-gradient: linear-gradient(135deg, #10B981 0%, #047857 100%); 
-  
-  /* Sombras macias nível Stripe */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  --glass-border: 1px solid var(--border-subtle);
-}
-
-/* 🏢 TEMA 2: CORPORATE (Default - Navy) */
-body[data-theme="corporate"] {
-  --bg-app: #0F172A;             
-  --bg-surface: #1E293B;         
-  --bg-surface-hover: #334155;
-  
-  --text-main: #F8FAFC;
-  --text-muted: #94A3B8;
-  
-  --border-subtle: #334155;
-  --border-focus: #10B981;       
-  
-  --brand-primary: #1E293B;
-  --brand-gradient: linear-gradient(135deg, #10B981 0%, #047857 100%);
-  
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-card: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
-  --glass-border: 1px solid var(--border-subtle);
-}
-
-/* 🌙 TEMA 3: DARK (Linear Style) */
-body[data-theme="dark"] {
-  --bg-app: #09090B;             
-  --bg-surface: #18181B;         
-  --bg-surface-hover: #27272A;
-  
-  --text-main: #FAFAFA;
-  --text-muted: #A1A1AA;
-  
-  --border-subtle: #27272A;
-  --border-focus: #10B981;
-  
-  --brand-primary: #09090B;
-  --brand-gradient: linear-gradient(135deg, #10B981 0%, #059669 100%);
-  
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
-  --shadow-card: 0 4px 6px rgba(0, 0, 0, 0.3);
-  --glass-border: 1px solid var(--border-subtle);
-}
-
-/* 🚥 STATUS SEMANTIC COLORS */
 :root {
-  --status-urgent: #EF4444;      
-  --status-late: #F59E0B;        
-  --status-success: #10B981;     
-  --status-info: #3B82F6;        
-  
-  --radius-card: 12px;
-  --radius-input: 8px;
+  --font-body: 'Manrope', 'Segoe UI', sans-serif;
+  --font-heading: 'Sora', 'Segoe UI', sans-serif;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+
+  --status-overdue: #ef4444;
+  --status-urgent: #f59e0b;
+  --status-complete: #10b981;
+  --status-progress: #3b82f6;
+
+  --bg-app: #08111f;
+  --bg-app-rgb: 8, 17, 31;
+  --bg-surface: rgba(10, 22, 40, 0.82);
+  --surface-elevated: rgba(12, 28, 52, 0.88);
+  --surface-soft: rgba(148, 163, 184, 0.08);
+  --surface-strong: rgba(148, 163, 184, 0.14);
+
+  --text-main: #f4f7fb;
+  --text-muted: #97a6bc;
+  --text-soft: #c7d2e0;
+
+  --border-subtle: rgba(148, 163, 184, 0.14);
+  --border-strong: rgba(148, 163, 184, 0.22);
+
+  --brand-primary: #16a34a;
+  --brand-secondary: #0f172a;
+  --brand-gradient: linear-gradient(135deg, #16a34a 0%, #14b8a6 48%, #2563eb 100%);
+
+  --shadow-soft: 0 18px 36px rgba(0, 0, 0, 0.22);
+  --shadow-card: 0 30px 70px rgba(0, 0, 0, 0.3);
+  --shadow-dropdown: 0 18px 48px rgba(0, 0, 0, 0.36);
+  --focus-glow: 0 0 0 4px rgba(20, 184, 166, 0.18);
 }
 
-/* ==========================================
-   2. TYPOGRAPHY & RESET
-   ========================================== */
+body[data-theme='light'] {
+  --bg-app: #f4f6fb;
+  --bg-app-rgb: 244, 246, 251;
+  --bg-surface: rgba(255, 255, 255, 0.88);
+  --surface-elevated: rgba(255, 255, 255, 0.92);
+  --surface-soft: rgba(15, 23, 42, 0.04);
+  --surface-strong: rgba(15, 23, 42, 0.08);
+
+  --text-main: #122033;
+  --text-muted: #61708a;
+  --text-soft: #8893a6;
+
+  --border-subtle: rgba(18, 32, 51, 0.1);
+  --border-strong: rgba(18, 32, 51, 0.16);
+
+  --brand-primary: #0f766e;
+  --brand-secondary: #0f172a;
+  --brand-gradient: linear-gradient(135deg, #0f766e 0%, #0ea5a4 55%, #38bdf8 100%);
+
+  --shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.06);
+  --shadow-card: 0 24px 60px rgba(15, 23, 42, 0.08);
+  --shadow-dropdown: 0 18px 36px rgba(15, 23, 42, 0.14);
+  --focus-glow: 0 0 0 4px rgba(14, 165, 164, 0.15);
+}
+
+body[data-theme='corporate'] {
+  --bg-app: #08111f;
+  --bg-app-rgb: 8, 17, 31;
+  --bg-surface: rgba(10, 22, 40, 0.82);
+  --surface-elevated: rgba(12, 28, 52, 0.88);
+  --surface-soft: rgba(148, 163, 184, 0.08);
+  --surface-strong: rgba(148, 163, 184, 0.14);
+
+  --text-main: #f4f7fb;
+  --text-muted: #97a6bc;
+  --text-soft: #c7d2e0;
+
+  --border-subtle: rgba(148, 163, 184, 0.14);
+  --border-strong: rgba(148, 163, 184, 0.22);
+
+  --brand-primary: #16a34a;
+  --brand-secondary: #0f172a;
+  --brand-gradient: linear-gradient(135deg, #16a34a 0%, #14b8a6 48%, #2563eb 100%);
+
+  --shadow-soft: 0 18px 36px rgba(0, 0, 0, 0.22);
+  --shadow-card: 0 30px 70px rgba(0, 0, 0, 0.3);
+  --shadow-dropdown: 0 18px 48px rgba(0, 0, 0, 0.36);
+  --focus-glow: 0 0 0 4px rgba(20, 184, 166, 0.18);
+}
+
+body[data-theme='dark'] {
+  --bg-app: #05070d;
+  --bg-app-rgb: 5, 7, 13;
+  --bg-surface: rgba(20, 24, 34, 0.82);
+  --surface-elevated: rgba(24, 28, 38, 0.9);
+  --surface-soft: rgba(255, 255, 255, 0.05);
+  --surface-strong: rgba(255, 255, 255, 0.09);
+
+  --text-main: #f7f8fb;
+  --text-muted: #a0acbd;
+  --text-soft: #d4d9e3;
+
+  --border-subtle: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.15);
+
+  --brand-primary: #22c55e;
+  --brand-secondary: #111827;
+  --brand-gradient: linear-gradient(135deg, #22c55e 0%, #06b6d4 55%, #3b82f6 100%);
+
+  --shadow-soft: 0 18px 36px rgba(0, 0, 0, 0.28);
+  --shadow-card: 0 34px 80px rgba(0, 0, 0, 0.42);
+  --shadow-dropdown: 0 24px 60px rgba(0, 0, 0, 0.45);
+  --focus-glow: 0 0 0 4px rgba(34, 197, 94, 0.16);
+}
+
+html,
 body {
-  background-color: var(--bg-app);
-  color: var(--text-main);
-  font-family: 'Inter', sans-serif;
-  margin: 0; padding: 0; min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  min-height: 100%;
 }
 
-h1, h2, h3, h4, h5, .font-heading {
-  font-family: 'Poppins', sans-serif;
-  color: var(--text-main);
+body {
   margin: 0;
+  font-family: var(--font-body);
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 28%),
+    radial-gradient(circle at 85% 12%, rgba(20, 184, 166, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(var(--bg-app-rgb), 0.98), rgba(var(--bg-app-rgb), 1));
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 220ms ease, color 220ms ease;
 }
 
-/* ==========================================
-   3. SAAS COMPONENTS
-   ========================================== */
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-heading {
+  font-family: var(--font-heading);
+  letter-spacing: -0.03em;
+  color: var(--text-main);
+}
+
+p,
+span,
+small,
+label {
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: rgba(37, 99, 235, 0.18);
+}
+
 .card-glass {
-  background-color: var(--bg-surface);
-  border: var(--glass-border);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  backdrop-filter: blur(18px);
   box-shadow: var(--shadow-card);
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-xl);
 }
 
 .btn-premium {
-  background: var(--brand-gradient) !important;
-  color: #FFFFFF !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px !important;
   border: none !important;
-  border-radius: 8px !important;
-  font-family: 'Inter', sans-serif !important;
-  font-weight: 600 !important;
-  height: 44px !important;
-  transition: opacity 0.2s ease !important;
-  
-  &:hover { opacity: 0.9; }
+  border-radius: 14px !important;
+  background: var(--brand-gradient) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em;
+  box-shadow: 0 14px 30px rgba(15, 118, 110, 0.2);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    opacity 180ms ease !important;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 18px 34px rgba(15, 118, 110, 0.24);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.58;
+    box-shadow: none;
+  }
 }
 
-/* ==========================================
-   4. ANGULAR MATERIAL MDC OVERRIDES (FIX DEFINITIVO)
-   ========================================== */
+.text-overdue {
+  color: var(--status-overdue) !important;
+}
 
-/* 1. Variáveis Nativas (Garante bordas arredondadas e cores sem quebrar a linha) */
+.text-urgent {
+  color: var(--status-urgent) !important;
+}
+
+.text-complete {
+  color: var(--status-complete) !important;
+}
+
+.text-progress {
+  color: var(--status-progress) !important;
+}
+
+.text-danger {
+  color: var(--status-overdue) !important;
+}
+
+.text-warning {
+  color: var(--status-urgent) !important;
+}
+
+.text-success {
+  color: var(--status-complete) !important;
+}
+
+.text-info {
+  color: var(--status-progress) !important;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  border: 1px solid transparent;
+
+  mat-icon {
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+  }
+
+  &.is-overdue {
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--status-overdue);
+    border-color: rgba(239, 68, 68, 0.2);
+  }
+
+  &.is-urgent {
+    background: rgba(245, 158, 11, 0.14);
+    color: var(--status-urgent);
+    border-color: rgba(245, 158, 11, 0.24);
+  }
+
+  &.is-progress {
+    background: rgba(59, 130, 246, 0.12);
+    color: var(--status-progress);
+    border-color: rgba(59, 130, 246, 0.18);
+  }
+
+  &.is-complete {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--status-complete);
+    border-color: rgba(16, 185, 129, 0.22);
+  }
+}
+
 .mat-mdc-form-field {
-  --mdc-outlined-text-field-container-shape: var(--radius-input) !important;
-  --mdc-outlined-text-field-outline-color: var(--border-subtle) !important;
-  --mdc-outlined-text-field-hover-outline-color: var(--text-muted) !important;
-  --mdc-outlined-text-field-focus-outline-color: var(--border-focus) !important;
-  
-  --mdc-outlined-text-field-label-text-color: var(--text-muted) !important;
-  --mdc-outlined-text-field-focus-label-text-color: var(--border-focus) !important;
-  
-  --mdc-outlined-text-field-input-text-color: var(--text-main) !important;
-  --mdc-outlined-text-field-caret-color: var(--border-focus) !important;
   width: 100%;
+  --mdc-outlined-text-field-container-shape: 16px;
+  --mdc-outlined-text-field-outline-color: var(--border-subtle);
+  --mdc-outlined-text-field-hover-outline-color: var(--border-strong);
+  --mdc-outlined-text-field-focus-outline-color: var(--brand-primary);
+  --mdc-outlined-text-field-input-text-color: var(--text-main);
+  --mdc-outlined-text-field-label-text-color: var(--text-muted);
+  --mdc-outlined-text-field-focus-label-text-color: var(--brand-primary);
+  --mdc-outlined-text-field-caret-color: var(--brand-primary);
 }
 
-/* 2. Fundo transparente para o SVG da borda respirar perfeitamente */
+.mat-mdc-form-field .mat-mdc-form-field-subscript-wrapper {
+  padding-top: 6px;
+}
+
 .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
-  background-color: transparent !important; 
-  transition: box-shadow 0.2s ease !important;
+  background: var(--surface-soft) !important;
+  border-radius: 18px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  overflow: visible !important;
+  transition:
+    box-shadow 180ms ease !important,
+    background-color 180ms ease !important,
+    border-color 180ms ease !important,
+    transform 180ms ease !important;
 }
 
-/* 3. Efeito Glow (SaaS Stripe Style) ao clicar no input */
+.mat-mdc-form-field .mat-mdc-form-field-flex {
+  align-items: center !important;
+  gap: 14px;
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+  overflow: visible !important;
+}
+
+.mat-mdc-form-field.mat-mdc-form-field-has-icon-prefix .mat-mdc-form-field-flex {
+  padding-left: 16px !important;
+}
+
+.mat-mdc-form-field .mat-mdc-form-field-infix {
+  min-height: 60px;
+  padding-top: 19px !important;
+  padding-bottom: 13px !important;
+  padding-left: 0 !important;
+}
+
+.mat-mdc-form-field.mat-mdc-form-field-has-icon-prefix .mat-mdc-form-field-infix {
+  padding-left: 0 !important;
+}
+
+.mat-mdc-form-field .mat-mdc-form-field-icon-prefix,
+.mat-mdc-form-field .mat-mdc-form-field-icon-suffix {
+  align-self: center;
+  color: color-mix(in srgb, var(--text-muted) 86%, transparent);
+}
+
+.mat-mdc-form-field .mat-mdc-form-field-icon-prefix {
+  padding-right: 6px;
+  margin-top: 0;
+  opacity: 0.92;
+}
+
+.mat-mdc-form-field.mat-mdc-form-field-has-icon-prefix .mdc-text-field--outlined .mdc-floating-label {
+  left: 48px !important;
+}
+
+.mat-mdc-form-field.mat-mdc-form-field-has-icon-prefix
+  .mdc-text-field--outlined
+  .mdc-floating-label--float-above {
+  transform: translateY(-35.75px) scale(0.75) !important;
+}
+
+.mat-mdc-form-field .mdc-floating-label {
+  max-width: none !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  pointer-events: none;
+}
+
+.mat-mdc-form-field .mdc-notched-outline__notch {
+  max-width: calc(100% - 24px) !important;
+}
+
+.mat-mdc-form-field .mdc-floating-label--float-above {
+  padding: 0 8px;
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      180deg,
+      transparent 24%,
+      color-mix(in srgb, var(--surface-elevated) 98%, transparent) 24%,
+      color-mix(in srgb, var(--surface-elevated) 98%, transparent) 84%,
+      transparent 84%
+    );
+}
+
+.mat-mdc-form-field:hover .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
+  background: color-mix(in srgb, var(--surface-soft) 82%, transparent) !important;
+}
+
+.mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
+  transform: translateY(-1px);
+}
+
 .mdc-text-field--focused .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
-  box-shadow: var(--focus-glow) !important; 
+  box-shadow: var(--focus-glow) !important;
+  background: color-mix(in srgb, var(--surface-soft) 78%, transparent) !important;
 }
 
-/* 4. A VACINA DO CHROME (Mata o fundo azul feio do Autofill) */
+.mdc-text-field--invalid .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important;
+}
+
+.mat-mdc-form-field.mat-form-field-disabled .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
+  opacity: 0.64;
+}
+
+.mat-mdc-form-field .mdc-floating-label,
+.mat-mdc-form-field .mat-mdc-input-element::placeholder,
+.mat-mdc-form-field textarea::placeholder {
+  transition: color 180ms ease, opacity 180ms ease !important;
+}
+
+.mat-mdc-form-field.mat-focused .mdc-floating-label {
+  font-weight: 700;
+}
+
+.mat-mdc-form-field .mat-mdc-input-element::placeholder,
+.mat-mdc-form-field textarea::placeholder {
+  color: color-mix(in srgb, var(--text-muted) 76%, transparent);
+}
+
 input:-webkit-autofill,
-input:-webkit-autofill:hover, 
-input:-webkit-autofill:focus, 
-input:-webkit-autofill:active {
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0 50px var(--bg-surface) inset !important;
   -webkit-text-fill-color: var(--text-main) !important;
-  transition: background-color 5000s ease-in-out 0s;
-  caret-color: var(--border-focus) !important;
+  caret-color: var(--brand-primary) !important;
 }
 
-/* 5. Tipografia Limpa e Premium */
-input.mat-mdc-input-element, 
-textarea.mat-mdc-input-element, 
-.mat-mdc-select-value-text {
-  font-family: 'Inter', sans-serif !important;
-  font-weight: 500 !important;
-  color: var(--text-main) !important;
-}
-
+input.mat-mdc-input-element,
+textarea.mat-mdc-input-element,
+.mat-mdc-select-value-text,
 .mdc-floating-label {
-  font-family: 'Inter', sans-serif !important;
-  font-weight: 500 !important;
-  letter-spacing: 0.3px;
+  font-family: var(--font-body) !important;
 }
 
-/* 6. Dropdowns Limpos */
-.mat-mdc-menu-panel, .mat-mdc-select-panel {
-  background-color: var(--bg-surface) !important;
-  border: var(--glass-border) !important;
-  border-radius: 12px !important;
+input.mat-mdc-input-element,
+textarea.mat-mdc-input-element {
+  padding-left: 0 !important;
+}
+
+textarea.mat-mdc-input-element {
+  min-height: 140px;
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.mat-mdc-form-field .mat-mdc-select-trigger {
+  min-height: 30px;
+  align-items: center;
+}
+
+.mat-mdc-form-field .mat-mdc-select-value {
+  line-height: 1.4;
+}
+
+.mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
+  border-color: color-mix(in srgb, var(--brand-primary) 28%, transparent);
+}
+
+.saas-search-field {
+  width: min(100%, 340px);
+}
+
+.saas-pagination {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 18px 24px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.saas-pagination-summary {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.saas-pagination-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.saas-pagination-current {
+  min-width: 118px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.mat-mdc-menu-panel,
+.mat-mdc-select-panel,
+.mat-datepicker-content {
+  background: var(--surface-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 18px !important;
   box-shadow: var(--shadow-dropdown) !important;
 }
 
-.mat-mdc-menu-item, .mat-mdc-option {
+.mat-mdc-menu-item,
+.mat-mdc-option {
   color: var(--text-main) !important;
-  font-family: 'Inter', sans-serif !important;
-  font-size: 14px !important;
-  background-color: transparent !important;
 }
 
-.mat-mdc-menu-item:hover, .mat-mdc-option:hover, .mat-mdc-option.mdc-list-item--selected {
-  background-color: var(--bg-surface-hover) !important;
+.mat-mdc-menu-item:hover,
+.mat-mdc-option:hover,
+.mat-mdc-option.mdc-list-item--selected {
+  background: var(--surface-soft) !important;
+}
+
+.mat-datepicker-content {
+  .mat-calendar-body-cell-content,
+  .mat-calendar-table-header th,
+  .mat-calendar-body-label,
+  .mat-calendar-text,
+  .mat-calendar-arrow,
+  .mat-calendar-previous-button,
+  .mat-calendar-next-button {
+    color: var(--text-main) !important;
+  }
+
+  .mat-calendar-body-selected {
+    background: var(--brand-gradient) !important;
+    color: #fff !important;
+  }
+
+  .mat-calendar-body-today:not(.mat-calendar-body-selected) {
+    border-color: var(--brand-primary) !important;
+  }
+}
+
+.mat-mdc-progress-bar {
+  --mdc-linear-progress-active-indicator-color: var(--brand-primary);
+  --mdc-linear-progress-track-color: rgba(148, 163, 184, 0.16);
+}
+
+.mat-mdc-snack-bar-container.snack-success .mdc-snackbar__surface {
+  background: rgba(16, 185, 129, 0.92) !important;
+  color: #fff !important;
+}
+
+.mat-mdc-snack-bar-container.snack-error .mdc-snackbar__surface {
+  background: rgba(239, 68, 68, 0.94) !important;
+  color: #fff !important;
 }

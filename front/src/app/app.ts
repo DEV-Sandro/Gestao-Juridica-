@@ -13,4 +13,14 @@ import { RouterOutlet } from '@angular/router';
 })
 export class AppComponent {
   title = 'front';
+
+  constructor() {
+    this.aplicarTemaSalvo();
+  }
+
+  private aplicarTemaSalvo(): void {
+    const temaSalvo = localStorage.getItem('justapro-theme') || 'corporate';
+    document.body.setAttribute('data-theme', temaSalvo);
+    document.documentElement.style.colorScheme = temaSalvo === 'light' ? 'light' : 'dark';
+  }
 }

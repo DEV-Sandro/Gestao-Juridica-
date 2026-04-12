@@ -13,6 +13,7 @@ async function registrarEvento({
     entidadeId,
     usuarioId: usuario?.uid || null,
     usuarioEmail: usuario?.email || null,
+    usuarioNome: usuario?.displayName || null,
     perfil: usuario?.role || null,
     detalhes
   });
