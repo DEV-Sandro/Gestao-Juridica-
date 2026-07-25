@@ -174,6 +174,16 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   compromissosRaw: CompromissoApiModel[] = [];
   processosPrioritarios: ProcessoViewModel[] = [];
 
+  // Filtros rápidos da agenda por categoria (liga/desliga cada tipo de evento).
+  readonly agendaCategorias: { chave: string; label: string; icone: string; tipos: string[] }[] = [
+    { chave: 'PRAZO', label: 'Prazos', icone: 'gavel', tipos: ['PRAZO'] },
+    { chave: 'AUDIENCIA', label: 'Audiências', icone: 'balance', tipos: ['AUDIENCIA'] },
+    { chave: 'REUNIAO', label: 'Reuniões', icone: 'groups', tipos: ['REUNIAO'] },
+    { chave: 'DOCUMENTO', label: 'Documentos', icone: 'description', tipos: ['DOCUMENTO'] },
+    { chave: 'EVENTO', label: 'Eventos', icone: 'event', tipos: ['EVENTO', 'OUTRO'] }
+  ];
+  filtrosAgendaAtivos = new Set<string>(['PRAZO', 'AUDIENCIA', 'REUNIAO', 'DOCUMENTO', 'EVENTO', 'OUTRO']);
+
   mostrarFiltroAvancado = false;
   filtroAtual: FiltroPrincipal = 'Todos';
   filtroNomeCliente = '';
@@ -1185,6 +1195,48 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     this.agendaEventos = [...eventosDeProcessos, ...eventosDeCompromissos].sort((primeiro, segundo) =>
       primeiro.data.localeCompare(segundo.data)
     );
+  }
+
+  // Eventos após aplicar os filtros de categoria ativos (o calendário consome esta lista).
+  get agendaEventosFiltrados(): AgendaEvento[] {
+    return this.agendaEventos.filter((evento) => this.filtrosAgendaAtivos.has(evento.tipo));
+  }
+
+  filtroAgendaAtivo(chave: string): boolean {
+    const categoria = this.agendaCategorias.find((cat) => cat.chave === chave);
+    return categoria ? categoria.tipos.every((tipo) => this.filtrosAgendaAtivos.has(tipo)) : false;
+  }
+
+  get todosFiltrosAgendaAtivos(): boolean {
+    return this.agendaCategorias.every((cat) => this.filtroAgendaAtivo(cat.chave));
+  }
+
+  alternarFiltroAgenda(chave: string): void {
+    const categoria = this.agendaCategorias.find((cat) => cat.chave === chave);
+    if (!categoria) {
+      return;
+    }
+
+    const ativo = this.filtroAgendaAtivo(chave);
+    for (const tipo of categoria.tipos) {
+      if (ativo) {
+        this.filtrosAgendaAtivos.delete(tipo);
+      } else {
+        this.filtrosAgendaAtivos.add(tipo);
+      }
+    }
+  }
+
+  mostrarTodosFiltrosAgenda(): void {
+    this.filtrosAgendaAtivos = new Set<string>(this.agendaCategorias.flatMap((cat) => cat.tipos));
+  }
+
+  contarEventosPorCategoria(chave: string): number {
+    const categoria = this.agendaCategorias.find((cat) => cat.chave === chave);
+    if (!categoria) {
+      return 0;
+    }
+    return this.agendaEventos.filter((evento) => categoria.tipos.includes(evento.tipo)).length;
   }
 
   private carregarCompromissos(): void {

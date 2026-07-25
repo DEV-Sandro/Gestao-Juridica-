@@ -200,6 +200,9 @@
       <a class="drawer-item" routerLink="/auditoria" *ngIf="currentUser?.role === 'ADMIN'" (click)="fecharDrawer()">
         <mat-icon>fact_check</mat-icon><span>Auditoria</span>
       </a>
+      <a class="drawer-item" routerLink="/ajuda" (click)="fecharDrawer()">
+        <mat-icon>help_outline</mat-icon><span>Central de Ajuda</span>
+      </a>
 
       <span class="drawer-group-label">Tema</span>
       <button type="button" class="drawer-item" *ngFor="let option of themeOptions" (click)="mudarTema(option.value)">
@@ -434,6 +437,11 @@
           <button mat-menu-item type="button" routerLink="/auditoria" *ngIf="currentUser?.role === 'ADMIN'">
             <mat-icon>fact_check</mat-icon>
             Auditoria
+          </button>
+
+          <button mat-menu-item type="button" routerLink="/ajuda">
+            <mat-icon>help_outline</mat-icon>
+            Central de Ajuda
           </button>
 
           <button mat-menu-item type="button" (click)="sair()">
@@ -727,7 +735,32 @@
             Novo compromisso
           </button>
         </div>
-        <app-agenda-calendario [eventos]="agendaEventos" (abrirEvento)="abrirEventoAgenda($event)"></app-agenda-calendario>
+
+        <div class="agenda-filtros" role="group" aria-label="Filtrar agenda por categoria">
+          <button
+            type="button"
+            class="agenda-chip"
+            [class.is-ativo]="todosFiltrosAgendaAtivos"
+            (click)="mostrarTodosFiltrosAgenda()"
+          >
+            <mat-icon>done_all</mat-icon>
+            Todos
+          </button>
+          <button
+            *ngFor="let cat of agendaCategorias"
+            type="button"
+            class="agenda-chip"
+            [class.is-ativo]="filtroAgendaAtivo(cat.chave)"
+            [attr.aria-pressed]="filtroAgendaAtivo(cat.chave)"
+            (click)="alternarFiltroAgenda(cat.chave)"
+          >
+            <mat-icon>{{ cat.icone }}</mat-icon>
+            {{ cat.label }}
+            <span class="agenda-chip-count" *ngIf="contarEventosPorCategoria(cat.chave) as total">{{ total }}</span>
+          </button>
+        </div>
+
+        <app-agenda-calendario [eventos]="agendaEventosFiltrados" (abrirEvento)="abrirEventoAgenda($event)"></app-agenda-calendario>
       </section>
     </section>
 

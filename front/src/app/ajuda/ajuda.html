@@ -1,36 +1,53 @@
-<div style="padding: 50px; max-width: 800px; margin: auto;">
-  
-  <h1 style="color: #3f51b5; font-family: Roboto, sans-serif;">
-    🎓 Central de Ajuda - AdvogaFlow
-  </h1>
-  <p style="color: #666; margin-bottom: 30px;">
-    Tire suas dúvidas sobre o funcionamento do sistema jurídico.
-  </p>
+<div class="ajuda-page fade-in">
+  <header class="ajuda-topbar">
+    <a routerLink="/advogado/dashboard" class="btn-back">
+      <mat-icon>arrow_back</mat-icon>
+      <span>Voltar</span>
+    </a>
+  </header>
 
-  <mat-accordion>
-    
-    <mat-expansion-panel *ngFor="let item of baseConhecimento">
-      
-      <mat-expansion-panel-header>
-        <mat-panel-title style="font-weight: bold;">
-          {{ item.title }}
-        </mat-panel-title>
-        <mat-panel-description>
-          {{ item.id }}
-        </mat-panel-description>
-      </mat-expansion-panel-header>
+  <section class="ajuda-hero">
+    <div class="ajuda-hero-icon"><mat-icon>help_center</mat-icon></div>
+    <h1 class="font-heading">Central de Ajuda</h1>
+    <p>Aprenda a usar o JustaPro. Pesquise sua dúvida ou navegue pelas categorias.</p>
 
-      <p style="line-height: 1.6; color: #444;">
-        {{ item.canonical_answer }}
-      </p>
+    <div class="ajuda-search">
+      <mat-icon>search</mat-icon>
+      <input
+        type="text"
+        [(ngModel)]="termo"
+        placeholder="Buscar por uma dúvida... (ex.: variáveis, honorários, urgente)"
+        aria-label="Buscar na central de ajuda"
+      />
+      <button type="button" *ngIf="termo" (click)="limpar()" aria-label="Limpar busca">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
 
-    </mat-expansion-panel>
+    <p class="ajuda-resultado" *ngIf="termo">
+      {{ totalResultados }} resultado<span *ngIf="totalResultados !== 1">s</span> para "{{ termo }}"
+    </p>
+  </section>
 
-  </mat-accordion>
+  <div class="ajuda-vazio" *ngIf="termo && totalResultados === 0">
+    <mat-icon>search_off</mat-icon>
+    <p>Nenhuma resposta encontrada para "{{ termo }}".</p>
+    <span>Tente outras palavras ou navegue pelas categorias limpando a busca.</span>
+  </div>
 
-  <br><br>
-  <a href="/dashboard" style="text-decoration: none; color: #3f51b5; font-weight: bold;">
-    ⬅ Voltar para o Escritório
-  </a>
+  <section class="ajuda-categoria" *ngFor="let cat of categoriasFiltradas">
+    <div class="cat-titulo">
+      <mat-icon>{{ cat.icone }}</mat-icon>
+      <h2 class="font-heading">{{ cat.categoria }}</h2>
+    </div>
 
+    <mat-accordion class="cat-accordion" [multi]="!!termo">
+      <mat-expansion-panel *ngFor="let item of cat.itens" [expanded]="!!termo">
+        <mat-expansion-panel-header>
+          <mat-panel-title>{{ item.pergunta }}</mat-panel-title>
+        </mat-expansion-panel-header>
+        <p class="faq-resposta">{{ item.resposta }}</p>
+      </mat-expansion-panel>
+    </mat-accordion>
+  </section>
 </div>
