@@ -86,7 +86,7 @@ export const FAQ: FaqCategoria[] = [
       {
         pergunta: 'Como filtrar a agenda por categoria?',
         resposta:
-          'Use os filtros no topo da Agenda para ligar ou desligar cada categoria — Audiências, Reuniões, Prazos e os eventos Financeiros (recebimentos e pagamentos). Assim você vê apenas o que interessa no momento.'
+          'Use os filtros no topo da Agenda para ligar ou desligar cada categoria de compromisso — Prazos, Audiências, Reuniões, Documentos e Eventos. Cada filtro mostra também quantos itens existem naquela categoria, e o botão "Todos" volta a exibir tudo.'
       },
       {
         pergunta: 'Por que alguns compromissos aparecem como "Ocupado"?',
