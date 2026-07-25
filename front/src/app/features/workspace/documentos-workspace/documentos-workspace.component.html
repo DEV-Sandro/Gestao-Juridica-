@@ -12,11 +12,64 @@
       </p>
     </div>
 
-    <a mat-stroked-button routerLink="/advogado/clientes">
-      <mat-icon>groups</mat-icon>
-      Gerenciar clientes
-    </a>
+    <div class="docs-hero-actions">
+      <button mat-stroked-button type="button" (click)="mostrarComoFunciona = !mostrarComoFunciona">
+        <mat-icon>{{ mostrarComoFunciona ? 'expand_less' : 'help_outline' }}</mat-icon>
+        Como funciona
+      </button>
+      <a mat-stroked-button routerLink="/advogado/clientes">
+        <mat-icon>groups</mat-icon>
+        Gerenciar clientes
+      </a>
+    </div>
   </div>
+
+  <!-- ============================================================
+       COMO FUNCIONA — passo a passo + referência de variáveis
+       ============================================================ -->
+  <section class="card-glass como-funciona" *ngIf="mostrarComoFunciona">
+    <div class="cf-passos">
+      <h3 class="font-heading">Como gerar um documento em 6 passos</h3>
+      <ol class="cf-lista">
+        <li><span class="cf-num">1</span> Faça upload de um documento modelo em <strong>.docx</strong> (Word).</li>
+        <li><span class="cf-num">2</span> No texto do modelo, escreva variáveis entre chaves: <code>&#123;cliente_nome&#125;</code>, <code>&#123;cliente_cpf&#125;</code>…</li>
+        <li><span class="cf-num">3</span> Salve o modelo. O sistema detecta as variáveis automaticamente.</li>
+        <li><span class="cf-num">4</span> Escolha o cliente e dê um nome ao documento.</li>
+        <li><span class="cf-num">5</span> O sistema substitui cada variável pelos dados do cliente cadastrado.</li>
+        <li><span class="cf-num">6</span> Baixe o documento preenchido, pronto para revisar e assinar.</li>
+      </ol>
+
+      <p class="cf-aviso">
+        <mat-icon>info</mat-icon>
+        Use <strong>chaves simples</strong> <code>&#123; &#125;</code> — não duplas. Variáveis não reconhecidas
+        saem com uma linha em branco para preencher à mão.
+      </p>
+    </div>
+
+    <div class="cf-variaveis">
+      <div class="cf-var-head">
+        <h4 class="font-heading">Variáveis disponíveis</h4>
+        <span>Toque para copiar</span>
+      </div>
+
+      <div class="cf-grupo" *ngFor="let grupo of gruposVariaveis">
+        <span class="cf-grupo-titulo">{{ grupo.grupo }}</span>
+        <div class="cf-chips">
+          <button
+            type="button"
+            class="cf-chip"
+            *ngFor="let v of grupo.itens"
+            (click)="copiarVariavel(v.chave)"
+            [matTooltip]="v.descricao"
+            matTooltipPosition="above"
+          >
+            <code>{{ '{' + v.chave + '}' }}</code>
+            <mat-icon>content_copy</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <div class="docs-grid">
     <article class="card-glass template-panel">

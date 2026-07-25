@@ -7,9 +7,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { AuthService, TemplateDocumento } from '../../../auth.service';
 import { ClienteRecord } from '../../../models/client.model';
@@ -41,8 +43,10 @@ interface ModeloView {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MatExpansionModule,
     MatProgressSpinnerModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatTooltipModule
   ],
   templateUrl: './documentos-workspace.component.html',
   styleUrls: ['./documentos-workspace.component.scss']
@@ -67,6 +71,57 @@ export class DocumentosWorkspaceComponent implements OnInit {
   objetoContrato = '';
   contratoValor = '';
   contratoValorExtenso = '';
+
+  mostrarComoFunciona = false;
+
+  // Variáveis REAIS que o gerador preenche automaticamente (delimitador de chave
+  // simples, padrão do docxtemplater). Fonte: buildPlaceholders no
+  // document-generator.service.ts — manter em sincronia.
+  readonly gruposVariaveis: { grupo: string; itens: { chave: string; descricao: string }[] }[] = [
+    {
+      grupo: 'Cliente',
+      itens: [
+        { chave: 'cliente_nome', descricao: 'Nome completo do cliente' },
+        { chave: 'cliente_cpf', descricao: 'CPF (formatado)' },
+        { chave: 'cliente_rg', descricao: 'RG' },
+        { chave: 'cliente_documento_secundario', descricao: 'Documento auxiliar (CNPJ, etc.)' },
+        { chave: 'cliente_estado_civil', descricao: 'Estado civil' },
+        { chave: 'cliente_nacionalidade', descricao: 'Nacionalidade' },
+        { chave: 'cliente_profissao', descricao: 'Profissão' },
+        { chave: 'cliente_telefone', descricao: 'Telefone' },
+        { chave: 'cliente_email', descricao: 'E-mail' },
+        { chave: 'cliente_endereco_completo', descricao: 'Endereço completo' },
+        { chave: 'cliente_cidade_estado', descricao: 'Cidade / UF' }
+      ]
+    },
+    {
+      grupo: 'Advogado',
+      itens: [
+        { chave: 'advogado_nome', descricao: 'Nome do advogado responsável' },
+        { chave: 'advogado_oab', descricao: 'Número da OAB' },
+        { chave: 'advogado_telefone', descricao: 'Telefone do advogado' }
+      ]
+    },
+    {
+      grupo: 'Processo e documento',
+      itens: [
+        { chave: 'processo_referencia', descricao: 'Referência/número do processo' },
+        { chave: 'processo_objeto', descricao: 'Objeto ou assunto do processo' },
+        { chave: 'local_assinatura', descricao: 'Cidade da assinatura' },
+        { chave: 'data_extenso', descricao: 'Data atual por extenso' },
+        { chave: 'contrato_valor', descricao: 'Valor dos honorários' },
+        { chave: 'contrato_valor_extenso', descricao: 'Valor por extenso' }
+      ]
+    }
+  ];
+
+  copiarVariavel(chave: string): void {
+    const texto = `{${chave}}`;
+    navigator.clipboard?.writeText(texto).then(
+      () => this.snack.open(`${texto} copiado`, 'OK', { duration: 1800, panelClass: ['snack-success'] }),
+      () => this.snack.open('Copie manualmente: ' + texto, 'OK', { duration: 2600 })
+    );
+  }
 
   // Upload de novo modelo (apenas ADMIN)
   mostrarUpload = false;
