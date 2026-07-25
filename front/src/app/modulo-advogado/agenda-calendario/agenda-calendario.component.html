@@ -42,6 +42,8 @@
       <span class="legend-pill is-urgent">Urgente</span>
       <span class="legend-pill is-progress">Em andamento</span>
       <span class="legend-pill is-complete">Concluido</span>
+      <span class="legend-pill is-receita">Recebimento</span>
+      <span class="legend-pill is-despesa">Pagamento</span>
     </div>
   </div>
 
@@ -73,7 +75,7 @@
             <span
               class="event-chip"
               *ngFor="let evento of day.events | slice: 0 : 2"
-              [ngClass]="statusClass(evento.status)"
+              [ngClass]="evento.classe || statusClass(evento.status)"
               (click)="selecionarEvento(evento, $event)"
             >
               <mat-icon>{{ evento.icon }}</mat-icon>
@@ -104,7 +106,7 @@
         type="button"
         class="day-event"
         *ngFor="let evento of eventosSelecionados"
-        [ngClass]="statusClass(evento.status)"
+        [ngClass]="evento.classe || statusClass(evento.status)"
         (click)="selecionarEvento(evento)"
       >
         <div class="day-event-icon">

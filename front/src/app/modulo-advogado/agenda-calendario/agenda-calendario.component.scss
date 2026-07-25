@@ -373,6 +373,26 @@
   border-color: rgba(16, 185, 129, 0.24);
 }
 
+/* Eventos financeiros — cor própria por natureza do lançamento. Entrada = verde,
+   saída = vermelho suave. Não disparam o alarme "has-overdue" da célula do dia. */
+.is-receita {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+  border-color: color-mix(in srgb, var(--color-success) 26%, transparent);
+}
+
+.is-despesa {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  border-color: color-mix(in srgb, var(--color-danger) 26%, transparent);
+}
+
+.is-financeiro-pago {
+  background: color-mix(in srgb, var(--text-muted) 12%, transparent);
+  color: var(--text-muted);
+  border-color: color-mix(in srgb, var(--text-muted) 24%, transparent);
+}
+
 @media (max-width: 1180px) {
   .agenda-layout {
     grid-template-columns: 1fr;

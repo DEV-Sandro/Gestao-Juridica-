@@ -81,7 +81,13 @@ export interface AgendaEvento {
   icon: string;
   detalhe: string;
   localCompromisso: string | null;
-  origem: 'PROCESSO' | 'COMPROMISSO';
+  origem: 'PROCESSO' | 'COMPROMISSO' | 'FINANCEIRO';
+  // Chave de agrupamento/filtro na agenda. Para eventos jurídicos é o próprio
+  // `tipo`; para eventos financeiros é 'RECEBIMENTO' ou 'PAGAMENTO'.
+  categoria: string;
+  // Variante visual opcional; quando presente, sobrepõe a cor derivada do status
+  // (usada pelos eventos financeiros para terem cor própria no calendário).
+  classe?: string;
   compromissoId?: string;
 }
 
@@ -495,7 +501,8 @@ export function processarAgendaEvento(processo: ProcessoViewModel): AgendaEvento
     icon: meta.icon,
     detalhe: formatarResumoPrazo(processo),
     localCompromisso: processo.localCompromisso || null,
-    origem: 'PROCESSO'
+    origem: 'PROCESSO',
+    categoria: processo.categoriaCompromisso
   };
 }
 
@@ -542,7 +549,67 @@ export function compromissoParaAgendaEvento(compromisso: CompromissoApiModel): A
     detalhe: compromisso.observacao || '',
     localCompromisso: compromisso.local || null,
     origem: 'COMPROMISSO',
+    categoria: tipo,
     compromissoId: compromisso.id
+  };
+}
+
+// Vencimentos do financeiro viram eventos de agenda com categoria própria
+// (RECEBIMENTO/PAGAMENTO) e cor dedicada, sem se misturar aos estados jurídicos.
+// Aceita a forma estrutural de LancamentoFinanceiro (evita import circular com auth.service).
+export function lancamentoParaAgendaEvento(lancamento: {
+  id: string;
+  descricao: string;
+  tipo: 'HONORARIO' | 'DESPESA' | 'REEMBOLSO';
+  valor: number;
+  vencimento: string;
+  statusEfetivo: 'PENDENTE' | 'PAGO' | 'CANCELADO' | 'ATRASADO';
+  processoId?: string | null;
+  clienteNome?: string | null;
+}): AgendaEvento | null {
+  const dataIso = (lancamento.vencimento || '').slice(0, 10);
+  if (!dataIso || lancamento.statusEfetivo === 'CANCELADO') {
+    return null;
+  }
+
+  // HONORARIO e REEMBOLSO entram no caixa; DESPESA sai.
+  const entrada = lancamento.tipo !== 'DESPESA';
+  const pago = lancamento.statusEfetivo === 'PAGO';
+  const atrasado = lancamento.statusEfetivo === 'ATRASADO';
+  const valorFmt = formatarMoeda(lancamento.valor);
+  const diasParaData = diferencaDiasParaPrazo(dataIso);
+
+  let situacao: string;
+  if (pago) {
+    situacao = 'pago';
+  } else if (atrasado) {
+    situacao = 'em atraso';
+  } else if (diasParaData === 0) {
+    situacao = 'vence hoje';
+  } else if (diasParaData === 1) {
+    situacao = 'vence amanhã';
+  } else if (diasParaData !== null && diasParaData > 1) {
+    situacao = `vence em ${diasParaData} dias`;
+  } else {
+    situacao = 'vencido';
+  }
+
+  return {
+    id: `lancamento-${lancamento.id}`,
+    processoId: lancamento.processoId || '',
+    data: dataIso,
+    titulo: lancamento.descricao,
+    subtitulo: lancamento.clienteNome || (entrada ? 'A receber' : 'A pagar'),
+    tipo: 'OUTRO',
+    tipoLabel: entrada ? 'Recebimento' : 'Pagamento',
+    status: pago ? 'Concluído' : 'Em Andamento',
+    statusLabel: pago ? 'Pago' : atrasado ? 'Em atraso' : 'Pendente',
+    icon: entrada ? 'trending_up' : 'trending_down',
+    detalhe: `${valorFmt} · ${situacao}`,
+    localCompromisso: null,
+    origem: 'FINANCEIRO',
+    categoria: entrada ? 'RECEBIMENTO' : 'PAGAMENTO',
+    classe: pago ? 'is-financeiro-pago' : entrada ? 'is-receita' : 'is-despesa'
   };
 }
 

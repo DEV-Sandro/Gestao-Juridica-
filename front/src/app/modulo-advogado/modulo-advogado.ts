@@ -20,7 +20,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
-import { AuthService, DashboardResumo, ResultadoBusca } from '../auth.service';
+import { AuthService, DashboardResumo, LancamentoFinanceiro, ResultadoBusca } from '../auth.service';
 import { AppUser } from '../models/app-user.model';
 import { ClienteRecord } from '../models/client.model';
 import { ClientesWorkspaceComponent } from '../features/workspace/clientes-workspace/clientes-workspace.component';
@@ -46,6 +46,7 @@ import {
   compararProcessosPorPrioridade,
   compromissoParaAgendaEvento,
   formatarResumoPrazo,
+  lancamentoParaAgendaEvento,
   mapearProcessoParaTela,
   obterMetaStatus,
   processarAgendaEvento,
@@ -172,17 +173,27 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   listaDeProcessosFiltrada: ProcessoViewModel[] = [];
   agendaEventos: AgendaEvento[] = [];
   compromissosRaw: CompromissoApiModel[] = [];
+  lancamentosAgendaRaw: LancamentoFinanceiro[] = [];
   processosPrioritarios: ProcessoViewModel[] = [];
 
-  // Filtros rápidos da agenda por categoria (liga/desliga cada tipo de evento).
-  readonly agendaCategorias: { chave: string; label: string; icone: string; tipos: string[] }[] = [
-    { chave: 'PRAZO', label: 'Prazos', icone: 'gavel', tipos: ['PRAZO'] },
-    { chave: 'AUDIENCIA', label: 'Audiências', icone: 'balance', tipos: ['AUDIENCIA'] },
-    { chave: 'REUNIAO', label: 'Reuniões', icone: 'groups', tipos: ['REUNIAO'] },
-    { chave: 'DOCUMENTO', label: 'Documentos', icone: 'description', tipos: ['DOCUMENTO'] },
-    { chave: 'EVENTO', label: 'Eventos', icone: 'event', tipos: ['EVENTO', 'OUTRO'] }
+  // Filtros rápidos da agenda por categoria (liga/desliga cada grupo de evento).
+  // `categorias` são as chaves de agrupamento presentes em AgendaEvento.categoria.
+  readonly agendaCategorias: { chave: string; label: string; icone: string; categorias: string[] }[] = [
+    { chave: 'PRAZO', label: 'Prazos', icone: 'gavel', categorias: ['PRAZO'] },
+    { chave: 'AUDIENCIA', label: 'Audiências', icone: 'balance', categorias: ['AUDIENCIA'] },
+    { chave: 'REUNIAO', label: 'Reuniões', icone: 'groups', categorias: ['REUNIAO'] },
+    { chave: 'DOCUMENTO', label: 'Documentos', icone: 'description', categorias: ['DOCUMENTO'] },
+    { chave: 'EVENTO', label: 'Eventos', icone: 'event', categorias: ['EVENTO', 'OUTRO'] },
+    {
+      chave: 'FINANCEIRO',
+      label: 'Financeiro',
+      icone: 'account_balance_wallet',
+      categorias: ['RECEBIMENTO', 'PAGAMENTO']
+    }
   ];
-  filtrosAgendaAtivos = new Set<string>(['PRAZO', 'AUDIENCIA', 'REUNIAO', 'DOCUMENTO', 'EVENTO', 'OUTRO']);
+  filtrosAgendaAtivos = new Set<string>(
+    this.agendaCategorias.flatMap((cat) => cat.categorias)
+  );
 
   mostrarFiltroAvancado = false;
   filtroAtual: FiltroPrincipal = 'Todos';
@@ -300,6 +311,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     this.carregarDados();
     this.carregarSituacoesETags();
     this.carregarCompromissos();
+    this.carregarLancamentosAgenda();
     this.carregarDashboard();
     this.iniciarBuscaGlobal();
   }
@@ -967,8 +979,15 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   }
 
   abrirEventoAgenda(evento: AgendaEvento): void {
+    if (evento.origem === 'FINANCEIRO') {
+      void this.router.navigate(['/advogado/financeiro']);
+      return;
+    }
     if (evento.origem === 'COMPROMISSO' && evento.compromissoId) {
       this.abrirEdicaoCompromisso(evento.compromissoId);
+      return;
+    }
+    if (!evento.processoId) {
       return;
     }
     this.abrirCaso(evento.processoId);
@@ -1192,19 +1211,25 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
       compromissoParaAgendaEvento(compromisso)
     );
 
-    this.agendaEventos = [...eventosDeProcessos, ...eventosDeCompromissos].sort((primeiro, segundo) =>
-      primeiro.data.localeCompare(segundo.data)
-    );
+    const eventosFinanceiros = this.lancamentosAgendaRaw
+      .map((lancamento) => lancamentoParaAgendaEvento(lancamento))
+      .filter((evento): evento is AgendaEvento => !!evento);
+
+    this.agendaEventos = [
+      ...eventosDeProcessos,
+      ...eventosDeCompromissos,
+      ...eventosFinanceiros
+    ].sort((primeiro, segundo) => primeiro.data.localeCompare(segundo.data));
   }
 
   // Eventos após aplicar os filtros de categoria ativos (o calendário consome esta lista).
   get agendaEventosFiltrados(): AgendaEvento[] {
-    return this.agendaEventos.filter((evento) => this.filtrosAgendaAtivos.has(evento.tipo));
+    return this.agendaEventos.filter((evento) => this.filtrosAgendaAtivos.has(evento.categoria));
   }
 
   filtroAgendaAtivo(chave: string): boolean {
-    const categoria = this.agendaCategorias.find((cat) => cat.chave === chave);
-    return categoria ? categoria.tipos.every((tipo) => this.filtrosAgendaAtivos.has(tipo)) : false;
+    const grupo = this.agendaCategorias.find((cat) => cat.chave === chave);
+    return grupo ? grupo.categorias.every((categoria) => this.filtrosAgendaAtivos.has(categoria)) : false;
   }
 
   get todosFiltrosAgendaAtivos(): boolean {
@@ -1212,31 +1237,31 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   }
 
   alternarFiltroAgenda(chave: string): void {
-    const categoria = this.agendaCategorias.find((cat) => cat.chave === chave);
-    if (!categoria) {
+    const grupo = this.agendaCategorias.find((cat) => cat.chave === chave);
+    if (!grupo) {
       return;
     }
 
     const ativo = this.filtroAgendaAtivo(chave);
-    for (const tipo of categoria.tipos) {
+    for (const categoria of grupo.categorias) {
       if (ativo) {
-        this.filtrosAgendaAtivos.delete(tipo);
+        this.filtrosAgendaAtivos.delete(categoria);
       } else {
-        this.filtrosAgendaAtivos.add(tipo);
+        this.filtrosAgendaAtivos.add(categoria);
       }
     }
   }
 
   mostrarTodosFiltrosAgenda(): void {
-    this.filtrosAgendaAtivos = new Set<string>(this.agendaCategorias.flatMap((cat) => cat.tipos));
+    this.filtrosAgendaAtivos = new Set<string>(this.agendaCategorias.flatMap((cat) => cat.categorias));
   }
 
   contarEventosPorCategoria(chave: string): number {
-    const categoria = this.agendaCategorias.find((cat) => cat.chave === chave);
-    if (!categoria) {
+    const grupo = this.agendaCategorias.find((cat) => cat.chave === chave);
+    if (!grupo) {
       return 0;
     }
-    return this.agendaEventos.filter((evento) => categoria.tipos.includes(evento.tipo)).length;
+    return this.agendaEventos.filter((evento) => grupo.categorias.includes(evento.categoria)).length;
   }
 
   private carregarCompromissos(): void {
@@ -1247,6 +1272,19 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.compromissosRaw = [];
+      }
+    });
+  }
+
+  // Vencimentos do financeiro aparecem na agenda como eventos próprios.
+  private carregarLancamentosAgenda(): void {
+    this.authService.listarLancamentos().subscribe({
+      next: (lancamentos) => {
+        this.lancamentosAgendaRaw = lancamentos || [];
+        this.atualizarAgendaEventos();
+      },
+      error: () => {
+        this.lancamentosAgendaRaw = [];
       }
     });
   }
