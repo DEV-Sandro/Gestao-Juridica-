@@ -92,6 +92,28 @@
             </div>
 
             <div class="info-item">
+              <span>Área Jurídica</span>
+              <strong>{{ labelCategoriaProcesso(processo.categoria) }}</strong>
+            </div>
+
+            <div class="info-item">
+              <span>Tipo de causa</span>
+              <strong>{{ labelTipoCausa(processo.tipoCausa) }}</strong>
+            </div>
+
+            <div class="info-item">
+              <span>Situação</span>
+              <strong>{{ labelSituacao(processo.situacao) }}</strong>
+            </div>
+
+            <div class="info-item" *ngIf="processo.tags && processo.tags.length">
+              <span>Tags</span>
+              <div class="tag-list">
+                <span class="tag-pill" *ngFor="let tag of processo.tags">{{ tag }}</span>
+              </div>
+            </div>
+
+            <div class="info-item">
               <span>Criado em</span>
               <strong>{{ processo.criadoEm | date: 'dd/MM/yyyy HH:mm' }}</strong>
             </div>

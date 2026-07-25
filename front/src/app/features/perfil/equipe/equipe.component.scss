@@ -199,6 +199,15 @@
       margin-top: 10px;
     }
 
+    .permissoes-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
     .role-badge {
       display: inline-flex;
       align-items: center;

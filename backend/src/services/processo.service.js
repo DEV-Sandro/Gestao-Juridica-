@@ -1,9 +1,9 @@
-const { db } = require('../config/firebase');
 const processoRepository = require('../repositories/processo.repository');
 const etapaRepository = require('../repositories/etapa.repository');
 const auditoriaRepository = require('../repositories/auditoria.repository');
 const auditoriaService = require('./auditoria.service');
 const clienteRepository = require('../repositories/cliente.repository');
+const configuracaoService = require('./configuracao.service');
 const {
   calcularStatusInteligente,
   normalizarCategoriaCompromisso
@@ -32,11 +32,8 @@ const STATUS_ORCAMENTO_PERMITIDOS = new Set([
 ]);
 
 async function obterDiasArquivamento() {
-  const doc = await db.collection('configuracoes').doc('arquivamento').get();
-
-  if (!doc.exists) return 30;
-
-  return Number(doc.data().dias) || 30;
+  const configuracao = await configuracaoService.obterConfiguracao('arquivamento');
+  return Number(configuracao.dias) || 30;
 }
 
 function normalizarBoolean(valor) {
@@ -72,6 +69,38 @@ function normalizarTexto(valor, tamanhoMaximo, obrigatorio = false) {
   }
 
   return texto.slice(0, tamanhoMaximo);
+}
+
+function normalizarTags(valor) {
+  if (valor === undefined) return undefined;
+  if (valor === null) return [];
+
+  if (!Array.isArray(valor)) {
+    throw new Error('VALIDACAO_FALHOU');
+  }
+
+  const tags = [];
+  const vistas = new Set();
+
+  for (const item of valor) {
+    if (typeof item !== 'string') continue;
+
+    const tag = item
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .trim()
+      .toLowerCase()
+      .slice(0, 40);
+
+    if (!tag || vistas.has(tag)) continue;
+
+    vistas.add(tag);
+    tags.push(tag);
+
+    if (tags.length >= 20) break;
+  }
+
+  return tags;
 }
 
 function normalizarPrazo(valor) {
@@ -433,6 +462,13 @@ async function obterProcessoComAcesso(processoId, user, motivoAcessoNegado) {
     throw new Error('ACESSO_NEGADO');
   }
 
+  // Agenda individual: advogado so acessa processos sob sua propria responsabilidade.
+  // ADMIN mantem acesso irrestrito para supervisao do escritorio.
+  if (user.role === 'ADVOGADO' && processo.advogadoId && processo.advogadoId !== user.uid) {
+    await registrarAcessoNegado(processoId, user, motivoAcessoNegado);
+    throw new Error('ACESSO_NEGADO');
+  }
+
   return processo;
 }
 
@@ -468,6 +504,18 @@ function montarPayloadProcesso(dados, processoAtual = null) {
 
   const localCompromisso = normalizarTexto(dados.localCompromisso, 160);
   if (localCompromisso !== undefined) payload.localCompromisso = localCompromisso;
+
+  const categoria = normalizarTexto(dados.categoria, 80);
+  if (categoria !== undefined) payload.categoria = categoria;
+
+  const tipoCausa = normalizarTexto(dados.tipoCausa, 80);
+  if (tipoCausa !== undefined) payload.tipoCausa = tipoCausa;
+
+  const situacao = normalizarTexto(dados.situacao, 60);
+  if (situacao !== undefined) payload.situacao = situacao;
+
+  const tags = normalizarTags(dados.tags);
+  if (tags !== undefined) payload.tags = tags;
 
   if (!processoAtual) {
     if (!payload.titulo) payload.titulo = 'Processo sem titulo';
@@ -859,7 +907,24 @@ function determinarAcaoPrincipal(camposAtualizados, payload, processoAtual) {
 }
 
 async function listarProcessos(query, user) {
-  const processos = await processoRepository.buscarTodos();
+  // Filtros de igualdade seguros são resolvidos direto no Firestore em vez de
+  // carregar a coleção inteira: para CLIENT isso restringe a leitura só aos seus
+  // próprios processos (o caso mais comum e mais barato de otimizar); categoria/
+  // tipoCausa/situacao/tags também são empurrados quando informados. advogadoId
+  // permanece em memória de propósito (ver comentário em
+  // processo.repository.js#buscarPorEscopo).
+  const tagsFiltro =
+    typeof query.tags === 'string' && query.tags.trim()
+      ? query.tags.split(',').map((tag) => tag.trim().toLowerCase()).filter(Boolean)
+      : undefined;
+
+  const processos = await processoRepository.buscarPorEscopo({
+    clienteId: user.role === 'CLIENT' ? user.uid : undefined,
+    categoria: query.categoria || undefined,
+    tipoCausa: query.tipoCausa || undefined,
+    situacao: query.situacao || undefined,
+    tags: tagsFiltro
+  });
   const dias = await obterDiasArquivamento();
   const clientesMap = await carregarClientesMap();
 
@@ -870,6 +935,9 @@ async function listarProcessos(query, user) {
   for (const processo of processos) {
     if (processo.deletado) continue;
     if (user.role === 'CLIENT' && processo.clienteId !== user.uid) continue;
+    // Agenda individual: cada advogado ve somente os processos sob sua responsabilidade.
+    // Apenas ADMIN mantem a visao geral de todos os processos do escritorio.
+    if (user.role === 'ADVOGADO' && processo.advogadoId && processo.advogadoId !== user.uid) continue;
 
     const processoComCliente = await enriquecerProcessoComCliente(processo, clientesMap);
     const processoResposta = montarProcessoResposta(processoComCliente, dias);
@@ -983,6 +1051,10 @@ async function criarProcesso(dados, user) {
     });
   }
 
+  if (novo.tags && novo.tags.length > 0) {
+    await configuracaoService.registrarValoresUsados('tagsUsadas', 'valores', novo.tags);
+  }
+
   return id;
 }
 
@@ -1025,6 +1097,10 @@ async function atualizarProcesso(id, dados, user) {
   }
 
   await processoRepository.atualizar(id, payloadPersistencia);
+
+  if (payloadPersistencia.tags && payloadPersistencia.tags.length > 0) {
+    await configuracaoService.registrarValoresUsados('tagsUsadas', 'valores', payloadPersistencia.tags);
+  }
 
   if (camposAtualizados.length > 0) {
     await auditoriaService.registrarEvento({

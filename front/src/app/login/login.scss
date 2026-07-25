@@ -1,29 +1,122 @@
 .login-wrapper {
-  min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  // Fundo com profundidade sutil: dois brilhos discretos da marca sobre o tema.
+  background:
+    radial-gradient(720px circle at 12% 8%, color-mix(in srgb, var(--brand-primary) 10%, transparent), transparent 55%),
+    radial-gradient(640px circle at 88% 92%, rgba(37, 99, 235, 0.1), transparent 55%),
+    var(--bg-app);
 }
 
 .login-card {
-  width: 100%; max-width: 400px; padding: 48px 40px; display: flex; flex-direction: column; gap: 32px;
+  width: 100%;
+  max-width: 410px;
+  padding: 44px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
 }
 
 .brand-header {
-  text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 4px;
+
   .logo-shield {
-    background: var(--brand-gradient); color: #FFF; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
-    mat-icon { font-size: 28px; width: 28px; height: 28px; }
+    background: var(--brand-gradient);
+    color: #fff;
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 14px 30px color-mix(in srgb, var(--brand-primary) 30%, transparent);
+
+    mat-icon { font-size: 30px; width: 30px; height: 30px; }
   }
-  h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+
+  h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  .brand-tagline {
+    margin: -6px 0 0;
+    color: var(--text-muted);
+    font-size: 13.5px;
+  }
 }
 
-.login-form { display: flex; flex-direction: column; gap: 16px; }
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
 
 .icon-muted { color: var(--text-muted); margin-right: 8px; }
 
 .form-options {
-  display: flex; justify-content: space-between; align-items: center; margin-top: -8px; margin-bottom: 8px;
-  ::ng-deep .mdc-label { color: var(--text-muted) !important; font-size: 14px; font-family: 'Inter'; }
-  .forgot-link { font-size: 14px; font-weight: 500; text-decoration: none; color: var(--border-focus); }
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: -6px;
+  margin-bottom: 6px;
+
+  ::ng-deep .mdc-label {
+    color: var(--text-muted) !important;
+    font-size: 13.5px;
+    font-family: var(--font-body);
+  }
+
+  .forgot-link {
+    font-size: 13.5px;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--brand-primary);
+  }
+
+  .options-links {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .link-button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+
+    &:hover:not(:disabled) { text-decoration: underline; }
+    &:disabled { opacity: 0.6; cursor: default; }
+  }
 }
 
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 480px) {
+  .login-wrapper { padding: 16px; }
+
+  .login-card {
+    padding: 32px 22px;
+    gap: 22px;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .fade-in { animation: fadeIn 0.4s ease forwards; }

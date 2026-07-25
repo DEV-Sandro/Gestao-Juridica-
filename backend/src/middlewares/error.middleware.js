@@ -31,6 +31,42 @@ function errorMiddleware(error, req, res, next) {
     });
   }
 
+  if (error.message === 'COMPROMISSO_NAO_ENCONTRADO') {
+    return res.status(404).json({
+      mensagem: 'Compromisso não encontrado'
+    });
+  }
+
+  if (error.message === 'LANCAMENTO_NAO_ENCONTRADO') {
+    return res.status(404).json({
+      mensagem: 'Lançamento financeiro não encontrado'
+    });
+  }
+
+  if (error.message === 'VALIDACAO_LANCAMENTO') {
+    return res.status(400).json({
+      mensagem: 'Informe descrição, valor e vencimento válidos para o lançamento.'
+    });
+  }
+
+  if (error.message === 'TEMPLATE_NAO_ENCONTRADO') {
+    return res.status(404).json({
+      mensagem: 'Modelo de documento não encontrado'
+    });
+  }
+
+  if (error.message === 'VALIDACAO_TEMPLATE') {
+    return res.status(400).json({
+      mensagem: 'Informe ao menos o nome e o arquivo do modelo.'
+    });
+  }
+
+  if (error.message === 'TEMPLATE_ARQUIVO_INVALIDO') {
+    return res.status(400).json({
+      mensagem: 'Arquivo inválido. Envie um documento .docx de até 5MB.'
+    });
+  }
+
   if (error.message === 'ACESSO_NEGADO') {
     return res.status(403).json({
       mensagem: 'Acesso negado'
@@ -64,12 +100,27 @@ function errorMiddleware(error, req, res, next) {
     });
   }
 
+  if (error.message === 'VALIDACAO_CONFIGURACAO') {
+    return res.status(400).json({
+      mensagem:
+        Array.isArray(error.details) && error.details.length > 0
+          ? error.details[0]
+          : 'Configuracao invalida.'
+    });
+  }
+
   if (error.message === 'VALIDACAO_CLIENTE') {
     return res.status(400).json({
       mensagem:
         Array.isArray(error.details) && error.details.length > 0
           ? error.details[0]
           : 'Dados do cliente invalidos.'
+    });
+  }
+
+  if (error.message === 'USUARIO_NAO_ENCONTRADO') {
+    return res.status(404).json({
+      mensagem: 'Usuario nao encontrado.'
     });
   }
 

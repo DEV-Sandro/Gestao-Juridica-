@@ -45,6 +45,12 @@ export const routes: Routes = [
     canActivate: [authGuard],
     data: { sidebarSection: 'documentos' }
   },
+  {
+    path: 'advogado/financeiro',
+    component: ModuloAdvogadoComponent,
+    canActivate: [roleGuard('ADMIN', 'ADVOGADO')],
+    data: { sidebarSection: 'financeiro' }
+  },
   { path: 'cliente', component: ModuloClienteComponent, canActivate: [authGuard] },
   { path: 'processo/:id', component: DetalhesProcessoComponent, canActivate: [authGuard] },
 
@@ -62,6 +68,12 @@ export const routes: Routes = [
     canActivate: [roleGuard('ADMIN')],
     loadComponent: () =>
       import('./features/perfil/equipe/equipe.component').then((m) => m.EquipeComponent)
+  },
+  {
+    path: 'auditoria',
+    canActivate: [roleGuard('ADMIN')],
+    loadComponent: () =>
+      import('./features/admin/auditoria/auditoria.component').then((m) => m.AuditoriaComponent)
   },
 
   // Rota antiga (vamos desativar em breve)

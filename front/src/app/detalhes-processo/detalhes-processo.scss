@@ -197,6 +197,23 @@
   }
 }
 
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--surface-strong, var(--surface-soft));
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .summary-note {
   margin-bottom: 16px;
   padding: 18px;

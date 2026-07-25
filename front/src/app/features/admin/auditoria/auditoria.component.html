@@ -1,0 +1,94 @@
+<div class="auditoria-page fade-in">
+  <header class="auditoria-topbar">
+    <div class="topbar-left">
+      <a routerLink="/advogado" class="btn-back">
+        <mat-icon>arrow_back</mat-icon>
+        <span>Voltar</span>
+      </a>
+      <h2 class="page-title font-heading">Auditoria</h2>
+    </div>
+  </header>
+
+  <section class="card-glass filtros-card">
+    <div class="filtros-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Entidade</mat-label>
+        <mat-select [(ngModel)]="filtroEntidade" (selectionChange)="carregar()">
+          <mat-option value="Todas">Todas</mat-option>
+          <mat-option *ngFor="let opcao of entidades" [value]="opcao.value">{{ opcao.label }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Usuário (nome, e-mail ou ação)</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [(ngModel)]="filtroTexto" placeholder="Filtrar na página atual" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>De</mat-label>
+        <input matInput type="date" [(ngModel)]="filtroDe" (change)="carregar()" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Até</mat-label>
+        <input matInput type="date" [(ngModel)]="filtroAte" (change)="carregar()" />
+      </mat-form-field>
+
+      <button mat-stroked-button type="button" (click)="limparFiltros()">
+        <mat-icon>filter_alt_off</mat-icon>
+        Limpar filtros
+      </button>
+    </div>
+  </section>
+
+  <section class="card-glass auditoria-card">
+    <div class="card-header">
+      <div>
+        <h3 class="font-heading m-0">Eventos registrados</h3>
+        <span class="text-muted">
+          {{ registrosFiltrados.length }} evento<span *ngIf="registrosFiltrados.length !== 1">s</span>
+          (mostrando até 200 mais recentes por consulta)
+        </span>
+      </div>
+    </div>
+
+    <div class="loading" *ngIf="carregando">
+      <mat-spinner diameter="32"></mat-spinner>
+      <span>Carregando auditoria...</span>
+    </div>
+
+    <div class="empty-state" *ngIf="!carregando && registrosFiltrados.length === 0">
+      <mat-icon>fact_check</mat-icon>
+      <p>Nenhum evento encontrado com os filtros atuais.</p>
+    </div>
+
+    <div class="table-scroll" *ngIf="!carregando && registrosFiltrados.length > 0">
+      <table class="auditoria-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Ação</th>
+            <th>Entidade</th>
+            <th>Usuário</th>
+            <th>IP</th>
+            <th>Detalhes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let registro of registrosFiltrados">
+            <td>{{ registro.criadoEm | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td><span class="acao-pill">{{ registro.acao }}</span></td>
+            <td>{{ registro.entidade }}</td>
+            <td>
+              <div class="table-primary">{{ registro.usuarioNome || 'Não informado' }}</div>
+              <div class="table-secondary">{{ registro.usuarioEmail || registro.perfil || '' }}</div>
+            </td>
+            <td>{{ registro.ip || '—' }}</td>
+            <td class="detalhes-cell">{{ resumoDetalhes(registro.detalhes) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

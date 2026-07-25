@@ -60,6 +60,22 @@
             <span class="meta-cargo" *ngIf="m.cargo">{{ m.cargo }}</span>
             <span class="meta-cargo" *ngIf="m.oab">{{ m.oab }}</span>
           </div>
+
+          <div class="permissoes-row" *ngIf="m.role === 'ADVOGADO'">
+            <mat-slide-toggle
+              [checked]="!!m.permissoes?.agendaVerColegas"
+              (change)="alterarPermissao(m, 'agendaVerColegas', $event.checked)"
+            >
+              Ver agenda dos colegas
+            </mat-slide-toggle>
+            <mat-slide-toggle
+              [checked]="!!m.permissoes?.agendaVerDetalhesColegas"
+              [disabled]="!m.permissoes?.agendaVerColegas"
+              (change)="alterarPermissao(m, 'agendaVerDetalhesColegas', $event.checked)"
+            >
+              Ver detalhes completos
+            </mat-slide-toggle>
+          </div>
         </div>
 
         <div class="membro-actions" *ngIf="m.uid !== meuUid">

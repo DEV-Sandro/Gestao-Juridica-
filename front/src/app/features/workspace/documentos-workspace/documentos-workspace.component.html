@@ -23,27 +23,98 @@
       <div class="panel-header">
         <div>
           <span class="eyebrow">Modelos</span>
-          <h3 class="font-heading">Templates iniciais</h3>
+          <h3 class="font-heading">Modelos disponíveis</h3>
         </div>
+        <button
+          *ngIf="ehAdmin"
+          mat-stroked-button
+          type="button"
+          class="btn-upload-toggle"
+          (click)="alternarUpload()"
+        >
+          <mat-icon>{{ mostrarUpload ? 'close' : 'upload_file' }}</mat-icon>
+          {{ mostrarUpload ? 'Fechar' : 'Novo modelo' }}
+        </button>
       </div>
 
-      <button
-        type="button"
+      <div class="upload-box" *ngIf="ehAdmin && mostrarUpload">
+        <p class="helper-copy">
+          Envie um .docx com variáveis no formato <code>{{ '{' }}cliente_nome{{ '}' }}</code>.
+          O sistema detecta os campos automaticamente.
+        </p>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Nome do modelo</mat-label>
+          <input matInput [(ngModel)]="novoTemplateNome" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Descrição (opcional)</mat-label>
+          <input matInput [(ngModel)]="novoTemplateDescricao" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Categoria (opcional)</mat-label>
+          <input matInput [(ngModel)]="novoTemplateCategoria" placeholder="Ex.: Procuração, Contrato" />
+        </mat-form-field>
+
+        <label class="file-picker">
+          <input type="file" accept=".docx" (change)="aoSelecionarArquivo($event)" hidden />
+          <mat-icon>attach_file</mat-icon>
+          <span>{{ novoTemplateArquivoNome || 'Selecionar arquivo .docx' }}</span>
+        </label>
+
+        <button
+          mat-flat-button
+          class="btn-premium"
+          type="button"
+          (click)="enviarTemplate()"
+          [disabled]="enviandoTemplate"
+        >
+          <mat-spinner *ngIf="enviandoTemplate" diameter="18"></mat-spinner>
+          <mat-icon *ngIf="!enviandoTemplate">save</mat-icon>
+          {{ enviandoTemplate ? 'Enviando...' : 'Cadastrar modelo' }}
+        </button>
+      </div>
+
+      <div class="loading" *ngIf="carregandoTemplates">
+        <mat-spinner diameter="24"></mat-spinner>
+        <span>Carregando modelos...</span>
+      </div>
+
+      <div
         class="template-card"
-        *ngFor="let template of templates"
-        [class.active]="template.id === templateSelecionado.id"
-        (click)="selecionarTemplate(template)"
+        *ngFor="let modelo of modelos"
+        [class.active]="modelo.id === modeloSelecionado?.id"
+        (click)="selecionarModelo(modelo)"
       >
-        <strong>{{ template.title }}</strong>
-        <span>{{ template.description }}</span>
-      </button>
+        <div class="template-card-main">
+          <strong>{{ modelo.titulo }}</strong>
+          <span>{{ modelo.descricao }}</span>
+          <div class="template-tags">
+            <span class="template-tag" *ngIf="modelo.origem === 'SERVIDOR'">v{{ modelo.versao }}</span>
+            <span class="template-tag" *ngIf="modelo.variaveis.length">{{ modelo.variaveis.length }} variáveis</span>
+            <span class="template-tag is-builtin" *ngIf="modelo.origem === 'EMBUTIDO'">Padrão</span>
+          </div>
+        </div>
+        <button
+          *ngIf="ehAdmin && modelo.origem === 'SERVIDOR'"
+          mat-icon-button
+          type="button"
+          class="btn-remove-template"
+          (click)="excluirModelo(modelo); $event.stopPropagation()"
+          aria-label="Remover modelo"
+        >
+          <mat-icon>delete_outline</mat-icon>
+        </button>
+      </div>
     </article>
 
     <article class="card-glass document-panel">
       <div class="panel-header">
         <div>
           <span class="eyebrow">Montagem</span>
-          <h3 class="font-heading">{{ templateSelecionado.title }}</h3>
+          <h3 class="font-heading">{{ modeloSelecionado?.titulo || 'Selecione um modelo' }}</h3>
         </div>
       </div>
 
@@ -60,6 +131,19 @@
 
       <ng-container *ngIf="!carregandoClientes && clientes.length > 0">
         <div class="form-grid">
+          <mat-form-field appearance="outline" class="span-2">
+            <mat-label>Nome do documento</mat-label>
+            <mat-icon matPrefix>edit_document</mat-icon>
+            <input
+              matInput
+              [(ngModel)]="nomeDocumento"
+              placeholder="Ex.: Procuracao - Joao da Silva"
+              maxlength="140"
+              required
+            />
+            <mat-hint>Esse sera o nome do arquivo .docx salvo.</mat-hint>
+          </mat-form-field>
+
           <mat-form-field appearance="outline">
             <mat-label>Cliente</mat-label>
             <mat-icon matPrefix>person_search</mat-icon>
@@ -120,12 +204,23 @@
           </div>
         </div>
 
-        <div class="template-preview">
+        <div class="template-preview" *ngIf="modeloSelecionado?.origem === 'EMBUTIDO'">
           <span class="eyebrow">Estrutura do modelo</span>
-          <div class="preview-section" *ngFor="let section of templateSelecionado.sections">
+          <div class="preview-section" *ngFor="let section of modeloSelecionado?.embutido?.sections">
             <strong *ngIf="section.heading">{{ section.heading }}</strong>
             <p *ngFor="let paragraph of section.paragraphs">{{ paragraph }}</p>
           </div>
+        </div>
+
+        <div class="template-preview" *ngIf="modeloSelecionado?.origem === 'SERVIDOR' && modeloSelecionado?.variaveis?.length">
+          <span class="eyebrow">Variáveis detectadas neste modelo</span>
+          <div class="variaveis-chips">
+            <span class="template-tag" *ngFor="let v of modeloSelecionado?.variaveis">{{ v }}</span>
+          </div>
+          <p class="helper-copy">
+            Os campos conhecidos (cliente, advogado, processo…) são preenchidos automaticamente.
+            Variáveis não reconhecidas saem com linha em branco para preencher à mão.
+          </p>
         </div>
 
         <div class="panel-footer">

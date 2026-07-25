@@ -23,3 +23,7 @@ service-account.json
 backend/service-account.json
 *.env
 backend/src/package-lock.json
+.gcloud/
+
+# --- CONFIG LOCAL DE FERRAMENTAS ---
+.claude/

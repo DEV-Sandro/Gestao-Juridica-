@@ -1,4 +1,5 @@
 const usuarioService = require('../services/usuario.service');
+const permissaoService = require('../services/permissao.service');
 
 async function obterMeuPerfil(req, res, next) {
   try {
@@ -67,6 +68,23 @@ async function atualizarRole(req, res, next) {
   }
 }
 
+async function obterMinhasPermissoes(req, res, next) {
+  try {
+    res.json(permissaoService.obterPermissoes(req.user));
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function atualizarPermissoes(req, res, next) {
+  try {
+    const atualizado = await usuarioService.atualizarPermissoes(req.params.uid, req.body);
+    res.json(atualizado);
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function removerMembro(req, res, next) {
   try {
     await usuarioService.removerMembro(req.params.uid, req.user);
@@ -84,5 +102,7 @@ module.exports = {
   listarEquipe,
   convidarMembro,
   atualizarRole,
+  obterMinhasPermissoes,
+  atualizarPermissoes,
   removerMembro
 };

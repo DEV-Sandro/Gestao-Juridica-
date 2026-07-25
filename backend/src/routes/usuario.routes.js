@@ -35,6 +35,7 @@ router.get('/me', controller.obterMeuPerfil);
  *       - bearerAuth: []
  */
 router.put('/me', controller.atualizarMeuPerfil);
+router.get('/me/permissoes', controller.obterMinhasPermissoes);
 router.post(
   '/me/avatar',
   express.raw({
@@ -77,6 +78,17 @@ router.post('/equipe/convidar', roleMiddleware('ADMIN'), controller.convidarMemb
  *       - bearerAuth: []
  */
 router.put('/equipe/:uid/role', roleMiddleware('ADMIN'), controller.atualizarRole);
+
+/**
+ * @swagger
+ * /api/equipe/{uid}/permissoes:
+ *   put:
+ *     summary: Atualiza permissoes granulares de um membro (ADMIN)
+ *     tags: [Usuarios]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.put('/equipe/:uid/permissoes', roleMiddleware('ADMIN'), controller.atualizarPermissoes);
 
 /**
  * @swagger

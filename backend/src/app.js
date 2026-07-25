@@ -9,9 +9,16 @@ const { projectId } = require('./config/firebase');
 const swaggerSpec = require('./config/swagger');
 const processoRoutes = require('./routes/processo.routes');
 const authRoutes = require('./routes/auth.routes');
+const auditoriaRoutes = require('./routes/auditoria.routes');
+const buscaRoutes = require('./routes/busca.routes');
 const clienteRoutes = require('./routes/cliente.routes');
+const compromissoRoutes = require('./routes/compromisso.routes');
+const configuracaoRoutes = require('./routes/configuracao.routes');
 const conviteRoutes = require('./routes/convite.routes');
+const dashboardRoutes = require('./routes/dashboard.routes');
 const honorarioRoutes = require('./routes/honorario.routes');
+const lancamentoRoutes = require('./routes/lancamento.routes');
+const templateRoutes = require('./routes/template.routes');
 const usuarioRoutes = require('./routes/usuario.routes');
 const { notFoundMiddleware, errorMiddleware } = require('./middlewares/error.middleware');
 
@@ -159,10 +166,17 @@ app.get('/healthz', (req, res) => {
 // ROTAS API
 // ============================================================
 app.use('/api', authRoutes);
+app.use('/api', auditoriaRoutes);
+app.use('/api', buscaRoutes);
+app.use('/api', compromissoRoutes);
 app.use('/api', conviteRoutes);
 app.use('/api', usuarioRoutes);
 app.use('/api', clienteRoutes);
+app.use('/api', configuracaoRoutes);
+app.use('/api', dashboardRoutes);
 app.use('/api', honorarioRoutes);
+app.use('/api', lancamentoRoutes);
+app.use('/api', templateRoutes);
 app.use('/api/processos', processoRoutes);
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 

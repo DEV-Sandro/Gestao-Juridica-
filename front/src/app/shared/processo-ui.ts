@@ -2,13 +2,14 @@
   | 'Aguardando Análise'
   | 'Em Andamento'
   | 'Urgente'
+  | 'Data Fatal'
   | 'Atrasado'
   | 'Concluído'
   | 'Arquivado'
   | 'Cancelado'
   | 'Indeferido';
 
-export type CategoriaCompromisso = 'PRAZO' | 'AUDIENCIA' | 'EVENTO' | 'DOCUMENTO';
+export type CategoriaCompromisso = 'PRAZO' | 'AUDIENCIA' | 'EVENTO' | 'DOCUMENTO' | 'REUNIAO' | 'OUTRO';
 export type OrcamentoStatus =
   | 'RASCUNHO'
   | 'ENVIADO_CLIENTE'
@@ -45,6 +46,10 @@ export interface ProcessoApiModel {
   urgenteManual?: boolean | null;
   categoriaCompromisso?: string | null;
   localCompromisso?: string | null;
+  categoria?: string | null;
+  tipoCausa?: string | null;
+  situacao?: string | null;
+  tags?: string[] | null;
   criadoEm?: string | null;
   atualizadoEm?: string | null;
   arquivado?: boolean | null;
@@ -76,6 +81,36 @@ export interface AgendaEvento {
   icon: string;
   detalhe: string;
   localCompromisso: string | null;
+  origem: 'PROCESSO' | 'COMPROMISSO';
+  compromissoId?: string;
+}
+
+export type CompromissoTipo = 'AUDIENCIA' | 'PRAZO' | 'REUNIAO' | 'EVENTO' | 'OUTRO';
+export type CompromissoStatus = 'PENDENTE' | 'CONCLUIDO' | 'CANCELADO';
+export type CompromissoVisibilidade = 'PUBLICO' | 'RESTRITO';
+
+export interface CompromissoApiModel {
+  id: string;
+  titulo: string;
+  tipo: CompromissoTipo;
+  processoId?: string | null;
+  advogadoId: string;
+  participantesIds?: string[];
+  dataInicio: string;
+  dataFim: string;
+  diaTodo: boolean;
+  local?: string | null;
+  observacao?: string | null;
+  status: CompromissoStatus;
+  visibilidade: CompromissoVisibilidade;
+  restrito?: boolean;
+}
+
+export interface ConflitoCompromisso {
+  id: string;
+  titulo: string;
+  dataInicio: string;
+  dataFim: string;
 }
 
 export interface HistoricoRegistroApi {
@@ -119,6 +154,7 @@ const STATUS_FINAIS = new Set<ProcessoStatusVisual>([
 ]);
 
 const STATUS_PRIORITY: Record<ProcessoStatusVisual, number> = {
+  'Data Fatal': 0,
   Atrasado: 0,
   Urgente: 1,
   'Em Andamento': 2,
@@ -148,6 +184,8 @@ export function normalizarCategoriaCompromisso(
   if (normalizado === 'AUDIENCIA') return 'AUDIENCIA';
   if (normalizado === 'EVENTO') return 'EVENTO';
   if (normalizado === 'DOCUMENTO') return 'DOCUMENTO';
+  if (normalizado === 'REUNIAO') return 'REUNIAO';
+  if (normalizado === 'OUTRO') return 'OUTRO';
   return 'PRAZO';
 }
 
@@ -159,6 +197,10 @@ export function categoriaCompromissoLabel(tipo: CategoriaCompromisso): string {
       return 'Evento';
     case 'DOCUMENTO':
       return 'Documento';
+    case 'REUNIAO':
+      return 'Reunião';
+    case 'OUTRO':
+      return 'Outro';
     default:
       return 'Prazo';
   }
@@ -296,6 +338,14 @@ export function diferencaDiasParaPrazo(prazo?: string | null): number | null {
   return Math.ceil((data.getTime() - hoje.getTime()) / 86400000);
 }
 
+// Um prazo vira Data Fatal automaticamente quando falta 1 dia ou menos,
+// vence hoje ou ja esta vencido — sem qualquer acao manual do usuario.
+const LIMIAR_DATA_FATAL_DIAS = 1;
+
+export function ehDataFatal(diasParaPrazo: number | null): boolean {
+  return diasParaPrazo !== null && diasParaPrazo <= LIMIAR_DATA_FATAL_DIAS;
+}
+
 export function calcularStatusVisual(
   processo: Pick<ProcessoApiModel, 'status' | 'prazo' | 'urgenteManual' | 'arquivado'>
 ): ProcessoStatusVisual {
@@ -312,13 +362,16 @@ export function calcularStatusVisual(
     return 'Concluído';
   }
 
-  if (urgenteManual) {
-    return diasParaPrazo !== null && diasParaPrazo < 0 ? 'Atrasado' : 'Urgente';
+  if (ehDataFatal(diasParaPrazo)) {
+    return 'Data Fatal';
   }
 
-  if (diasParaPrazo !== null) {
-    if (diasParaPrazo < 0) return 'Atrasado';
-    if (diasParaPrazo <= 7) return 'Urgente';
+  if (urgenteManual) {
+    return 'Urgente';
+  }
+
+  if (diasParaPrazo !== null && diasParaPrazo <= 7) {
+    return 'Urgente';
   }
 
   return statusBase;
@@ -350,6 +403,13 @@ export function obterMetaStatus(status: ProcessoStatusVisual): {
   label: string;
 } {
   switch (status) {
+    case 'Data Fatal':
+      return {
+        icon: 'gavel',
+        badgeClass: 'is-overdue',
+        textClass: 'text-overdue',
+        label: 'Data Fatal'
+      };
     case 'Atrasado':
       return {
         icon: 'error',
@@ -434,7 +494,55 @@ export function processarAgendaEvento(processo: ProcessoViewModel): AgendaEvento
     statusLabel: meta.label,
     icon: meta.icon,
     detalhe: formatarResumoPrazo(processo),
-    localCompromisso: processo.localCompromisso || null
+    localCompromisso: processo.localCompromisso || null,
+    origem: 'PROCESSO'
+  };
+}
+
+// Compromissos sao eventos de agenda proprios (com hora), independentes de um
+// processo. Reaproveita a mesma logica de urgencia (Data Fatal/Urgente) usada
+// pelos processos, para o calendario colorir os dois tipos de forma consistente.
+export function compromissoParaAgendaEvento(compromisso: CompromissoApiModel): AgendaEvento {
+  const dataIso = (compromisso.dataInicio || '').slice(0, 10);
+  const diasParaData = diferencaDiasParaPrazo(dataIso);
+
+  let status: ProcessoStatusVisual;
+  if (compromisso.status === 'CONCLUIDO') {
+    status = 'Concluído';
+  } else if (compromisso.status === 'CANCELADO') {
+    status = 'Cancelado';
+  } else if (ehDataFatal(diasParaData)) {
+    status = 'Data Fatal';
+  } else if (diasParaData !== null && diasParaData <= 7) {
+    status = 'Urgente';
+  } else {
+    status = 'Em Andamento';
+  }
+
+  const tipo = normalizarCategoriaCompromisso(compromisso.tipo);
+  const meta = obterMetaStatus(status);
+  const hora = compromisso.diaTodo
+    ? ''
+    : new Date(compromisso.dataInicio).toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+  return {
+    id: `compromisso-${compromisso.id}`,
+    processoId: compromisso.processoId || '',
+    data: dataIso,
+    titulo: compromisso.titulo,
+    subtitulo: [hora, compromisso.local].filter(Boolean).join(' · '),
+    tipo,
+    tipoLabel: categoriaCompromissoLabel(tipo),
+    status,
+    statusLabel: meta.label,
+    icon: meta.icon,
+    detalhe: compromisso.observacao || '',
+    localCompromisso: compromisso.local || null,
+    origem: 'COMPROMISSO',
+    compromissoId: compromisso.id
   };
 }
 

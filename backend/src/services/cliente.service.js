@@ -13,6 +13,22 @@ const textoOpcional = (max) =>
 
 const cpfRegex = /^\d{11}$/;
 
+const ESTADOS_CIVIS = new Set([
+  'SOLTEIRO',
+  'CASADO',
+  'DIVORCIADO',
+  'VIUVO',
+  'UNIAO_ESTAVEL',
+  'SEPARADO_JUDICIALMENTE'
+]);
+
+const estadoCivilOpcional = z
+  .union([z.string().trim().max(30), z.null(), z.undefined()])
+  .transform((valor) => (typeof valor === 'string' ? valor.trim().toUpperCase() || null : null))
+  .refine((valor) => !valor || ESTADOS_CIVIS.has(valor), {
+    message: 'Estado civil invalido.'
+  });
+
 const schemaCliente = z.object({
   nome: textoObrigatorio(140, 'Informe o nome do cliente.'),
   cpf: textoOpcional(14).refine((valor) => !valor || cpfRegex.test(valor.replace(/\D/g, '')), {
@@ -24,6 +40,10 @@ const schemaCliente = z.object({
   ),
   telefone: textoOpcional(32),
   documentoSecundario: textoOpcional(32),
+  estadoCivil: estadoCivilOpcional,
+  nacionalidade: textoOpcional(60),
+  profissao: textoOpcional(80),
+  rg: textoOpcional(20),
   endereco: textoOpcional(180),
   numero: textoOpcional(20),
   complemento: textoOpcional(80),
@@ -63,6 +83,10 @@ function sanitizarCliente(cliente) {
     email: cliente.email || null,
     telefone: cliente.telefone || null,
     documentoSecundario: cliente.documentoSecundario || null,
+    estadoCivil: cliente.estadoCivil || null,
+    nacionalidade: cliente.nacionalidade || null,
+    profissao: cliente.profissao || null,
+    rg: cliente.rg || null,
     endereco: cliente.endereco || null,
     numero: cliente.numero || null,
     complemento: cliente.complemento || null,

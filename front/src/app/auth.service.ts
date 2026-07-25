@@ -4,24 +4,132 @@ import {
   GoogleAuthProvider,
   User as FirebaseUser,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
   updateProfile
 } from '@angular/fire/auth';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
 
 import { environment } from '../environments/environment';
 import { AppUser, ConviteMembroPayload, UserRole } from './models/app-user.model';
 import { ClientePayload, ClienteRecord } from './models/client.model';
+import { CompromissoApiModel, ConflitoCompromisso } from './shared/processo-ui';
 import {
   InviteAcceptancePayload,
   InviteAcceptanceResult,
   InviteCreateResponse,
   InviteSummary
 } from './models/invite.model';
+
+export interface ResultadoBusca {
+  termo: string;
+  processos: {
+    id: string;
+    titulo: string;
+    cliente: string | null;
+    status: string | null;
+    prazo: string | null;
+  }[];
+  clientes: {
+    id: string;
+    nome: string;
+    cpf: string | null;
+    email: string | null;
+    telefone: string | null;
+  }[];
+}
+
+export type LancamentoTipo = 'HONORARIO' | 'DESPESA' | 'REEMBOLSO';
+export type LancamentoStatus = 'PENDENTE' | 'PAGO' | 'CANCELADO' | 'ATRASADO';
+
+export interface LancamentoFinanceiro {
+  id: string;
+  descricao: string;
+  tipo: LancamentoTipo;
+  valor: number;
+  vencimento: string;
+  status: 'PENDENTE' | 'PAGO' | 'CANCELADO';
+  statusEfetivo: LancamentoStatus;
+  pagoEm?: string | null;
+  valorPago?: number | null;
+  parcela?: number;
+  totalParcelas?: number;
+  processoId?: string | null;
+  processoTitulo?: string | null;
+  clienteId?: string | null;
+  clienteNome?: string | null;
+  formaPagamento?: string | null;
+  observacao?: string | null;
+}
+
+export interface ResumoFinanceiro {
+  recebidoNoMes: number;
+  aReceber: number;
+  atrasado: number;
+  previstoNoMes: number;
+  despesasNoMes: number;
+  totalAtrasados: number;
+  totalPendentes: number;
+}
+
+export interface DashboardResumo {
+  geradoEm: string;
+  processos: {
+    ativos: number;
+    dataFatal: number;
+    urgentes: number;
+    concluidos: number;
+    vencendoHoje: number;
+    porArea: Record<string, number>;
+    porSituacao: Record<string, number>;
+  };
+  prazosCriticos: {
+    id: string;
+    titulo: string;
+    cliente: string | null;
+    prazo: string;
+    status: string;
+    diasParaPrazo: number | null;
+  }[];
+  agenda: {
+    hoje: number;
+    proximosSete: number;
+    itensDoDia: { id: string; titulo: string; dataInicio: string; tipo: string; local: string | null }[];
+  };
+  financeiro: ResumoFinanceiro | null;
+}
+
+export interface TemplateDocumento {
+  id: string;
+  nome: string;
+  descricao: string | null;
+  categoria: string | null;
+  tipo: string | null;
+  versaoAtual: number;
+  variaveis: string[];
+  ativo: boolean;
+  criadoEm: string | null;
+  atualizadoEm: string | null;
+}
+
+export interface AuditoriaRegistro {
+  id: string;
+  acao: string;
+  entidade: string;
+  entidadeId: string | null;
+  usuarioId: string | null;
+  usuarioEmail: string | null;
+  usuarioNome: string | null;
+  perfil: string | null;
+  ip: string | null;
+  userAgent: string | null;
+  detalhes: Record<string, unknown>;
+  criadoEm: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -71,6 +179,14 @@ export class AuthService {
 
   async loginGoogle() {
     await signInWithPopup(this.auth, new GoogleAuthProvider());
+  }
+
+  // Envia o e-mail de redefinicao de senha pelo proprio Firebase Auth (que gera o
+  // link seguro, valida o token e expira sozinho — nao guardamos nada disso).
+  // Erros de "usuario nao encontrado" sao engolidos de proposito pelo chamador
+  // para nao permitir descobrir quais e-mails existem na base.
+  async enviarResetSenha(email: string): Promise<void> {
+    await sendPasswordResetEmail(this.auth, email.trim());
   }
 
   async getAuthToken(): Promise<string | null> {
@@ -137,8 +253,129 @@ export class AuthService {
     return this.http.put<AppUser>(`${this.apiUrl}/api/equipe/${uid}/role`, { role });
   }
 
+  atualizarPermissoesMembro(uid: string, permissoes: Record<string, boolean>) {
+    return this.http.put<AppUser>(`${this.apiUrl}/api/equipe/${uid}/permissoes`, permissoes);
+  }
+
+  listarAuditoria(filtros: {
+    entidade?: string;
+    usuarioId?: string;
+    de?: string;
+    ate?: string;
+    limite?: number;
+  }) {
+    let params = new HttpParams();
+    Object.entries(filtros).forEach(([chave, valor]) => {
+      if (valor !== undefined && valor !== null && valor !== '') {
+        params = params.set(chave, String(valor));
+      }
+    });
+
+    return this.http.get<AuditoriaRegistro[]>(`${this.apiUrl}/api/auditoria`, { params });
+  }
+
   removerMembro(uid: string) {
     return this.http.delete(`${this.apiUrl}/api/equipe/${uid}`);
+  }
+
+  listarAgenda(filtros: { modo?: string; advogadoId?: string; de?: string; ate?: string }) {
+    let params = new HttpParams();
+    Object.entries(filtros).forEach(([chave, valor]) => {
+      if (valor !== undefined && valor !== null && valor !== '') {
+        params = params.set(chave, String(valor));
+      }
+    });
+
+    return this.http.get<CompromissoApiModel[]>(`${this.apiUrl}/api/agenda`, { params });
+  }
+
+  criarCompromisso(dados: Partial<CompromissoApiModel>) {
+    return this.http.post<{ id: string; conflitos: ConflitoCompromisso[] }>(
+      `${this.apiUrl}/api/compromissos`,
+      dados
+    );
+  }
+
+  atualizarCompromisso(id: string, dados: Partial<CompromissoApiModel>) {
+    return this.http.put<{ conflitos: ConflitoCompromisso[] }>(
+      `${this.apiUrl}/api/compromissos/${id}`,
+      dados
+    );
+  }
+
+  excluirCompromisso(id: string) {
+    return this.http.delete(`${this.apiUrl}/api/compromissos/${id}`);
+  }
+
+  buscarGlobal(termo: string) {
+    return this.http.get<ResultadoBusca>(`${this.apiUrl}/api/busca`, {
+      params: new HttpParams().set('q', termo)
+    });
+  }
+
+  obterDashboard() {
+    return this.http.get<DashboardResumo>(`${this.apiUrl}/api/dashboard`);
+  }
+
+  listarLancamentos(filtros: { processoId?: string; statusEfetivo?: string; de?: string; ate?: string } = {}) {
+    let params = new HttpParams();
+    Object.entries(filtros).forEach(([chave, valor]) => {
+      if (valor) params = params.set(chave, String(valor));
+    });
+    return this.http.get<LancamentoFinanceiro[]>(`${this.apiUrl}/api/lancamentos`, { params });
+  }
+
+  obterResumoFinanceiro() {
+    return this.http.get<ResumoFinanceiro>(`${this.apiUrl}/api/financeiro/resumo`);
+  }
+
+  criarLancamento(payload: {
+    descricao: string;
+    tipo?: LancamentoTipo;
+    valor: string | number;
+    vencimento: string;
+    parcelas?: number;
+    processoId?: string | null;
+    formaPagamento?: string | null;
+    observacao?: string | null;
+  }) {
+    return this.http.post<LancamentoFinanceiro[]>(`${this.apiUrl}/api/lancamentos`, payload);
+  }
+
+  atualizarLancamento(id: string, payload: Record<string, unknown>) {
+    return this.http.put<LancamentoFinanceiro>(`${this.apiUrl}/api/lancamentos/${id}`, payload);
+  }
+
+  excluirLancamento(id: string) {
+    return this.http.delete(`${this.apiUrl}/api/lancamentos/${id}`);
+  }
+
+  listarTemplates() {
+    return this.http.get<TemplateDocumento[]>(`${this.apiUrl}/api/templates`);
+  }
+
+  criarTemplate(payload: {
+    nome: string;
+    descricao?: string | null;
+    categoria?: string | null;
+    tipo?: string | null;
+    arquivoBase64: string;
+  }) {
+    return this.http.post<TemplateDocumento>(`${this.apiUrl}/api/templates`, payload);
+  }
+
+  adicionarVersaoTemplate(id: string, payload: { arquivoBase64: string; notas?: string | null }) {
+    return this.http.post<TemplateDocumento>(`${this.apiUrl}/api/templates/${id}/versoes`, payload);
+  }
+
+  excluirTemplate(id: string) {
+    return this.http.delete(`${this.apiUrl}/api/templates/${id}`);
+  }
+
+  baixarTemplateArquivo(id: string) {
+    return this.http.get(`${this.apiUrl}/api/templates/${id}/arquivo`, {
+      responseType: 'arraybuffer'
+    });
   }
 
   listarProcessos() {
@@ -187,6 +424,16 @@ export class AuthService {
 
   pegarTabelasOAB() {
     return this.http.get<Record<string, string>>(`${this.apiUrl}/api/honorarios`);
+  }
+
+  listarSituacoesProcesso() {
+    return this.http.get<{ opcoes?: { value: string; label: string; ativo: boolean }[] }>(
+      `${this.apiUrl}/api/configuracoes/situacoesProcesso`
+    );
+  }
+
+  listarTagsUsadas() {
+    return this.http.get<{ valores?: string[] }>(`${this.apiUrl}/api/configuracoes/tagsUsadas`);
   }
 
   listarClientes() {

@@ -1,0 +1,53 @@
+<div class="reset-dialog">
+  <ng-container *ngIf="!enviado; else confirmacao">
+    <div class="reset-header">
+      <div class="reset-icon"><mat-icon>lock_reset</mat-icon></div>
+      <div>
+        <h2 class="font-heading">Recuperar senha</h2>
+        <p>Enviaremos um link seguro para você criar uma nova senha.</p>
+      </div>
+    </div>
+
+    <mat-form-field appearance="outline" class="reset-field">
+      <mat-label>E-mail cadastrado</mat-label>
+      <mat-icon matPrefix>email</mat-icon>
+      <input
+        matInput
+        type="email"
+        [(ngModel)]="email"
+        placeholder="nome@escritorio.com"
+        (keyup.enter)="enviar()"
+        autocomplete="email"
+      />
+    </mat-form-field>
+
+    <p class="reset-erro" *ngIf="erro">
+      <mat-icon>error_outline</mat-icon>
+      {{ erro }}
+    </p>
+
+    <div class="reset-acoes">
+      <button mat-button type="button" (click)="fechar()" [disabled]="enviando">Cancelar</button>
+      <button mat-flat-button class="btn-premium" type="button" (click)="enviar()" [disabled]="enviando">
+        <mat-spinner *ngIf="enviando" diameter="18"></mat-spinner>
+        <span>{{ enviando ? 'Enviando...' : 'Enviar link' }}</span>
+      </button>
+    </div>
+  </ng-container>
+
+  <ng-template #confirmacao>
+    <div class="reset-sucesso">
+      <div class="reset-icon is-sucesso"><mat-icon>mark_email_read</mat-icon></div>
+      <h2 class="font-heading">Verifique seu e-mail</h2>
+      <p>
+        Se houver uma conta para <strong>{{ email }}</strong>, o link de redefinição
+        já está a caminho.
+      </p>
+      <span class="reset-dica">Não achou? Confira a caixa de spam.</span>
+
+      <button mat-flat-button class="btn-premium" type="button" (click)="fechar()">
+        Entendi
+      </button>
+    </div>
+  </ng-template>
+</div>

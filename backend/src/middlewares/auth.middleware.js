@@ -21,7 +21,13 @@ async function authMiddleware(req, res, next) {
       email: decoded.email || null,
       displayName: userData.displayName || decoded.name || null,
       photoURL: userData.photoURL || decoded.picture || null,
-      role: userData.role || 'CLIENT'
+      role: userData.role || 'CLIENT',
+      permissoes: userData.permissoes || null,
+      // Capturados aqui (unico lugar com acesso ao req cru) e carregados junto do
+      // usuario em toda a aplicacao — auditoriaService.registrarEvento le esses
+      // campos de "usuario" sem que cada chamador precise repassar o req.
+      ip: req.ip || null,
+      userAgent: req.get('user-agent') || null
     };
 
     next();

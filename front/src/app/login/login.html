@@ -4,6 +4,7 @@
     <div class="brand-header">
       <div class="logo-shield"><mat-icon>balance</mat-icon></div>
       <h1 class="font-heading">JustaPro</h1>
+      <p class="brand-tagline">Gestão jurídica do seu escritório</p>
     </div>
 
     <form (ngSubmit)="acessar()" class="login-form">
@@ -24,7 +25,12 @@
 
       <div class="form-options">
         <mat-checkbox color="primary">Lembrar de mim</mat-checkbox>
-        <a routerLink="/convite/aceitar" class="forgot-link">Finalizar convite</a>
+        <div class="options-links">
+          <button type="button" class="forgot-link link-button" (click)="esqueciSenha()">
+            Esqueci minha senha
+          </button>
+          <a routerLink="/convite/aceitar" class="forgot-link">Finalizar convite</a>
+        </div>
       </div>
 
       <button mat-flat-button class="btn-premium" type="submit" [disabled]="carregando">

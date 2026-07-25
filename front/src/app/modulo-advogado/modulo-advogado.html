@@ -1,18 +1,30 @@
 ﻿<div class="jp-layout fade-in">
-  <aside class="jp-sidebar" aria-label="Menu lateral do workspace">
+  <aside class="jp-sidebar" [class.is-recolhida]="sidebarRecolhida" aria-label="Menu lateral do workspace">
     <div class="sidebar-brand">
       <div class="brand-mark">
         <mat-icon>balance</mat-icon>
       </div>
-      <div>
+      <div class="brand-texts">
         <strong class="font-heading">JustaPro</strong>
         <span>Gestao juridica premium</span>
       </div>
+
+      <button
+        type="button"
+        class="sidebar-toggle"
+        (click)="alternarSidebar()"
+        [attr.aria-expanded]="!sidebarRecolhida"
+        [attr.aria-label]="sidebarRecolhida ? 'Expandir menu lateral' : 'Recolher menu lateral'"
+        [matTooltip]="sidebarRecolhida ? 'Expandir menu' : 'Recolher menu'"
+        matTooltipPosition="right"
+      >
+        <mat-icon>{{ sidebarRecolhida ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+      </button>
     </div>
 
     <nav class="sidebar-nav">
       <a
-        class="nav-item"
+        class="nav-item" [matTooltip]="sidebarRecolhida ? 'Dashboard' : ''" matTooltipPosition="right"
         routerLink="/advogado/dashboard"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
@@ -24,7 +36,7 @@
       </a>
 
       <a
-        class="nav-item"
+        class="nav-item" [matTooltip]="sidebarRecolhida ? 'Processos' : ''" matTooltipPosition="right"
         routerLink="/advogado/processos"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
@@ -36,7 +48,7 @@
       </a>
 
       <a
-        class="nav-item"
+        class="nav-item" [matTooltip]="sidebarRecolhida ? 'Clientes' : ''" matTooltipPosition="right"
         routerLink="/advogado/clientes"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
@@ -48,7 +60,7 @@
       </a>
 
       <a
-        class="nav-item"
+        class="nav-item" [matTooltip]="sidebarRecolhida ? 'Agenda' : ''" matTooltipPosition="right"
         routerLink="/advogado/agenda"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
@@ -60,7 +72,7 @@
       </a>
 
       <a
-        class="nav-item"
+        class="nav-item" [matTooltip]="sidebarRecolhida ? 'Documentos' : ''" matTooltipPosition="right"
         routerLink="/advogado/documentos"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
@@ -73,13 +85,13 @@
     </nav>
 
     <div class="sidebar-bottom">
-      <a class="nav-item" routerLink="/perfil" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+      <a class="nav-item" [matTooltip]="sidebarRecolhida ? 'Meu perfil' : ''" matTooltipPosition="right" routerLink="/perfil" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
         <mat-icon>person</mat-icon>
         <span>Meu perfil</span>
       </a>
 
       <a
-        class="nav-item"
+        class="nav-item" [matTooltip]="sidebarRecolhida ? 'Equipe' : ''" matTooltipPosition="right"
         routerLink="/equipe"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
@@ -89,7 +101,28 @@
         <span>Equipe</span>
       </a>
 
-      <button type="button" class="nav-item text-danger" (click)="sair()">
+      <a
+        class="nav-item" [matTooltip]="sidebarRecolhida ? 'Auditoria' : ''" matTooltipPosition="right"
+        routerLink="/auditoria"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        *ngIf="currentUser?.role === 'ADMIN'"
+      >
+        <mat-icon>fact_check</mat-icon>
+        <span>Auditoria</span>
+      </a>
+
+      <a
+        class="nav-item" [matTooltip]="sidebarRecolhida ? 'Financeiro' : ''" matTooltipPosition="right"
+        routerLink="/advogado/financeiro"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        <mat-icon>account_balance_wallet</mat-icon>
+        <span>Financeiro</span>
+      </a>
+
+      <button type="button" class="nav-item text-danger" [matTooltip]="sidebarRecolhida ? 'Sair' : ''" matTooltipPosition="right" (click)="sair()">
         <mat-icon>logout</mat-icon>
         <span>Sair</span>
       </button>
@@ -119,21 +152,104 @@
     </div>
 
     <header class="jp-topbar">
-      <div class="topbar-copy">
-        <span class="eyebrow">Operacao juridica</span>
-        <h1 class="font-heading">{{ topbarTitulo }}</h1>
-        <p class="topbar-description">{{ topbarDescricao }}</p>
-      </div>
+      <nav class="topbar-breadcrumb" aria-label="Trilha de navegacao">
+        <button
+          type="button"
+          class="breadcrumb-menu-mobile"
+          (click)="alternarSidebar()"
+          aria-label="Alternar menu lateral"
+        >
+          <mat-icon>menu</mat-icon>
+        </button>
+        <span class="breadcrumb-raiz">Workspace</span>
+        <mat-icon class="breadcrumb-sep">chevron_right</mat-icon>
+        <h1 class="font-heading breadcrumb-atual">{{ topbarTitulo }}</h1>
+      </nav>
 
       <div class="topbar-actions">
+        <div class="busca-global">
+          <mat-icon class="busca-icone">search</mat-icon>
+          <input
+            type="text"
+            class="busca-input"
+            placeholder="Buscar processo, cliente, CPF, tag..."
+            [(ngModel)]="termoBuscaGlobal"
+            (ngModelChange)="aoDigitarBusca()"
+            (focus)="aoDigitarBusca()"
+            aria-label="Busca global"
+          />
+          <button
+            type="button"
+            class="busca-limpar"
+            *ngIf="termoBuscaGlobal"
+            (click)="fecharBusca()"
+            aria-label="Limpar busca"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+
+          <div class="busca-resultados" *ngIf="painelBuscaAberto && resultadoBusca">
+            <div class="busca-vazia" *ngIf="totalResultadosBusca === 0 && !buscandoGlobal">
+              Nenhum resultado para "{{ resultadoBusca.termo }}".
+            </div>
+
+            <ng-container *ngIf="resultadoBusca.processos.length">
+              <span class="busca-grupo">Processos</span>
+              <button
+                type="button"
+                class="busca-item"
+                *ngFor="let processo of resultadoBusca.processos"
+                (click)="abrirResultadoProcesso(processo.id)"
+              >
+                <mat-icon>folder_open</mat-icon>
+                <span class="busca-item-texto">
+                  <strong>{{ processo.titulo }}</strong>
+                  <small>{{ processo.cliente || 'Sem cliente' }} · {{ processo.status }}</small>
+                </span>
+              </button>
+            </ng-container>
+
+            <ng-container *ngIf="resultadoBusca.clientes.length">
+              <span class="busca-grupo">Clientes</span>
+              <button
+                type="button"
+                class="busca-item"
+                *ngFor="let cliente of resultadoBusca.clientes"
+                (click)="abrirResultadoCliente()"
+              >
+                <mat-icon>person</mat-icon>
+                <span class="busca-item-texto">
+                  <strong>{{ cliente.nome }}</strong>
+                  <small>{{ cliente.cpf || cliente.email || cliente.telefone || 'Sem contato' }}</small>
+                </span>
+              </button>
+            </ng-container>
+          </div>
+        </div>
+
         <button type="button" class="icon-action" aria-label="Notificacoes" (click)="togglePainelNotificacoes()">
           <mat-icon>notifications</mat-icon>
           <span class="icon-badge" *ngIf="notificacoesNaoLidas > 0">{{ notificacoesNaoLidas }}</span>
         </button>
 
-        <button mat-button class="theme-trigger" [matMenuTriggerFor]="temaMenu" type="button">
+        <button
+          type="button"
+          class="icon-action"
+          (click)="alternarModoClaroEscuro()"
+          [matTooltip]="temaAtual === 'light' ? 'Mudar para tema escuro' : 'Mudar para tema claro'"
+          [attr.aria-label]="temaAtual === 'light' ? 'Mudar para tema escuro' : 'Mudar para tema claro'"
+        >
+          <mat-icon>{{ temaAtual === 'light' ? 'dark_mode' : 'light_mode' }}</mat-icon>
+        </button>
+
+        <button
+          type="button"
+          class="icon-action"
+          [matMenuTriggerFor]="temaMenu"
+          matTooltip="Escolher tema"
+          aria-label="Escolher tema"
+        >
           <mat-icon>palette</mat-icon>
-          {{ temaAtualLabel }}
         </button>
 
         <mat-menu #temaMenu="matMenu">
@@ -166,6 +282,11 @@
           <button mat-menu-item type="button" routerLink="/equipe" *ngIf="currentUser?.role === 'ADMIN'">
             <mat-icon>groups</mat-icon>
             Gestao da equipe
+          </button>
+
+          <button mat-menu-item type="button" routerLink="/auditoria" *ngIf="currentUser?.role === 'ADMIN'">
+            <mat-icon>fact_check</mat-icon>
+            Auditoria
           </button>
 
           <button mat-menu-item type="button" (click)="sair()">
@@ -214,49 +335,131 @@
         <mat-icon>description</mat-icon>
         <span>Docs</span>
       </a>
+      <a class="quick-link" routerLink="/advogado/financeiro" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <mat-icon>account_balance_wallet</mat-icon>
+        <span>Financeiro</span>
+      </a>
     </nav>
 
     <section class="jp-workspace" *ngIf="activeSidebarSection === 'dashboard'">
-      <section class="summary-banner card-glass" *ngIf="resumoDiario.visivel">
-        <div class="summary-copy">
-          <span class="eyebrow">Resumo automatico do dia</span>
-          <h2 class="font-heading">{{ resumoDiario.texto }}</h2>
-          <p>Os atalhos abaixo levam direto para a fila mais critica.</p>
+      <!-- Bloco 1 — responde "o que preciso fazer agora?" antes de qualquer numero. -->
+      <section
+        class="attention-card"
+        [ngClass]="'is-' + focoDoDia.nivel"
+        *ngIf="focoDoDia.nivel !== 'ok'"
+        role="status"
+      >
+        <div class="attention-icon">
+          <mat-icon>{{ focoDoDia.icone }}</mat-icon>
         </div>
 
-        <div class="summary-actions">
-          <button mat-stroked-button type="button" *ngIf="resumoDiario.atrasados > 0" (click)="irParaProcessosAtrasados()">
-            <mat-icon>error</mat-icon>
-            {{ resumoDiario.atrasados }} atrasados
-          </button>
+        <div class="attention-copy">
+          <span class="attention-label">{{ focoDoDia.rotulo }}</span>
+          <h2 class="font-heading">{{ focoDoDia.titulo }}</h2>
+          <p>{{ focoDoDia.detalhe }}</p>
+        </div>
 
-          <button mat-stroked-button type="button" *ngIf="resumoDiario.urgentes > 0" (click)="irParaProcessosUrgentes()">
-            <mat-icon>priority_high</mat-icon>
-            {{ resumoDiario.urgentes }} urgentes
-          </button>
-
-          <button mat-stroked-button type="button" *ngIf="resumoDiario.hoje > 0" (click)="irParaVencimentosDeHoje()">
-            <mat-icon>today</mat-icon>
-            {{ resumoDiario.hoje }} vencem hoje
-          </button>
-
-          <button mat-flat-button class="btn-premium" type="button" (click)="fecharResumoDiario()">
-            Entendi
+        <div class="attention-actions">
+          <button mat-flat-button class="btn-premium" type="button" (click)="resolverAgora()">
+            <mat-icon>bolt</mat-icon>
+            Resolver agora
           </button>
         </div>
       </section>
 
+      <section class="attention-card is-ok" *ngIf="focoDoDia.nivel === 'ok'" role="status">
+        <div class="attention-icon"><mat-icon>verified</mat-icon></div>
+        <div class="attention-copy">
+          <span class="attention-label">Tudo em ordem</span>
+          <h2 class="font-heading">Nenhum prazo crítico para hoje</h2>
+          <p>Sua fila está sob controle. Bom momento para adiantar o que vence na semana.</p>
+        </div>
+      </section>
+
+      <!-- KPIs horizontais: icone + numero + apoio na mesma linha (menos altura). -->
       <section class="stats-grid">
         <article class="card-glass stat-card" *ngFor="let kpi of kpis">
-          <div class="stat-topline">
-            <span>{{ kpi.titulo }}</span>
-            <div class="stat-icon" [ngClass]="kpi.classe">
-              <mat-icon>{{ kpi.icone }}</mat-icon>
-            </div>
+          <div class="stat-icon" [ngClass]="kpi.classe">
+            <mat-icon>{{ kpi.icone }}</mat-icon>
           </div>
 
-          <strong>{{ kpi.valor }}</strong>
-          <small>{{ kpi.apoio }}</small>
+          <div class="stat-body">
+            <span class="stat-titulo">{{ kpi.titulo }}</span>
+            <strong>{{ kpi.valor }}</strong>
+            <small>{{ kpi.apoio }}</small>
+          </div>
+        </article>
+      </section>
+
+      <!-- Agenda do Dia: audiencias, reunioes e prazos de hoje. -->
+      <section class="card-glass agenda-hoje" *ngIf="dashboard?.agenda as ag">
+        <div class="panel-header">
+          <div>
+            <span class="eyebrow">Agenda do dia</span>
+            <h3 class="font-heading">
+              {{ ag.hoje === 0 ? 'Nenhum compromisso hoje' : (ag.hoje === 1 ? '1 compromisso hoje' : ag.hoje + ' compromissos hoje') }}
+            </h3>
+          </div>
+          <button mat-button type="button" routerLink="/advogado/agenda">
+            Abrir agenda
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+
+        <p class="agenda-vazia" *ngIf="ag.itensDoDia.length === 0">
+          Sem audiências, reuniões ou prazos marcados para hoje.
+          <span *ngIf="ag.proximosSete > 0">{{ ag.proximosSete }} nos próximos 7 dias.</span>
+        </p>
+
+        <ul class="agenda-lista" *ngIf="ag.itensDoDia.length > 0">
+          <li class="agenda-item" *ngFor="let item of ag.itensDoDia">
+            <span class="agenda-hora">{{ item.dataInicio | date: 'HH:mm' }}</span>
+            <span class="agenda-tipo" [ngClass]="'tipo-' + item.tipo.toLowerCase()">
+              <mat-icon>{{ iconeCompromissoAgenda(item.tipo) }}</mat-icon>
+            </span>
+            <span class="agenda-texto">
+              <strong>{{ item.titulo }}</strong>
+              <small *ngIf="item.local">{{ item.local }}</small>
+            </span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="stats-grid financeiro-strip" *ngIf="dashboard?.financeiro as fin">
+        <article class="card-glass stat-card">
+          <div class="stat-topline">
+            <span>Recebido no mês</span>
+            <div class="stat-icon complete"><mat-icon>payments</mat-icon></div>
+          </div>
+          <strong class="valor-monetario">{{ formatarMoeda(fin.recebidoNoMes) }}</strong>
+          <small>Baixas registradas neste mês</small>
+        </article>
+
+        <article class="card-glass stat-card">
+          <div class="stat-topline">
+            <span>A receber</span>
+            <div class="stat-icon progress"><mat-icon>request_quote</mat-icon></div>
+          </div>
+          <strong class="valor-monetario">{{ formatarMoeda(fin.aReceber) }}</strong>
+          <small>{{ fin.totalPendentes }} lançamento(s) em aberto</small>
+        </article>
+
+        <article class="card-glass stat-card">
+          <div class="stat-topline">
+            <span>Em atraso</span>
+            <div class="stat-icon overdue"><mat-icon>running_with_errors</mat-icon></div>
+          </div>
+          <strong class="valor-monetario">{{ formatarMoeda(fin.atrasado) }}</strong>
+          <small>{{ fin.totalAtrasados }} vencido(s)</small>
+        </article>
+
+        <article class="card-glass stat-card">
+          <div class="stat-topline">
+            <span>Previsto no mês</span>
+            <div class="stat-icon urgent"><mat-icon>calendar_month</mat-icon></div>
+          </div>
+          <strong class="valor-monetario">{{ formatarMoeda(fin.previstoNoMes) }}</strong>
+          <small>Vencimentos do mês corrente</small>
         </article>
       </section>
 
@@ -371,6 +574,12 @@
 
     <section class="jp-workspace" *ngIf="activeSidebarSection === 'agenda'">
       <section class="card-glass agenda-dedicated-card">
+        <div class="agenda-toolbar">
+          <button mat-flat-button class="btn-premium" type="button" (click)="abrirNovoCompromisso()">
+            <mat-icon>add</mat-icon>
+            Novo compromisso
+          </button>
+        </div>
         <app-agenda-calendario [eventos]="agendaEventos" (abrirEvento)="abrirEventoAgenda($event)"></app-agenda-calendario>
       </section>
     </section>
@@ -381,6 +590,10 @@
 
     <section class="jp-workspace" *ngIf="activeSidebarSection === 'documentos'">
       <app-documentos-workspace></app-documentos-workspace>
+    </section>
+
+    <section class="jp-workspace" *ngIf="activeSidebarSection === 'financeiro'">
+      <app-financeiro-workspace></app-financeiro-workspace>
     </section>
 
     <section class="jp-workspace" *ngIf="activeSidebarSection === 'processos'">
@@ -412,8 +625,8 @@
               <button type="button" class="pill" [class.active]="filtroAtual === 'Urgente'" (click)="aplicarFiltro('Urgente')">
                 Urgentes
               </button>
-              <button type="button" class="pill" [class.active]="filtroAtual === 'Atrasado'" (click)="aplicarFiltro('Atrasado')">
-                Atrasados
+              <button type="button" class="pill" [class.active]="filtroAtual === 'Data Fatal'" (click)="aplicarFiltro('Data Fatal')">
+                Data Fatal
               </button>
             </div>
 
@@ -440,7 +653,7 @@
                 <mat-option value="Aguardando Análise">Aguardando analise</mat-option>
                 <mat-option value="Em Andamento">Em andamento</mat-option>
                 <mat-option value="Urgente">Urgente</mat-option>
-                <mat-option value="Atrasado">Atrasado</mat-option>
+                <mat-option value="Data Fatal">Data Fatal</mat-option>
                 <mat-option value="Concluído">Concluido</mat-option>
               </mat-select>
             </mat-form-field>
@@ -454,6 +667,36 @@
                 <mat-option value="EVENTO">Evento</mat-option>
                 <mat-option value="DOCUMENTO">Documento</mat-option>
               </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Área Jurídica</mat-label>
+              <mat-select [(ngModel)]="filtroCategoriaProcesso" (selectionChange)="scheduleFiltro()">
+                <mat-option value="Todos">Todas</mat-option>
+                <mat-option *ngFor="let opcao of categoriasProcesso" [value]="opcao.value">{{ opcao.label }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Tipo de causa</mat-label>
+              <mat-select [(ngModel)]="filtroTipoCausa" (selectionChange)="scheduleFiltro()">
+                <mat-option value="Todos">Todos</mat-option>
+                <mat-option *ngFor="let opcao of tiposCausa" [value]="opcao.value">{{ opcao.label }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Situação</mat-label>
+              <mat-select [(ngModel)]="filtroSituacao" (selectionChange)="scheduleFiltro()">
+                <mat-option value="Todos">Todas</mat-option>
+                <mat-option *ngFor="let opcao of situacoesDisponiveis" [value]="opcao.value">{{ opcao.label }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Tag</mat-label>
+              <mat-icon matPrefix>sell</mat-icon>
+              <input matInput [(ngModel)]="filtroTagTexto" (ngModelChange)="scheduleFiltro()" placeholder="Buscar por tag" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
@@ -507,7 +750,14 @@
 
                 <td>
                   <div class="table-primary">{{ proc.tipo }}</div>
+                  <div class="table-secondary" *ngIf="proc.categoria || proc.tipoCausa">
+                    {{ labelCategoriaProcesso(proc.categoria) }}<span *ngIf="proc.categoria && proc.tipoCausa"> · </span>{{ proc.tipoCausa ? labelTipoCausa(proc.tipoCausa) : '' }}
+                  </div>
+                  <div class="table-secondary" *ngIf="proc.situacao">{{ labelSituacao(proc.situacao) }}</div>
                   <div class="table-secondary">{{ proc.descricao || 'Sem observacoes adicionais.' }}</div>
+                  <div class="tag-list" *ngIf="proc.tags && proc.tags.length">
+                    <span class="tag-pill" *ngFor="let tag of proc.tags">{{ tag }}</span>
+                  </div>
                 </td>
 
                 <td>
@@ -817,6 +1067,50 @@
           <mat-form-field appearance="outline">
             <mat-label>Local ou referencia</mat-label>
             <input matInput [(ngModel)]="novoLocalCompromisso" placeholder="Forum central, videoconferencia, cliente..." />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Área Jurídica</mat-label>
+            <mat-select [(ngModel)]="novaCategoriaProcesso">
+              <mat-option value="">Não informado</mat-option>
+              <mat-option *ngFor="let opcao of categoriasProcesso" [value]="opcao.value">{{ opcao.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Tipo de causa</mat-label>
+            <mat-select [(ngModel)]="novoTipoCausa">
+              <mat-option value="">Não informado</mat-option>
+              <mat-option *ngFor="let opcao of tiposCausa" [value]="opcao.value">{{ opcao.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Situação</mat-label>
+            <mat-select [(ngModel)]="novaSituacao">
+              <mat-option value="">Não informado</mat-option>
+              <mat-option *ngFor="let opcao of situacoesDisponiveis" [value]="opcao.value">{{ opcao.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="span-2">
+            <mat-label>Tags</mat-label>
+            <mat-chip-grid #tagGrid>
+              <mat-chip-row *ngFor="let tag of novasTags" (removed)="removerTag(tag)">
+                {{ tag }}
+                <button matChipRemove><mat-icon>cancel</mat-icon></button>
+              </mat-chip-row>
+              <input
+                placeholder="Digite e pressione Enter"
+                [(ngModel)]="novaTagInput"
+                [matChipInputFor]="tagGrid"
+                [matAutocomplete]="tagAuto"
+                (matChipInputTokenEnd)="adicionarTag($event.value); $event.chipInput.clear()"
+              />
+            </mat-chip-grid>
+            <mat-autocomplete #tagAuto="matAutocomplete" (optionSelected)="adicionarTag($event.option.value)">
+              <mat-option *ngFor="let sugestao of tagsSugeridas" [value]="sugestao">{{ sugestao }}</mat-option>
+            </mat-autocomplete>
           </mat-form-field>
         </div>
 

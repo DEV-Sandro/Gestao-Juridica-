@@ -62,7 +62,9 @@ export class AgendaCalendarioComponent implements OnChanges {
   }
 
   get totalAtrasadosNoMes(): number {
-    return this.eventosDoMes.filter((evento) => evento.status === 'Atrasado').length;
+    return this.eventosDoMes.filter(
+      (evento) => evento.status === 'Atrasado' || evento.status === 'Data Fatal'
+    ).length;
   }
 
   irParaHoje(): void {
@@ -113,6 +115,7 @@ export class AgendaCalendarioComponent implements OnChanges {
 
   statusClass(status: ProcessoStatusVisual): string {
     switch (status) {
+      case 'Data Fatal':
       case 'Atrasado':
         return 'is-overdue';
       case 'Urgente':
@@ -169,7 +172,7 @@ export class AgendaCalendarioComponent implements OnChanges {
         isToday: iso === todayIso,
         isSelected: iso === this.selectedDateIso,
         hasUrgent: events.some((evento) => evento.status === 'Urgente'),
-        hasOverdue: events.some((evento) => evento.status === 'Atrasado'),
+        hasOverdue: events.some((evento) => evento.status === 'Atrasado' || evento.status === 'Data Fatal'),
         events
       };
     });
@@ -189,6 +192,7 @@ export class AgendaCalendarioComponent implements OnChanges {
 
   private prioridadeStatus(status: ProcessoStatusVisual): number {
     switch (status) {
+      case 'Data Fatal':
       case 'Atrasado':
         return 0;
       case 'Urgente':

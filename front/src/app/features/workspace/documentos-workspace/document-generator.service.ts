@@ -4,7 +4,7 @@ import PizZip from 'pizzip';
 import { saveAs } from 'file-saver';
 
 import { AppUser } from '../../../models/app-user.model';
-import { ClienteRecord } from '../../../models/client.model';
+import { ClienteRecord, labelEstadoCivil } from '../../../models/client.model';
 
 export interface DocumentTemplateSection {
   heading?: string;
@@ -104,11 +104,14 @@ export class DocumentGeneratorService {
     template: DocumentTemplateDefinition,
     cliente: ClienteRecord,
     user: AppUser,
-    extras: DocumentContextExtras
+    extras: DocumentContextExtras,
+    nomeDocumento?: string
   ): Promise<void> {
     const blob = await this.generate(template, cliente, user, extras);
-    const slugNome = this.slugify(cliente.nome || 'cliente');
-    saveAs(blob, `${template.filePrefix}-${slugNome}.docx`);
+    const nomeArquivo = nomeDocumento?.trim()
+      ? this.slugify(nomeDocumento)
+      : `${template.filePrefix}-${this.slugify(cliente.nome || 'cliente')}`;
+    saveAs(blob, `${nomeArquivo}.docx`);
   }
 
   async generate(
@@ -118,7 +121,31 @@ export class DocumentGeneratorService {
     extras: DocumentContextExtras
   ): Promise<Blob> {
     const templateBuffer = await this.loadTemplateBuffer(template.assetPath);
-    const zip = new PizZip(templateBuffer);
+    return this.renderBuffer(templateBuffer, cliente, user, extras);
+  }
+
+  // Gera e baixa a partir de bytes de um modelo cadastrado no servidor (upload do
+  // admin), reutilizando exatamente o mesmo preenchimento de placeholders dos
+  // modelos embutidos. Placeholders desconhecidos saem com linha em branco.
+  async downloadFromBuffer(
+    buffer: ArrayBuffer,
+    cliente: ClienteRecord,
+    user: AppUser,
+    extras: DocumentContextExtras,
+    nomeDocumento: string
+  ): Promise<void> {
+    const blob = await this.renderBuffer(buffer, cliente, user, extras);
+    const nomeArquivo = this.slugify(nomeDocumento) || `documento-${this.slugify(cliente.nome || 'cliente')}`;
+    saveAs(blob, `${nomeArquivo}.docx`);
+  }
+
+  private renderBuffer(
+    buffer: ArrayBuffer,
+    cliente: ClienteRecord,
+    user: AppUser,
+    extras: DocumentContextExtras
+  ): Blob {
+    const zip = new PizZip(buffer);
     const placeholders = this.buildPlaceholders(cliente, user, extras);
 
     try {
@@ -184,6 +211,12 @@ export class DocumentGeneratorService {
       cliente_nome: this.docValue(cliente.nome),
       cliente_cpf: this.docValue(cliente.cpf),
       cliente_documento_secundario: this.docValue(cliente.documentoSecundario),
+      cliente_estado_civil: this.docValue(
+        cliente.estadoCivil ? labelEstadoCivil(cliente.estadoCivil) : null
+      ),
+      cliente_nacionalidade: this.docValue(cliente.nacionalidade),
+      cliente_profissao: this.docValue(cliente.profissao),
+      cliente_rg: this.docValue(cliente.rg),
       cliente_telefone: this.docValue(cliente.telefone),
       cliente_email: this.docValue(cliente.email),
       cliente_endereco_completo: this.docValue(enderecoCompleto),

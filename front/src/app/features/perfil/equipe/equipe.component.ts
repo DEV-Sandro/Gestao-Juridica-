@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
@@ -23,6 +24,7 @@ import { ConvidarMembroDialogComponent } from './convidar-membro-dialog.componen
     MatIconModule,
     MatMenuModule,
     MatDialogModule,
+    MatSlideToggleModule,
     MatProgressSpinnerModule
   ],
   templateUrl: './equipe.component.html',
@@ -118,6 +120,31 @@ export class EquipeComponent implements OnInit, OnDestroy {
           'Fechar',
           { duration: 4000 }
         )
+    });
+  }
+
+  alterarPermissao(membro: AppUser, chave: 'agendaVerColegas' | 'agendaVerDetalhesColegas', valor: boolean): void {
+    const permissoesAnteriores = membro.permissoes;
+    // Otimista: atualiza a UI na hora, reverte se a chamada falhar.
+    membro.permissoes = { ...membro.permissoes, [chave]: valor };
+
+    // Ver detalhes sem poder ver a agenda dos colegas nao faz sentido.
+    const payload: Record<string, boolean> = { [chave]: valor };
+    if (chave === 'agendaVerColegas' && !valor) {
+      payload['agendaVerDetalhesColegas'] = false;
+      membro.permissoes.agendaVerDetalhesColegas = false;
+    }
+
+    this.authService.atualizarPermissoesMembro(membro.uid, payload).subscribe({
+      next: (atualizado) => {
+        membro.permissoes = atualizado.permissoes;
+      },
+      error: (err) => {
+        membro.permissoes = permissoesAnteriores;
+        this.snack.open(err?.error?.mensagem || 'Erro ao atualizar permissão', 'Fechar', {
+          duration: 4000
+        });
+      }
     });
   }
 

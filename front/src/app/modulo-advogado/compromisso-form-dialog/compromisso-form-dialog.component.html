@@ -1,0 +1,92 @@
+<div class="compromisso-dialog">
+  <header class="compromisso-header">
+    <div>
+      <h3 class="font-heading m-0">{{ editando ? 'Editar compromisso' : 'Novo compromisso' }}</h3>
+      <span class="text-muted">Audiências, reuniões, prazos e outros eventos da sua agenda</span>
+    </div>
+    <button mat-icon-button class="btn-close" (click)="fechar()" [disabled]="salvando">
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <div class="compromisso-body">
+    <mat-form-field appearance="outline">
+      <mat-label>Título</mat-label>
+      <mat-icon matPrefix>edit_calendar</mat-icon>
+      <input matInput [(ngModel)]="titulo" placeholder="Ex.: Audiência de conciliação" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Tipo</mat-label>
+      <mat-select [(ngModel)]="tipo">
+        <mat-option *ngFor="let opcao of tipos" [value]="opcao.value">{{ opcao.label }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <label class="dia-todo-toggle">
+      <mat-checkbox [(ngModel)]="diaTodo">Dia inteiro</mat-checkbox>
+    </label>
+
+    <div class="data-hora-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Data</mat-label>
+        <input matInput type="date" [(ngModel)]="data" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" *ngIf="!diaTodo">
+        <mat-label>Início</mat-label>
+        <input matInput type="time" [(ngModel)]="horaInicio" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" *ngIf="!diaTodo">
+        <mat-label>Fim</mat-label>
+        <input matInput type="time" [(ngModel)]="horaFim" />
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Local (opcional)</mat-label>
+      <mat-icon matPrefix>place</mat-icon>
+      <input matInput [(ngModel)]="local" placeholder="Fórum central, sala de reuniões..." />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" *ngIf="processos.length > 0">
+      <mat-label>Vincular a um processo (opcional)</mat-label>
+      <mat-select [(ngModel)]="processoId">
+        <mat-option value="">Nenhum</mat-option>
+        <mat-option *ngFor="let proc of processos" [value]="proc.id">{{ proc.titulo }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Visibilidade</mat-label>
+      <mat-select [(ngModel)]="visibilidade">
+        <mat-option value="PUBLICO">Visível para colegas com permissão</mat-option>
+        <mat-option value="RESTRITO">Restrito (só eu e participantes)</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Observação (opcional)</mat-label>
+      <textarea matInput rows="3" [(ngModel)]="observacao"></textarea>
+    </mat-form-field>
+
+    <div class="erro" *ngIf="erro">
+      <mat-icon>error_outline</mat-icon>
+      {{ erro }}
+    </div>
+  </div>
+
+  <footer class="compromisso-footer">
+    <button mat-button class="text-danger" *ngIf="editando" (click)="excluir()" [disabled]="salvando">
+      <mat-icon>delete_outline</mat-icon>
+      Excluir
+    </button>
+    <span class="spacer"></span>
+    <button mat-button (click)="fechar()" [disabled]="salvando">Cancelar</button>
+    <button mat-flat-button class="btn-premium" (click)="salvar()" [disabled]="salvando">
+      <mat-spinner *ngIf="salvando" diameter="18" style="margin-right: 8px"></mat-spinner>
+      {{ salvando ? 'Salvando...' : (editando ? 'Salvar alterações' : 'Criar compromisso') }}
+    </button>
+  </footer>
+</div>

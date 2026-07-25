@@ -3,41 +3,60 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { MAT_DATE_FORMATS, MAT_DATE_LOCALE, NativeDateModule } from '@angular/material/core';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
-import { AuthService } from '../auth.service';
+import { AuthService, DashboardResumo, ResultadoBusca } from '../auth.service';
 import { AppUser } from '../models/app-user.model';
 import { ClienteRecord } from '../models/client.model';
 import { ClientesWorkspaceComponent } from '../features/workspace/clientes-workspace/clientes-workspace.component';
 import { DocumentosWorkspaceComponent } from '../features/workspace/documentos-workspace/documentos-workspace.component';
+import { FinanceiroWorkspaceComponent } from '../features/workspace/financeiro-workspace/financeiro-workspace.component';
 import { AgendaCalendarioComponent } from './agenda-calendario/agenda-calendario.component';
+import {
+  CompromissoDialogData,
+  CompromissoDialogResult,
+  CompromissoFormDialogComponent
+} from './compromisso-form-dialog/compromisso-form-dialog.component';
 import {
   AgendaEvento,
   CategoriaCompromisso,
+  CompromissoApiModel,
   ProcessoApiModel,
   ProcessoStatusVisual,
   ProcessoViewModel,
   THEME_OPTIONS,
   ThemeOption,
   categoriaCompromissoLabel,
+  normalizarCategoriaCompromisso,
   compararProcessosPorPrioridade,
+  compromissoParaAgendaEvento,
   formatarResumoPrazo,
   mapearProcessoParaTela,
   obterMetaStatus,
   processarAgendaEvento,
   tempoRelativo
 } from '../shared/processo-ui';
+import {
+  CATEGORIAS_PROCESSO,
+  OpcaoClassificacao,
+  TIPOS_CAUSA,
+  labelClassificacao
+} from '../shared/processo-categorias';
 
 export const MEU_FORMATO_BR = {
   parse: {
@@ -56,6 +75,7 @@ type FiltroPrincipal =
   | 'Aguardando An\u00E1lise'
   | 'Em Andamento'
   | 'Urgente'
+  | 'Data Fatal'
   | 'Atrasado'
   | 'Conclu\u00EDdo';
 
@@ -108,7 +128,7 @@ interface ProcessoClienteForm {
   cep: string;
 }
 
-type SidebarSection = 'dashboard' | 'processos' | 'clientes' | 'agenda' | 'documentos';
+type SidebarSection = 'dashboard' | 'processos' | 'clientes' | 'agenda' | 'documentos' | 'financeiro';
 
 @Component({
   selector: 'app-modulo-advogado',
@@ -118,19 +138,24 @@ type SidebarSection = 'dashboard' | 'processos' | 'clientes' | 'agenda' | 'docum
     FormsModule,
     RouterLink,
     RouterLinkActive,
+    MatAutocompleteModule,
     MatButtonModule,
     MatCheckboxModule,
+    MatChipsModule,
+    MatDialogModule,
     MatIconModule,
     MatInputModule,
     MatFormFieldModule,
     MatSelectModule,
     MatMenuModule,
+    MatTooltipModule,
     MatDatepickerModule,
     NativeDateModule,
     MatSnackBarModule,
     AgendaCalendarioComponent,
     ClientesWorkspaceComponent,
-    DocumentosWorkspaceComponent
+    DocumentosWorkspaceComponent,
+    FinanceiroWorkspaceComponent
   ],
   providers: [
     { provide: MAT_DATE_LOCALE, useValue: 'pt-BR' },
@@ -146,6 +171,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   listaDeProcessosRaw: ProcessoViewModel[] = [];
   listaDeProcessosFiltrada: ProcessoViewModel[] = [];
   agendaEventos: AgendaEvento[] = [];
+  compromissosRaw: CompromissoApiModel[] = [];
   processosPrioritarios: ProcessoViewModel[] = [];
 
   mostrarFiltroAvancado = false;
@@ -154,8 +180,17 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   filtroTipoAcao = '';
   filtroStatusAvancado: FiltroPrincipal | 'Todos' = 'Todos';
   filtroCategoriaCompromisso: 'Todos' | CategoriaCompromisso = 'Todos';
+  filtroCategoriaProcesso = 'Todos';
+  filtroTipoCausa = 'Todos';
+  filtroSituacao = 'Todos';
+  filtroTagTexto = '';
   filtroDataInicial: Date | null = null;
   filtroDataFinal: Date | null = null;
+
+  readonly categoriasProcesso: OpcaoClassificacao[] = CATEGORIAS_PROCESSO;
+  readonly tiposCausa: OpcaoClassificacao[] = TIPOS_CAUSA;
+  situacoesDisponiveis: OpcaoClassificacao[] = [];
+  tagsSugeridas: string[] = [];
 
   countAtivos = 0;
   countConcluidos = 0;
@@ -195,6 +230,11 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   novoStatus: ProcessoStatusVisual = 'Aguardando An\u00E1lise';
   novaCategoriaCompromisso: CategoriaCompromisso = 'PRAZO';
   novoLocalCompromisso = '';
+  novaCategoriaProcesso = '';
+  novoTipoCausa = '';
+  novaSituacao = '';
+  novasTags: string[] = [];
+  novaTagInput = '';
   urgenteManualForm = false;
   clienteForm: ProcessoClienteForm = this.criarClienteFormVazio();
 
@@ -203,6 +243,15 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   temaAtual: ThemeOption['value'] = 'corporate';
   currentUser: AppUser | null = null;
   activeSidebarSection: SidebarSection = 'dashboard';
+  dashboard: DashboardResumo | null = null;
+  sidebarRecolhida = localStorage.getItem('justapro-sidebar') === 'recolhida';
+
+  termoBuscaGlobal = '';
+  resultadoBusca: ResultadoBusca | null = null;
+  buscandoGlobal = false;
+  painelBuscaAberto = false;
+  private readonly buscaSubject = new Subject<string>();
+  private buscaSub?: Subscription;
 
   private userSub?: Subscription;
   private filtroSub?: Subscription;
@@ -213,7 +262,8 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute,
-    private snack: MatSnackBar
+    private snack: MatSnackBar,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -236,20 +286,194 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
 
     this.carregarClientes();
     this.carregarDados();
+    this.carregarSituacoesETags();
+    this.carregarCompromissos();
+    this.carregarDashboard();
+    this.iniciarBuscaGlobal();
+  }
+
+  // Alterna direto claro <-> escuro. O menu de paleta continua disponivel para
+  // quem quiser o tema corporativo.
+  alternarModoClaroEscuro(): void {
+    this.mudarTema(this.temaAtual === 'light' ? 'corporate' : 'light');
+  }
+
+  // O tipo vem como string do endpoint de dashboard; normaliza antes de resolver
+  // o icone, reaproveitando a mesma regra usada nas demais telas.
+  iconeCompromissoAgenda(tipo: string): string {
+    return this.compromissoIcon(normalizarCategoriaCompromisso(tipo));
+  }
+
+  alternarSidebar(): void {
+    this.sidebarRecolhida = !this.sidebarRecolhida;
+    localStorage.setItem('justapro-sidebar', this.sidebarRecolhida ? 'recolhida' : 'aberta');
+  }
+
+  carregarDashboard(): void {
+    this.authService.obterDashboard().subscribe({
+      next: (dashboard) => (this.dashboard = dashboard),
+      error: () => (this.dashboard = null)
+    });
+  }
+
+  aoDigitarBusca(): void {
+    this.buscaSubject.next(this.termoBuscaGlobal);
+  }
+
+  private iniciarBuscaGlobal(): void {
+    this.buscaSub = this.buscaSubject
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe((termo) => {
+        const limpo = (termo || '').trim();
+
+        if (limpo.length < 2) {
+          this.resultadoBusca = null;
+          this.painelBuscaAberto = false;
+          this.buscandoGlobal = false;
+          return;
+        }
+
+        this.buscandoGlobal = true;
+        this.authService.buscarGlobal(limpo).subscribe({
+          next: (resultado) => {
+            this.resultadoBusca = resultado;
+            this.painelBuscaAberto = true;
+            this.buscandoGlobal = false;
+          },
+          error: () => {
+            this.resultadoBusca = null;
+            this.buscandoGlobal = false;
+          }
+        });
+      });
+  }
+
+  get totalResultadosBusca(): number {
+    if (!this.resultadoBusca) return 0;
+    return this.resultadoBusca.processos.length + this.resultadoBusca.clientes.length;
+  }
+
+  abrirResultadoProcesso(id: string): void {
+    this.fecharBusca();
+    this.abrirCaso(id);
+  }
+
+  abrirResultadoCliente(): void {
+    this.fecharBusca();
+    void this.router.navigate(['/advogado/clientes']);
+  }
+
+  fecharBusca(): void {
+    this.painelBuscaAberto = false;
+    this.termoBuscaGlobal = '';
+    this.resultadoBusca = null;
+  }
+
+  formatarMoeda(valor?: number | null): string {
+    if (typeof valor !== 'number' || Number.isNaN(valor)) return 'R$ 0,00';
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
   }
 
   ngOnDestroy(): void {
     this.userSub?.unsubscribe();
     this.filtroSub?.unsubscribe();
     this.routeDataSub?.unsubscribe();
+    this.buscaSub?.unsubscribe();
+  }
+
+  // Regra de foco: uma unica coisa mais importante agora, em ordem de gravidade
+  // (critico > vence hoje > urgente > agenda do dia). Um dashboard que grita tudo
+  // ao mesmo tempo nao prioriza nada.
+  get focoDoDia(): {
+    nivel: 'critico' | 'atencao' | 'info' | 'ok';
+    rotulo: string;
+    titulo: string;
+    detalhe: string;
+    icone: string;
+  } {
+    const criticos = this.countAtrasados;
+    const hoje = this.countHoje;
+    const urgentes = this.countUrgentes;
+    const compromissosHoje = this.dashboard?.agenda?.hoje || 0;
+
+    if (criticos > 0) {
+      return {
+        nivel: 'critico',
+        rotulo: 'Atenção',
+        icone: 'gavel',
+        titulo:
+          criticos === 1
+            ? 'Existe 1 processo em Data Fatal'
+            : `Existem ${criticos} processos em Data Fatal`,
+        detalhe: 'Prazo vencido, vencendo hoje ou com apenas 1 dia restante. Exige ação imediata.'
+      };
+    }
+
+    if (hoje > 0) {
+      return {
+        nivel: 'atencao',
+        rotulo: 'Para hoje',
+        icone: 'today',
+        titulo: hoje === 1 ? '1 prazo vence hoje' : `${hoje} prazos vencem hoje`,
+        detalhe: 'Resolva ainda hoje para não entrar na fila crítica.'
+      };
+    }
+
+    if (urgentes > 0) {
+      return {
+        nivel: 'atencao',
+        rotulo: 'Prioridade',
+        icone: 'priority_high',
+        titulo: urgentes === 1 ? '1 processo urgente' : `${urgentes} processos urgentes`,
+        detalhe: 'Vencem nos próximos dias ou foram marcados como prioridade.'
+      };
+    }
+
+    if (compromissosHoje > 0) {
+      return {
+        nivel: 'info',
+        rotulo: 'Sua agenda',
+        icone: 'event',
+        titulo:
+          compromissosHoje === 1
+            ? '1 compromisso agendado para hoje'
+            : `${compromissosHoje} compromissos agendados para hoje`,
+        detalhe: 'Confira horários e locais antes de começar o dia.'
+      };
+    }
+
+    return { nivel: 'ok', rotulo: '', titulo: '', detalhe: '', icone: 'verified' };
+  }
+
+  // "Resolver agora" leva exatamente para a fila que gerou o alerta.
+  resolverAgora(): void {
+    const foco = this.focoDoDia;
+
+    if (foco.icone === 'gavel') return this.irParaProcessosAtrasados();
+    if (foco.icone === 'today') return this.irParaVencimentosDeHoje();
+    if (foco.icone === 'priority_high') return this.irParaProcessosUrgentes();
+
+    void this.router.navigate(['/advogado/agenda']);
+  }
+
+  // Tendencia honesta: contagem real de processos criados nos ultimos 7 dias.
+  // Nao inventamos percentuais sem serie historica.
+  get novosEstaSemana(): number {
+    const corte = Date.now() - 7 * 86400000;
+    return this.listaDeProcessosRaw.filter((proc) => {
+      const criado = proc.criadoEm ? new Date(proc.criadoEm).getTime() : NaN;
+      return Number.isFinite(criado) && criado >= corte;
+    }).length;
   }
 
   get kpis(): KPIItem[] {
+    const novos = this.novosEstaSemana;
+
     return [
       {
         titulo: 'Casos ativos',
         valor: this.countAtivos,
-        apoio: 'Base em andamento',
+        apoio: novos > 0 ? `+${novos} esta semana` : 'Base em andamento',
         icone: 'folder_open',
         classe: 'progress'
       },
@@ -261,10 +485,10 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
         classe: 'urgent'
       },
       {
-        titulo: 'Atrasados',
+        titulo: 'Data Fatal',
         valor: this.countAtrasados,
-        apoio: 'Prazos ja vencidos',
-        icone: 'error_outline',
+        apoio: 'Vencidos, vencem hoje ou falta 1 dia',
+        icone: 'gavel',
         classe: 'overdue'
       },
       {
@@ -378,7 +602,8 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
       value === 'processos' ||
       value === 'clientes' ||
       value === 'agenda' ||
-      value === 'documentos'
+      value === 'documentos' ||
+      value === 'financeiro'
     ) {
       return value;
     }
@@ -391,6 +616,10 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     if (this.filtroTipoAcao.trim()) total++;
     if (this.filtroStatusAvancado !== 'Todos') total++;
     if (this.filtroCategoriaCompromisso !== 'Todos') total++;
+    if (this.filtroCategoriaProcesso !== 'Todos') total++;
+    if (this.filtroTipoCausa !== 'Todos') total++;
+    if (this.filtroSituacao !== 'Todos') total++;
+    if (this.filtroTagTexto.trim()) total++;
     if (this.filtroDataInicial) total++;
     if (this.filtroDataFinal) total++;
     if (this.filtroAtual !== 'Todos') total++;
@@ -437,10 +666,38 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     this.filtroTipoAcao = '';
     this.filtroStatusAvancado = 'Todos';
     this.filtroCategoriaCompromisso = 'Todos';
+    this.filtroCategoriaProcesso = 'Todos';
+    this.filtroTipoCausa = 'Todos';
+    this.filtroSituacao = 'Todos';
+    this.filtroTagTexto = '';
     this.filtroDataInicial = null;
     this.filtroDataFinal = null;
     this.filtroAtual = 'Todos';
     this.executarFiltros(true);
+  }
+
+  labelCategoriaProcesso(categoria?: string | null): string {
+    return labelClassificacao(this.categoriasProcesso, categoria);
+  }
+
+  labelTipoCausa(tipoCausa?: string | null): string {
+    return labelClassificacao(this.tiposCausa, tipoCausa);
+  }
+
+  labelSituacao(situacao?: string | null): string {
+    return labelClassificacao(this.situacoesDisponiveis, situacao);
+  }
+
+  adicionarTag(valor: string): void {
+    const tag = valor.trim().toLowerCase();
+    if (tag && !this.novasTags.includes(tag)) {
+      this.novasTags = [...this.novasTags, tag];
+    }
+    this.novaTagInput = '';
+  }
+
+  removerTag(tag: string): void {
+    this.novasTags = this.novasTags.filter((item) => item !== tag);
   }
 
   abrirNovoProcesso(): void {
@@ -488,6 +745,11 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     this.novoStatus = proc.statusBase;
     this.novaCategoriaCompromisso = proc.categoriaCompromisso;
     this.novoLocalCompromisso = proc.localCompromisso || '';
+    this.novaCategoriaProcesso = proc.categoria || '';
+    this.novoTipoCausa = proc.tipoCausa || '';
+    this.novaSituacao = proc.situacao || '';
+    this.novasTags = [...(proc.tags || [])];
+    this.novaTagInput = '';
     this.urgenteManualForm = proc.urgenteManual;
 
     const clienteAtual = this.clientesDisponiveis.find((cliente) => cliente.id === proc.clienteId);
@@ -522,6 +784,11 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     this.novoStatus = 'Aguardando An\u00E1lise';
     this.novaCategoriaCompromisso = 'PRAZO';
     this.novoLocalCompromisso = '';
+    this.novaCategoriaProcesso = '';
+    this.novoTipoCausa = '';
+    this.novaSituacao = '';
+    this.novasTags = [];
+    this.novaTagInput = '';
     this.urgenteManualForm = false;
     this.clienteSelecionadoId = null;
     this.buscaCliente = '';
@@ -548,6 +815,10 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
       urgenteManual: this.novoStatus === 'Conclu\u00EDdo' ? false : this.urgenteManualForm,
       categoriaCompromisso: this.novaCategoriaCompromisso,
       localCompromisso: this.novoLocalCompromisso.trim() || null,
+      categoria: this.novaCategoriaProcesso || null,
+      tipoCausa: this.novoTipoCausa || null,
+      situacao: this.novaSituacao || null,
+      tags: this.novasTags,
       clienteId: this.clienteSelecionadoId,
       clienteNome: this.clienteForm.nome.trim(),
       cliente: {
@@ -658,7 +929,97 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   }
 
   abrirEventoAgenda(evento: AgendaEvento): void {
+    if (evento.origem === 'COMPROMISSO' && evento.compromissoId) {
+      this.abrirEdicaoCompromisso(evento.compromissoId);
+      return;
+    }
     this.abrirCaso(evento.processoId);
+  }
+
+  abrirNovoCompromisso(dataIso?: string): void {
+    this.abrirDialogCompromisso({
+      compromisso: null,
+      processos: this.listaDeProcessosRaw.map((p) => ({ id: p.id, titulo: p.tipo })),
+      dataPreSelecionada: dataIso || null
+    });
+  }
+
+  private abrirEdicaoCompromisso(compromissoId: string): void {
+    const idBruto = compromissoId.replace(/^compromisso-/, '');
+    const compromisso = this.compromissosRaw.find((c) => c.id === idBruto);
+    if (!compromisso) return;
+
+    if (compromisso.restrito) {
+      this.snack.open('Você não tem permissão para ver os detalhes deste compromisso.', 'OK', {
+        duration: 3200
+      });
+      return;
+    }
+
+    this.abrirDialogCompromisso({
+      compromisso,
+      processos: this.listaDeProcessosRaw.map((p) => ({ id: p.id, titulo: p.tipo })),
+      dataPreSelecionada: null
+    });
+  }
+
+  private abrirDialogCompromisso(data: CompromissoDialogData): void {
+    const ref = this.dialog.open<CompromissoFormDialogComponent, CompromissoDialogData, CompromissoDialogResult>(
+      CompromissoFormDialogComponent,
+      {
+        data,
+        panelClass: 'jp-dialog-panel',
+        backdropClass: 'jp-dialog-backdrop'
+      }
+    );
+
+    ref.afterClosed().subscribe((resultado) => {
+      if (!resultado) return;
+
+      if (resultado.acao === 'excluir' && data.compromisso) {
+        this.authService.excluirCompromisso(data.compromisso.id).subscribe({
+          next: () => {
+            this.snack.open('Compromisso removido.', 'OK', { duration: 2800 });
+            this.carregarCompromissos();
+          },
+          error: (err) =>
+            this.snack.open(err?.error?.mensagem || 'Erro ao remover compromisso.', 'Fechar', {
+              duration: 4000,
+              panelClass: ['snack-error']
+            })
+        });
+        return;
+      }
+
+      if (resultado.acao === 'salvar' && resultado.payload) {
+        const request$ = data.compromisso
+          ? this.authService.atualizarCompromisso(data.compromisso.id, resultado.payload)
+          : this.authService.criarCompromisso(resultado.payload);
+
+        request$.subscribe({
+          next: (resposta) => {
+            this.carregarCompromissos();
+            if (resposta.conflitos?.length) {
+              this.snack.open(
+                `Compromisso salvo, mas há ${resposta.conflitos.length} conflito(s) de horário na sua agenda.`,
+                'OK',
+                { duration: 5000, panelClass: ['snack-error'] }
+              );
+            } else {
+              this.snack.open('Compromisso salvo com sucesso.', 'OK', {
+                duration: 2800,
+                panelClass: ['snack-success']
+              });
+            }
+          },
+          error: (err) =>
+            this.snack.open(err?.error?.mensagem || 'Erro ao salvar compromisso.', 'Fechar', {
+              duration: 4000,
+              panelClass: ['snack-error']
+            })
+        });
+      }
+    });
   }
 
   abrirNotificacao(notificacao: Notificacao): void {
@@ -721,6 +1082,10 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
         return 'event';
       case 'DOCUMENTO':
         return 'description';
+      case 'REUNIAO':
+        return 'groups';
+      case 'OUTRO':
+        return 'more_horiz';
       default:
         return 'schedule';
     }
@@ -733,7 +1098,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
 
   irParaProcessosAtrasados(): void {
     this.fecharResumoDiario();
-    void this.router.navigate(['/advogado/processos']).then(() => this.aplicarFiltro('Atrasado'));
+    void this.router.navigate(['/advogado/processos']).then(() => this.aplicarFiltro('Data Fatal'));
   }
 
   irParaVencimentosDeHoje(): void {
@@ -776,6 +1141,32 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
           duration: 3600,
           panelClass: ['snack-error']
         });
+      }
+    });
+  }
+
+  private atualizarAgendaEventos(): void {
+    const eventosDeProcessos = this.listaDeProcessosRaw
+      .map((processo) => processarAgendaEvento(processo))
+      .filter((evento): evento is AgendaEvento => !!evento);
+
+    const eventosDeCompromissos = this.compromissosRaw.map((compromisso) =>
+      compromissoParaAgendaEvento(compromisso)
+    );
+
+    this.agendaEventos = [...eventosDeProcessos, ...eventosDeCompromissos].sort((primeiro, segundo) =>
+      primeiro.data.localeCompare(segundo.data)
+    );
+  }
+
+  private carregarCompromissos(): void {
+    this.authService.listarAgenda({ modo: 'individual' }).subscribe({
+      next: (compromissos) => {
+        this.compromissosRaw = compromissos || [];
+        this.atualizarAgendaEventos();
+      },
+      error: () => {
+        this.compromissosRaw = [];
       }
     });
   }
@@ -836,6 +1227,28 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     });
   }
 
+  private carregarSituacoesETags(): void {
+    this.authService.listarSituacoesProcesso().subscribe({
+      next: (config) => {
+        this.situacoesDisponiveis = (config.opcoes || [])
+          .filter((opcao) => opcao.ativo !== false)
+          .map((opcao) => ({ value: opcao.value, label: opcao.label }));
+      },
+      error: () => {
+        this.situacoesDisponiveis = [];
+      }
+    });
+
+    this.authService.listarTagsUsadas().subscribe({
+      next: (config) => {
+        this.tagsSugeridas = config.valores || [];
+      },
+      error: () => {
+        this.tagsSugeridas = [];
+      }
+    });
+  }
+
   private normalizarTextoBusca(valor: string): string {
     return (valor || '')
       .normalize('NFD')
@@ -879,7 +1292,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
         this.countAtivos++;
       }
       if (proc.statusDinamico === 'Urgente') this.countUrgentes++;
-      if (proc.statusDinamico === 'Atrasado') this.countAtrasados++;
+      if (proc.statusDinamico === 'Data Fatal' || proc.statusDinamico === 'Atrasado') this.countAtrasados++;
       if (proc.diasParaPrazo === 0 && !['Arquivado', 'Conclu\u00EDdo'].includes(proc.statusDinamico)) {
         this.countHoje++;
       }
@@ -898,10 +1311,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     this.notificacoesNaoLidas = this.notificacoes.filter((notificacao) => !notificacao.lida).length;
     this.atualizarResumoDiario();
 
-    this.agendaEventos = this.listaDeProcessosRaw
-      .map((processo) => processarAgendaEvento(processo))
-      .filter((evento): evento is AgendaEvento => !!evento)
-      .sort((primeiro, segundo) => primeiro.data.localeCompare(segundo.data));
+    this.atualizarAgendaEventos();
 
     this.processosPrioritarios = [...this.listaDeProcessosRaw]
       .filter(
@@ -926,10 +1336,10 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     let detalhe = '';
     let status: ProcessoStatusVisual | null = null;
 
-    if (proc.statusDinamico === 'Atrasado') {
-      texto = `${proc.cliente} esta com prazo vencido`;
+    if (proc.statusDinamico === 'Data Fatal' || proc.statusDinamico === 'Atrasado') {
+      texto = `${proc.cliente} esta em Data Fatal (vencido, vence hoje ou falta 1 dia)`;
       detalhe = formatarResumoPrazo(proc);
-      status = 'Atrasado';
+      status = proc.statusDinamico;
     } else if (proc.statusDinamico === 'Urgente' || proc.diasParaPrazo === 0) {
       texto =
         proc.diasParaPrazo === 0
@@ -943,7 +1353,8 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
       return null;
     }
 
-    const prioridade = status === 'Atrasado' ? 0 : 1;
+    const dataFatalAtiva = status === 'Data Fatal' || status === 'Atrasado';
+    const prioridade = dataFatalAtiva ? 0 : 1;
     const cacheKey = `justapro-notif-${proc.id}-${status}`;
     const tsKey = `${cacheKey}-ts`;
     const timestampSalvo = localStorage.getItem(tsKey);
@@ -952,7 +1363,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     if (!timestampSalvo) {
       localStorage.setItem(tsKey, String(timestamp));
       this.notificar(
-        status === 'Atrasado' ? 'Processo atrasado' : 'Processo urgente',
+        dataFatalAtiva ? 'Processo em Data Fatal' : 'Processo urgente',
         `${proc.cliente}: ${detalhe}`
       );
     }
@@ -1009,9 +1420,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     const partes: string[] = [];
     if (this.countAtrasados > 0) {
       partes.push(
-        `${this.countAtrasados} processo${this.countAtrasados === 1 ? '' : 's'} atrasado${
-          this.countAtrasados === 1 ? '' : 's'
-        }`
+        `${this.countAtrasados} processo${this.countAtrasados === 1 ? '' : 's'} em Data Fatal`
       );
     }
     if (this.countUrgentes > 0) {
@@ -1060,6 +1469,21 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
         this.filtroCategoriaCompromisso === 'Todos' ||
         proc.categoriaCompromisso === this.filtroCategoriaCompromisso;
 
+      const passaCategoriaProcesso =
+        this.filtroCategoriaProcesso === 'Todos' || proc.categoria === this.filtroCategoriaProcesso;
+
+      const passaTipoCausa =
+        this.filtroTipoCausa === 'Todos' || proc.tipoCausa === this.filtroTipoCausa;
+
+      const passaSituacao =
+        this.filtroSituacao === 'Todos' || proc.situacao === this.filtroSituacao;
+
+      const passaTag =
+        !this.filtroTagTexto.trim() ||
+        (proc.tags || []).some((tag) =>
+          tag.toLowerCase().includes(this.filtroTagTexto.trim().toLowerCase())
+        );
+
       let passaData = true;
       if (this.filtroDataInicial || this.filtroDataFinal) {
         if (!proc.prazo) {
@@ -1076,7 +1500,18 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
         }
       }
 
-      return passaPill && passaNome && passaTipo && passaStatus && passaCategoria && passaData;
+      return (
+        passaPill &&
+        passaNome &&
+        passaTipo &&
+        passaStatus &&
+        passaCategoria &&
+        passaCategoriaProcesso &&
+        passaTipoCausa &&
+        passaSituacao &&
+        passaTag &&
+        passaData
+      );
     });
 
     this.totalResultados = this.listaDeProcessosFiltrada.length;

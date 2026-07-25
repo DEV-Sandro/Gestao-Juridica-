@@ -26,6 +26,15 @@ function calcularDiferencaDias(dataIso) {
   return Math.ceil((data.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
 }
 
+// Limiar (em dias) a partir do qual um prazo passa a ser tratado como Data Fatal:
+// vencido, vence hoje ou falta 1 dia. Isso acontece automaticamente, sem
+// necessidade de qualquer acao manual do usuario.
+const LIMIAR_DATA_FATAL = 1;
+
+function ehDataFatal(diferencaDias) {
+  return diferencaDias !== null && diferencaDias <= LIMIAR_DATA_FATAL;
+}
+
 function calcularStatusInteligente(processo, diasParaArquivar = 30) {
   const statusBase = processo.status || 'Em Andamento';
 
@@ -46,13 +55,16 @@ function calcularStatusInteligente(processo, diasParaArquivar = 30) {
     return 'Concluído';
   }
 
-  if (processo.urgenteManual === true) {
-    return diferencaDias !== null && diferencaDias < 0 ? 'Atrasado' : 'Urgente';
+  if (ehDataFatal(diferencaDias)) {
+    return 'Data Fatal';
   }
 
-  if (diferencaDias !== null) {
-    if (diferencaDias < 0) return 'Atrasado';
-    if (diferencaDias <= 7) return 'Urgente';
+  if (processo.urgenteManual === true) {
+    return 'Urgente';
+  }
+
+  if (diferencaDias !== null && diferencaDias <= 7) {
+    return 'Urgente';
   }
 
   return statusBase;
@@ -61,5 +73,7 @@ function calcularStatusInteligente(processo, diasParaArquivar = 30) {
 module.exports = {
   calcularDiferencaDias,
   calcularStatusInteligente,
-  normalizarCategoriaCompromisso
+  normalizarCategoriaCompromisso,
+  ehDataFatal,
+  LIMIAR_DATA_FATAL
 };

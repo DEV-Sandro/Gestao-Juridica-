@@ -1,4 +1,4 @@
-const { db } = require('../config/firebase');
+const configuracaoService = require('./configuracao.service');
 
 function normalizarLinksHonorarios(dados = {}) {
   return Object.keys(dados)
@@ -17,13 +17,7 @@ function normalizarLinksHonorarios(dados = {}) {
 }
 
 async function listarLinksHonorarios() {
-  const doc = await db.collection('configuracoes').doc('honorarios').get();
-
-  if (!doc.exists) {
-    return {};
-  }
-
-  const dados = doc.data() || {};
+  const dados = await configuracaoService.obterConfiguracao('honorarios');
   const origemLinks =
     dados.linksOAB && typeof dados.linksOAB === 'object' && !Array.isArray(dados.linksOAB)
       ? dados.linksOAB

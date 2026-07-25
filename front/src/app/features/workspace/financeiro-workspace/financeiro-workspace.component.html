@@ -1,0 +1,183 @@
+<section class="financeiro-page">
+  <div class="fin-hero card-glass">
+    <div>
+      <span class="eyebrow">Financeiro</span>
+      <h2 class="font-heading">Honorários, parcelas e recebimentos</h2>
+      <p>
+        Lance honorários contratados, gere as parcelas automaticamente e dê baixa
+        conforme o cliente paga.
+      </p>
+    </div>
+
+    <button mat-flat-button class="btn-premium" type="button" (click)="alternarFormulario()">
+      <mat-icon>{{ mostrarFormulario ? 'close' : 'add' }}</mat-icon>
+      {{ mostrarFormulario ? 'Fechar' : 'Novo lançamento' }}
+    </button>
+  </div>
+
+  <div class="resumo-grid" *ngIf="resumo">
+    <article class="card-glass resumo-card">
+      <span>Recebido no mês</span>
+      <strong class="valor-positivo">{{ formatarMoeda(resumo.recebidoNoMes) }}</strong>
+    </article>
+    <article class="card-glass resumo-card">
+      <span>A receber</span>
+      <strong>{{ formatarMoeda(resumo.aReceber) }}</strong>
+      <small>{{ resumo.totalPendentes }} lançamento(s) em aberto</small>
+    </article>
+    <article class="card-glass resumo-card">
+      <span>Em atraso</span>
+      <strong class="valor-negativo">{{ formatarMoeda(resumo.atrasado) }}</strong>
+      <small>{{ resumo.totalAtrasados }} vencido(s)</small>
+    </article>
+    <article class="card-glass resumo-card">
+      <span>Previsto para o mês</span>
+      <strong>{{ formatarMoeda(resumo.previstoNoMes) }}</strong>
+    </article>
+  </div>
+
+  <article class="card-glass form-card" *ngIf="mostrarFormulario">
+    <h3 class="font-heading">Novo lançamento</h3>
+
+    <div class="form-grid">
+      <mat-form-field appearance="outline" class="span-2">
+        <mat-label>Descrição</mat-label>
+        <input matInput [(ngModel)]="novoDescricao" placeholder="Ex.: Honorários contratuais" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Tipo</mat-label>
+        <mat-select [(ngModel)]="novoTipo">
+          <mat-option value="HONORARIO">Honorário</mat-option>
+          <mat-option value="DESPESA">Despesa</mat-option>
+          <mat-option value="REEMBOLSO">Reembolso</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Valor total</mat-label>
+        <mat-icon matPrefix>payments</mat-icon>
+        <input matInput [(ngModel)]="novoValor" placeholder="Ex.: 4.500,00" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Primeiro vencimento</mat-label>
+        <input matInput type="date" [(ngModel)]="novoVencimento" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Parcelas</mat-label>
+        <input matInput type="number" min="1" max="60" [(ngModel)]="novoParcelas" />
+        <mat-hint>1 = à vista. As demais vencem mês a mês.</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Processo (opcional)</mat-label>
+        <mat-select [(ngModel)]="novoProcessoId">
+          <mat-option value="">Sem vínculo</mat-option>
+          <mat-option *ngFor="let processo of processos" [value]="processo.id">
+            {{ processo.titulo }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Forma de pagamento (opcional)</mat-label>
+        <input matInput [(ngModel)]="novoFormaPagamento" placeholder="PIX, boleto, transferência..." />
+      </mat-form-field>
+    </div>
+
+    <div class="form-footer">
+      <button mat-flat-button class="btn-premium" type="button" (click)="salvarLancamento()" [disabled]="salvando">
+        <mat-spinner *ngIf="salvando" diameter="18"></mat-spinner>
+        <mat-icon *ngIf="!salvando">save</mat-icon>
+        {{ salvando ? 'Salvando...' : 'Lançar' }}
+      </button>
+    </div>
+  </article>
+
+  <article class="card-glass lista-card">
+    <div class="panel-header">
+      <div>
+        <span class="eyebrow">Lançamentos</span>
+        <h3 class="font-heading">{{ lancamentosFiltrados.length }} registro(s)</h3>
+      </div>
+
+      <mat-form-field appearance="outline" class="filtro-status">
+        <mat-label>Status</mat-label>
+        <mat-select [(ngModel)]="filtroStatus">
+          <mat-option value="Todos">Todos</mat-option>
+          <mat-option value="PENDENTE">Pendentes</mat-option>
+          <mat-option value="ATRASADO">Atrasados</mat-option>
+          <mat-option value="PAGO">Pagos</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="loading" *ngIf="carregando">
+      <mat-spinner diameter="30"></mat-spinner>
+      <span>Carregando lançamentos...</span>
+    </div>
+
+    <div class="empty-state" *ngIf="!carregando && lancamentosFiltrados.length === 0">
+      <mat-icon>account_balance_wallet</mat-icon>
+      <p>Nenhum lançamento encontrado.</p>
+    </div>
+
+    <div class="table-scroll" *ngIf="!carregando && lancamentosFiltrados.length > 0">
+      <table class="fin-table">
+        <thead>
+          <tr>
+            <th>Descrição</th>
+            <th>Tipo</th>
+            <th>Vencimento</th>
+            <th class="align-right">Valor</th>
+            <th>Status</th>
+            <th class="align-right">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let lancamento of lancamentosFiltrados">
+            <td>
+              <div class="table-primary">{{ lancamento.descricao }}</div>
+              <div class="table-secondary" *ngIf="lancamento.clienteNome || lancamento.processoTitulo">
+                {{ lancamento.clienteNome || lancamento.processoTitulo }}
+              </div>
+            </td>
+            <td>{{ tipoLabel(lancamento.tipo) }}</td>
+            <td>{{ lancamento.vencimento | date: 'dd/MM/yyyy' }}</td>
+            <td class="align-right">{{ formatarMoeda(lancamento.valor) }}</td>
+            <td>
+              <span class="status-chip" [ngClass]="statusClasse(lancamento.statusEfetivo)">
+                {{ statusLabel(lancamento.statusEfetivo) }}
+              </span>
+            </td>
+            <td class="align-right acoes">
+              <button
+                mat-icon-button
+                type="button"
+                *ngIf="lancamento.statusEfetivo !== 'PAGO'"
+                (click)="darBaixa(lancamento)"
+                title="Registrar pagamento"
+              >
+                <mat-icon>check_circle</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                *ngIf="lancamento.statusEfetivo === 'PAGO'"
+                (click)="reabrir(lancamento)"
+                title="Estornar pagamento"
+              >
+                <mat-icon>undo</mat-icon>
+              </button>
+              <button mat-icon-button type="button" (click)="excluir(lancamento)" title="Remover">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>

@@ -58,6 +58,9 @@
           <span>{{ cliente.cpf || 'CPF nao informado' }}</span>
         </div>
         <small>{{ cliente.email || cliente.telefone || 'Sem contato principal' }}</small>
+        <small *ngIf="cliente.profissao || cliente.estadoCivil">
+          {{ cliente.profissao || '' }}<span *ngIf="cliente.profissao && cliente.estadoCivil"> · </span>{{ cliente.estadoCivil ? labelEstadoCivil(cliente.estadoCivil) : '' }}
+        </small>
       </button>
 
       <div class="saas-pagination" *ngIf="!carregando && clientesFiltrados.length > 0">
@@ -119,6 +122,33 @@
           <mat-label>Documento auxiliar</mat-label>
           <mat-icon matPrefix>id_card</mat-icon>
           <input matInput [(ngModel)]="form.documentoSecundario" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>RG</mat-label>
+          <mat-icon matPrefix>badge</mat-icon>
+          <input matInput [(ngModel)]="form.rg" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Estado civil</mat-label>
+          <mat-icon matPrefix>diversity_1</mat-icon>
+          <mat-select [(ngModel)]="form.estadoCivil">
+            <mat-option [value]="null">Nao informado</mat-option>
+            <mat-option *ngFor="let opcao of estadoCivilOptions" [value]="opcao.value">{{ opcao.label }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Nacionalidade</mat-label>
+          <mat-icon matPrefix>public</mat-icon>
+          <input matInput [(ngModel)]="form.nacionalidade" placeholder="Ex.: Brasileira" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Profissão</mat-label>
+          <mat-icon matPrefix>work</mat-icon>
+          <input matInput [(ngModel)]="form.profissao" />
         </mat-form-field>
 
         <mat-form-field appearance="outline">

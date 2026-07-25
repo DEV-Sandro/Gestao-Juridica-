@@ -4,6 +4,7 @@ const { z } = require('zod');
 const { admin, bucket, defaultBucketName, projectId, sanitizeBucketName } = require('../config/firebase');
 const usuarioRepository = require('../repositories/usuario.repository');
 const conviteService = require('./convite.service');
+const permissaoService = require('./permissao.service');
 
 const ROLES_VALIDOS = ['ADMIN', 'ADVOGADO', 'CLIENT'];
 const urlFotoPermitida = /^(https:\/\/|http:\/\/).+/i;
@@ -62,18 +63,21 @@ function validarAtualizacaoPerfil(dados = {}) {
 }
 
 function sanitizarMembro(doc, authUser = null) {
+  const role = doc.role ?? 'CLIENT';
+
   return {
     uid: doc.uid,
     email: doc.email ?? authUser?.email ?? null,
     displayName: doc.displayName ?? authUser?.displayName ?? null,
     photoURL: doc.photoURL ?? authUser?.photoURL ?? null,
     avatarStoragePath: doc.avatarStoragePath ?? null,
-    role: doc.role ?? 'CLIENT',
+    role,
     telefone: doc.telefone ?? null,
     cargo: doc.cargo ?? null,
     oab: doc.oab ?? null,
     criadoEm: doc.criadoEm ?? null,
-    ativo: doc.ativo !== false
+    ativo: doc.ativo !== false,
+    permissoes: permissaoService.obterPermissoes({ role, permissoes: doc.permissoes })
   };
 }
 
@@ -319,6 +323,36 @@ async function atualizarRole(uid, novoRole) {
   return sanitizarMembro(doc || { uid });
 }
 
+async function atualizarPermissoes(uid, dados) {
+  const payload = {};
+
+  for (const chave of permissaoService.CHAVES_PERMITIDAS) {
+    if (dados[chave] !== undefined) {
+      if (typeof dados[chave] !== 'boolean') {
+        throw new Error('VALIDACAO_FALHOU');
+      }
+      payload[chave] = dados[chave];
+    }
+  }
+
+  if (Object.keys(payload).length === 0) {
+    throw new Error('VALIDACAO_FALHOU');
+  }
+
+  const atual = await usuarioRepository.buscarPorId(uid);
+  if (!atual) {
+    throw new Error('USUARIO_NAO_ENCONTRADO');
+  }
+
+  await usuarioRepository.atualizar(uid, {
+    permissoes: { ...(atual.permissoes || {}), ...payload },
+    atualizadoEm: new Date().toISOString()
+  });
+
+  const doc = await usuarioRepository.buscarPorId(uid);
+  return sanitizarMembro(doc || { uid });
+}
+
 async function removerMembro(uid, adminUser) {
   if (uid === adminUser.uid) {
     throw new Error('NAO_PODE_REMOVER_A_SI_MESMO');
@@ -341,5 +375,6 @@ module.exports = {
   listarEquipe,
   convidarMembro,
   atualizarRole,
+  atualizarPermissoes,
   removerMembro
 };

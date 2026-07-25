@@ -8,9 +8,11 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { AuthService } from '../auth.service';
+import { RecuperarSenhaDialogComponent } from './recuperar-senha-dialog.component';
 
 @Component({
   selector: 'app-login',
@@ -24,6 +26,7 @@ import { AuthService } from '../auth.service';
     MatIconModule,
     MatButtonModule,
     MatCheckboxModule,
+    MatDialogModule,
     MatSnackBarModule
   ],
   templateUrl: './login.html',
@@ -33,6 +36,7 @@ export class LoginComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   private snack = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
 
   email = '';
   senha = '';
@@ -77,6 +81,17 @@ export class LoginComponent implements OnInit {
     } finally {
       this.carregando = false;
     }
+  }
+
+  esqueciSenha(): void {
+    // O e-mail ja digitado no login entra pre-preenchido, mas o dialog nao depende
+    // disso — da para pedir o link direto, sem preencher o formulario antes.
+    this.dialog.open(RecuperarSenhaDialogComponent, {
+      data: { email: this.email.trim() },
+      panelClass: 'jp-dialog-panel',
+      backdropClass: 'jp-dialog-backdrop',
+      autoFocus: 'first-tabbable'
+    });
   }
 
   private notificar(mensagem: string): void {

@@ -6,10 +6,16 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { AuthService } from '../../../auth.service';
-import { ClientePayload, ClienteRecord } from '../../../models/client.model';
+import {
+  ClientePayload,
+  ClienteRecord,
+  ESTADO_CIVIL_OPTIONS,
+  labelEstadoCivil
+} from '../../../models/client.model';
 
 const FORM_VAZIO: ClientePayload = {
   nome: '',
@@ -17,6 +23,10 @@ const FORM_VAZIO: ClientePayload = {
   email: '',
   telefone: '',
   documentoSecundario: '',
+  estadoCivil: null,
+  nacionalidade: '',
+  profissao: '',
+  rg: '',
   endereco: '',
   numero: '',
   complemento: '',
@@ -37,6 +47,7 @@ const FORM_VAZIO: ClientePayload = {
     MatIconModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     MatProgressSpinnerModule,
     MatSnackBarModule
   ],
@@ -57,6 +68,7 @@ export class ClientesWorkspaceComponent implements OnInit {
   buscaCliente = '';
   paginaAtual = 1;
   form: ClientePayload = { ...FORM_VAZIO };
+  readonly estadoCivilOptions = ESTADO_CIVIL_OPTIONS;
 
   ngOnInit(): void {
     this.carregar();
@@ -96,6 +108,10 @@ export class ClientesWorkspaceComponent implements OnInit {
       email: cliente.email,
       telefone: cliente.telefone,
       documentoSecundario: cliente.documentoSecundario,
+      estadoCivil: cliente.estadoCivil,
+      nacionalidade: cliente.nacionalidade,
+      profissao: cliente.profissao,
+      rg: cliente.rg,
       endereco: cliente.endereco,
       numero: cliente.numero,
       complemento: cliente.complemento,
@@ -141,6 +157,10 @@ export class ClientesWorkspaceComponent implements OnInit {
     const inicio = (this.paginaAtual - 1) * this.clientesPorPagina + 1;
     const fim = Math.min(this.paginaAtual * this.clientesPorPagina, this.clientesFiltrados.length);
     return `Mostrando ${inicio}-${fim} de ${this.clientesFiltrados.length} cliente(s)`;
+  }
+
+  labelEstadoCivil(valor?: string | null): string {
+    return labelEstadoCivil(valor);
   }
 
   onBuscaClienteChange(): void {

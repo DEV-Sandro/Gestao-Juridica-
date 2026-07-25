@@ -14,6 +14,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AuthService } from '../auth.service';
 import { ClienteRecord } from '../models/client.model';
 import {
+  CategoriaCompromisso,
   HistoricoRegistroApi,
   OrcamentoStatus,
   ProcessoOrcamento,
@@ -22,6 +23,8 @@ import {
   ProcessoViewModel,
   TimelineItem,
   categoriaCompromissoLabel,
+  diferencaDiasParaPrazo,
+  ehDataFatal,
   formatarMoeda,
   formatarResumoPrazo,
   mapearHistoricoParaTimeline,
@@ -29,6 +32,12 @@ import {
   normalizarOrcamentoStatus,
   obterMetaStatus
 } from '../shared/processo-ui';
+import {
+  CATEGORIAS_PROCESSO,
+  OpcaoClassificacao,
+  TIPOS_CAUSA,
+  labelClassificacao
+} from '../shared/processo-categorias';
 import {
   DocumentGeneratorService,
   DocumentTemplateDefinition,
@@ -124,6 +133,7 @@ export class DetalhesProcessoComponent implements OnInit {
   convertendoOrcamento = false;
   atualizandoPrioridade = false;
   processandoEtapaId: string | null = null;
+  situacoesDisponiveis: OpcaoClassificacao[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -142,6 +152,17 @@ export class DetalhesProcessoComponent implements OnInit {
 
     this.carregarTabelasOab();
     this.recarregarTudo();
+
+    this.auth.listarSituacoesProcesso().subscribe({
+      next: (config) => {
+        this.situacoesDisponiveis = (config.opcoes || [])
+          .filter((opcao) => opcao.ativo !== false)
+          .map((opcao) => ({ value: opcao.value, label: opcao.label }));
+      },
+      error: () => {
+        this.situacoesDisponiveis = [];
+      }
+    });
   }
 
   get prazoFormatado(): string {
@@ -516,23 +537,21 @@ export class DetalhesProcessoComponent implements OnInit {
     });
   }
 
-  estaAtrasado(data: string, status: string): boolean {
+  // Data Fatal automatica: vencido, vence hoje ou falta 1 dia. Mesma regra do
+  // status.util.js do backend, para o card da etapa nunca divergir do processo.
+  estaDataFatal(data: string, status: string): boolean {
     if (status === 'CONCLUIDO') return false;
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const dataEtapa = new Date(`${data}T12:00:00`);
-    dataEtapa.setHours(0, 0, 0, 0);
-    return dataEtapa.getTime() < hoje.getTime();
+    return ehDataFatal(diferencaDiasParaPrazo(data));
+  }
+
+  estaAtrasado(data: string, status: string): boolean {
+    return this.estaDataFatal(data, status);
   }
 
   estaUrgente(data: string, status: string): boolean {
-    if (status === 'CONCLUIDO') return false;
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const dataEtapa = new Date(`${data}T12:00:00`);
-    dataEtapa.setHours(0, 0, 0, 0);
-    const diff = Math.ceil((dataEtapa.getTime() - hoje.getTime()) / 86400000);
-    return diff >= 0 && diff <= 2;
+    if (status === 'CONCLUIDO' || this.estaDataFatal(data, status)) return false;
+    const diff = diferencaDiasParaPrazo(data);
+    return diff !== null && diff >= 2 && diff <= 7;
   }
 
   etapaEstaUrgente(etapa: EtapaViewModel): boolean {
@@ -542,14 +561,14 @@ export class DetalhesProcessoComponent implements OnInit {
 
   etapaCardClass(etapa: EtapaViewModel): string {
     if (etapa.status === 'CONCLUIDO') return 'is-complete';
-    if (this.estaAtrasado(etapa.dataLimite, etapa.status)) return 'is-overdue';
+    if (this.estaDataFatal(etapa.dataLimite, etapa.status)) return 'is-overdue';
     if (this.etapaEstaUrgente(etapa)) return 'is-urgent';
     return 'is-neutral';
   }
 
   etapaStatusLabel(etapa: EtapaViewModel): string {
     if (etapa.status === 'CONCLUIDO') return 'Concluida';
-    if (this.estaAtrasado(etapa.dataLimite, etapa.status)) return 'Atrasada';
+    if (this.estaDataFatal(etapa.dataLimite, etapa.status)) return 'Data Fatal';
     if (etapa.urgenteManual) return 'Urgencia manual';
     if (this.estaUrgente(etapa.dataLimite, etapa.status)) return 'Urgente';
     return 'Pendente';
@@ -557,7 +576,7 @@ export class DetalhesProcessoComponent implements OnInit {
 
   etapaStatusIcone(etapa: EtapaViewModel): string {
     if (etapa.status === 'CONCLUIDO') return 'check_circle';
-    if (this.estaAtrasado(etapa.dataLimite, etapa.status)) return 'error';
+    if (this.estaDataFatal(etapa.dataLimite, etapa.status)) return 'gavel';
     if (etapa.urgenteManual) return 'outlined_flag';
     if (this.estaUrgente(etapa.dataLimite, etapa.status)) return 'priority_high';
     return 'schedule';
@@ -576,8 +595,8 @@ export class DetalhesProcessoComponent implements OnInit {
       return 'Fluxo concluido e registrado na timeline.';
     }
 
-    if (this.estaAtrasado(etapa.dataLimite, etapa.status)) {
-      return 'Compromisso vencido e precisando de acao imediata.';
+    if (this.estaDataFatal(etapa.dataLimite, etapa.status)) {
+      return 'Data Fatal: vencido, vence hoje ou falta 1 dia. Acao imediata.';
     }
 
     if (etapa.urgenteManual) {
@@ -595,11 +614,23 @@ export class DetalhesProcessoComponent implements OnInit {
     return obterMetaStatus(status).badgeClass;
   }
 
+  labelCategoriaProcesso(categoria?: string | null): string {
+    return labelClassificacao(CATEGORIAS_PROCESSO, categoria);
+  }
+
+  labelTipoCausa(tipoCausa?: string | null): string {
+    return labelClassificacao(TIPOS_CAUSA, tipoCausa);
+  }
+
+  labelSituacao(situacao?: string | null): string {
+    return labelClassificacao(this.situacoesDisponiveis, situacao);
+  }
+
   statusIcon(status: ProcessoStatusVisual): string {
     return obterMetaStatus(status).icon;
   }
 
-  compromissoIcon(tipo: 'PRAZO' | 'AUDIENCIA' | 'EVENTO' | 'DOCUMENTO'): string {
+  compromissoIcon(tipo: CategoriaCompromisso): string {
     switch (tipo) {
       case 'AUDIENCIA':
         return 'gavel';
@@ -607,6 +638,10 @@ export class DetalhesProcessoComponent implements OnInit {
         return 'event';
       case 'DOCUMENTO':
         return 'description';
+      case 'REUNIAO':
+        return 'groups';
+      case 'OUTRO':
+        return 'more_horiz';
       default:
         return 'schedule';
     }

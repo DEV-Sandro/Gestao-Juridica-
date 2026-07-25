@@ -125,6 +125,9 @@ body[data-theme='dark'] {
 html,
 body {
   min-height: 100%;
+  // Paineis off-canvas (notificacoes, drawer) ficam fora da tela a direita;
+  // sem isto eles criam scroll horizontal fantasma no celular.
+  overflow-x: clip;
 }
 
 body {
