@@ -23,6 +23,42 @@
   --status-complete: #10b981;
   --status-progress: #3b82f6;
 
+  /* ---- Camada SEMÂNTICA (fonte única; componentes usam estas) ---- */
+  --color-primary: var(--brand-primary); /* segue o tema (verde/teal) */
+  --color-danger: var(--status-overdue);
+  --color-warning: var(--status-urgent);
+  --color-success: var(--status-complete);
+  --color-info: var(--status-progress);
+  --color-on-accent: #ffffff; /* texto/ícone sobre fundo colorido */
+
+  /* Tints suaves para fundos de badge/ícone (substituem color-mix repetido) */
+  --color-danger-soft: color-mix(in srgb, var(--color-danger) 14%, transparent);
+  --color-warning-soft: color-mix(in srgb, var(--color-warning) 16%, transparent);
+  --color-success-soft: color-mix(in srgb, var(--color-success) 14%, transparent);
+  --color-info-soft: color-mix(in srgb, var(--color-info) 14%, transparent);
+  --color-primary-soft: color-mix(in srgb, var(--color-primary) 12%, transparent);
+
+  /* ---- Motion (150–300ms, curva padrão Material) ---- */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-fast: 150ms;
+  --motion-base: 200ms;
+  --motion-slow: 280ms;
+
+  /* ---- Z-index (documentado; header acima do toast p/ menu clicável) ---- */
+  --z-header: 1150;
+  --z-toast: 1120;
+  --z-overlay: 1200;
+  --z-drawer: 1210;
+  --z-fullscreen: 1300;
+
+  /* ---- Aliases de compatibilidade (componentes antigos usavam estes nomes,
+     que não existiam e renderizavam inválidos). Apontam para a fonte única. ---- */
+  --status-success: var(--color-success);
+  --status-info: var(--color-info);
+  --radius-card: var(--radius-lg);
+  --bg-surface-hover: var(--surface-soft);
+  --glass-border: 1px solid var(--border-subtle);
+
   --bg-app: #08111f;
   --bg-app-rgb: 8, 17, 31;
   --bg-surface: rgba(10, 22, 40, 0.82);

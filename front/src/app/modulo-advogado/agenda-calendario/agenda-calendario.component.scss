@@ -176,7 +176,7 @@
 
   &.is-today .day-number {
     background: var(--brand-gradient);
-    color: #fff;
+    color: var(--color-on-accent);
   }
 
   &.has-urgent {

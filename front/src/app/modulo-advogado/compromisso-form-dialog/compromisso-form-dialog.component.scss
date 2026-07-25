@@ -82,5 +82,5 @@
 }
 
 .text-muted { color: var(--text-muted); }
-.text-danger { color: var(--status-urgent, #ef4444); }
+.text-danger { color: var(--status-urgent, var(--color-danger)); }
 .m-0 { margin: 0; }

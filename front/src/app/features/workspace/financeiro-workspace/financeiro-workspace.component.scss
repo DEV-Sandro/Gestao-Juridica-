@@ -42,8 +42,8 @@
 
   small { color: var(--text-muted); font-size: 12px; }
 
-  .valor-positivo { color: #16a34a; }
-  .valor-negativo { color: #dc2626; }
+  .valor-positivo { color: var(--color-primary); }
+  .valor-negativo { color: var(--color-danger); }
 }
 
 .form-card,
@@ -128,8 +128,8 @@
   font-weight: 800;
   white-space: nowrap;
 
-  &.is-pago { background: rgba(22, 163, 74, 0.16); color: #16a34a; }
-  &.is-atrasado { background: rgba(220, 38, 38, 0.16); color: #dc2626; }
+  &.is-pago { background: rgba(22, 163, 74, 0.16); color: var(--color-primary); }
+  &.is-atrasado { background: rgba(220, 38, 38, 0.16); color: var(--color-danger); }
   &.is-pendente { background: rgba(234, 179, 8, 0.18); color: #b45309; }
   &.is-cancelado { background: rgba(127, 127, 127, 0.16); color: var(--text-muted); }
 }

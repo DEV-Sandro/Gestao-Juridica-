@@ -139,7 +139,7 @@
   display: grid;
   place-items: center;
   background: var(--brand-gradient);
-  color: #fff;
+  color: var(--color-on-accent);
   box-shadow: 0 16px 32px rgba(37, 99, 235, 0.18);
 }
 
@@ -384,7 +384,7 @@
   align-items: center;
   justify-content: center;
   background: var(--status-overdue);
-  color: #fff;
+  color: var(--color-on-accent);
   font-size: 11px;
   font-weight: 800;
 }
@@ -424,7 +424,7 @@
   display: grid;
   place-items: center;
   background: var(--brand-gradient);
-  color: #fff;
+  color: var(--color-on-accent);
   font-weight: 800;
   border: 2px solid transparent;
 
@@ -1691,7 +1691,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--brand-primary) 80%, #fff);
+  background: color-mix(in srgb, var(--brand-primary) 80%, var(--color-on-accent));
   box-shadow: 0 0 0 6px color-mix(in srgb, var(--brand-primary) 16%, transparent);
   flex: 0 0 auto;
 }
@@ -2136,7 +2136,7 @@
 .drawer-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1200;
+  z-index: var(--z-overlay);
   background: rgba(0, 0, 0, 0.5);
   opacity: 0;
   visibility: hidden;
@@ -2150,7 +2150,7 @@
   top: 0;
   left: 0;
   bottom: 0;
-  z-index: 1210;
+  z-index: var(--z-drawer);
   width: min(84vw, 320px);
   display: flex;
   flex-direction: column;
@@ -2252,7 +2252,7 @@
 .busca-fullscreen {
   position: fixed;
   inset: 0;
-  z-index: 1300;
+  z-index: var(--z-fullscreen);
   display: flex;
   flex-direction: column;
   background: var(--bg-app);
@@ -2320,7 +2320,7 @@
   .jp-topbar {
     position: sticky;
     top: 0;
-    z-index: 1150; /* acima do toast, para o menu ficar sempre clicável */
+    z-index: var(--z-header); /* acima do toast, para o menu ficar sempre clicável */
     padding: 8px 12px;
     flex-wrap: nowrap;
   }
@@ -2362,7 +2362,7 @@
     left: 12px;
     right: 12px;
     max-width: none;
-    z-index: 1120;
+    z-index: var(--z-toast);
   }
 
   /* Drawer substitui as pilulas horizontais */
