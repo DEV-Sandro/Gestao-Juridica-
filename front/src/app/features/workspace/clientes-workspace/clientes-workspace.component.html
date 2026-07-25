@@ -1,12 +1,8 @@
 <section class="clientes-page">
   <div class="clientes-hero card-glass">
-    <div>
-      <span class="eyebrow">Carteira ativa</span>
-      <h2 class="font-heading">Clientes prontos para operacao e documentos</h2>
-      <p>
-        Cadastre dados essenciais do cliente para reaproveitar em atendimento, processos e
-        geracao de documentos juridicos.
-      </p>
+    <div class="clientes-hero-copy">
+      <h2 class="font-heading">Clientes</h2>
+      <p>{{ clientes.length }} cadastrado<span *ngIf="clientes.length !== 1">s</span> · reaproveitados em processos e documentos</p>
     </div>
 
     <button mat-flat-button class="btn-premium" type="button" (click)="novoCliente()">
@@ -90,7 +86,7 @@
       </div>
 
       <p class="editor-helper">
-        Campos sem icone agora mantem o mesmo conforto visual dos campos com prefixo. O cadastro tambem pode ser arquivado sem perder historico juridico.
+        Preencha os dados essenciais do cliente. O cadastro pode ser arquivado depois sem perder o histórico jurídico.
       </p>
 
       <div class="form-grid">

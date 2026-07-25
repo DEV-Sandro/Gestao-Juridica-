@@ -786,11 +786,13 @@ async function resolverClienteDoProcesso(dados, user, processoAtual = null) {
       if (clientePorId && clientePorId.ativo !== false) {
         clienteInformado.nome = clientePorId.nome || null;
       } else {
-        clienteInformado.nome = clienteInformado.id;
+        // Cliente nao encontrado: NUNCA usar o ID como nome (vazava o id do
+        // documento como se fosse o nome da pessoa). Placeholder legivel.
+        clienteInformado.nome = 'Cliente sem cadastro';
         clienteInformado.id = null;
       }
     } catch (error) {
-      clienteInformado.nome = clienteInformado.id;
+      clienteInformado.nome = 'Cliente sem cadastro';
       clienteInformado.id = null;
     }
   }

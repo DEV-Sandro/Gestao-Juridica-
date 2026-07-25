@@ -600,9 +600,8 @@
       <section class="card-glass table-card" id="section-processos">
         <div class="table-toolbar">
           <div class="table-toolbar-copy">
-            <span class="eyebrow">Operacao diaria</span>
-            <h3 class="font-heading">Lista de processos</h3>
-            <p>Centralize a busca, a leitura da fila e as acoes do caso em um unico ponto de trabalho.</p>
+            <h3 class="font-heading">Processos</h3>
+            <p>{{ totalResultados }} resultado<span *ngIf="totalResultados !== 1">s</span></p>
           </div>
 
           <div class="toolbar-actions">
