@@ -245,6 +245,8 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   activeSidebarSection: SidebarSection = 'dashboard';
   dashboard: DashboardResumo | null = null;
   sidebarRecolhida = localStorage.getItem('justapro-sidebar') === 'recolhida';
+  drawerAberto = false;
+  buscaMobileAberta = false;
 
   termoBuscaGlobal = '';
   resultadoBusca: ResultadoBusca | null = null;
@@ -307,6 +309,31 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   alternarSidebar(): void {
     this.sidebarRecolhida = !this.sidebarRecolhida;
     localStorage.setItem('justapro-sidebar', this.sidebarRecolhida ? 'recolhida' : 'aberta');
+  }
+
+  // ---- Drawer mobile: navegação off-canvas com overlay ----
+  abrirDrawer(): void {
+    this.drawerAberto = true;
+    document.body.style.overflow = 'hidden'; // trava o scroll do fundo
+  }
+
+  fecharDrawer(): void {
+    this.drawerAberto = false;
+    document.body.style.overflow = '';
+  }
+
+  // ---- Busca em tela cheia (mobile) ----
+  abrirBuscaMobile(): void {
+    this.buscaMobileAberta = true;
+    setTimeout(() => {
+      const campo = document.querySelector<HTMLInputElement>('.busca-mobile-input');
+      campo?.focus();
+    }, 60);
+  }
+
+  fecharBuscaMobile(): void {
+    this.buscaMobileAberta = false;
+    this.fecharBusca();
   }
 
   carregarDashboard(): void {
@@ -379,6 +406,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     this.filtroSub?.unsubscribe();
     this.routeDataSub?.unsubscribe();
     this.buscaSub?.unsubscribe();
+    document.body.style.overflow = ''; // garante que o scroll volta se o drawer estava aberto
   }
 
   // Regra de foco: uma unica coisa mais importante agora, em ordem de gravidade

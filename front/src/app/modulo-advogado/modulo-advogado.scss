@@ -1929,8 +1929,18 @@
     display: none;
   }
 
+  // Drawer passa a ser a navegação única abaixo do desktop.
   .mobile-quick-nav {
-    display: flex;
+    display: none;
+  }
+
+  .breadcrumb-menu-mobile {
+    display: grid;
+  }
+
+  .breadcrumb-raiz,
+  .breadcrumb-sep {
+    display: none;
   }
 
   .overview-grid {
@@ -1943,10 +1953,15 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  // Header permanece em UMA linha: menu + titulo à esquerda, ações à direita.
+  // (antes empilhava em coluna, criando o header alto de duas fileiras)
   .jp-topbar {
-    flex-direction: column;
-    align-items: flex-start;
+    padding: 12px 20px;
+    gap: 12px;
+    flex-wrap: nowrap;
   }
+
+  .topbar-breadcrumb { flex: 1; min-width: 0; }
 
   // O banner e um grid (1fr auto): em tela estreita as acoes iam para o lado e
   // espremiam o texto a uma palavra por linha. Empilha em coluna unica.
@@ -1958,11 +1973,6 @@
 
   .summary-actions {
     justify-content: flex-start;
-  }
-
-  .jp-topbar {
-    padding: 12px 20px;
-    gap: 12px;
   }
 
   .topbar-description {
@@ -2114,4 +2124,269 @@
     min-width: 0;
     width: 100%;
   }
+}
+
+/* ============================================================
+   MOBILE — Drawer nativo, busca full-screen, header enxuto
+   ============================================================ */
+
+/* Gatilho de busca mobile e o proprio drawer ficam ocultos no desktop */
+.busca-mobile-trigger { display: none; }
+
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 220ms ease, visibility 220ms ease;
+
+  &.is-aberto { opacity: 1; visibility: visible; }
+}
+
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 1210;
+  width: min(84vw, 320px);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+  transform: translateX(-100%);
+  transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+
+  &.is-aberto { transform: translateX(0); }
+}
+
+.drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 10px;
+
+  .drawer-brand { display: flex; align-items: center; gap: 10px; }
+  .brand-mark { width: 38px; height: 38px; border-radius: 12px; }
+  strong { font-size: 1.05rem; }
+
+  .drawer-close {
+    width: 38px; height: 38px; display: grid; place-items: center;
+    border: 1px solid var(--border-subtle); border-radius: 11px;
+    background: var(--surface-soft); color: var(--text-main); cursor: pointer;
+  }
+}
+
+.drawer-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 12px 8px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--surface-soft);
+
+  .drawer-user-texts { display: flex; flex-direction: column; min-width: 0; }
+  strong { font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  span { color: var(--text-muted); font-size: 0.78rem; }
+}
+
+.drawer-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 12px 12px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.drawer-group-label {
+  display: block;
+  padding: 14px 8px 6px;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.drawer-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 12px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 650;
+  font-size: 0.95rem;
+  text-decoration: none;
+  cursor: pointer;
+  text-align: left;
+
+  span { flex: 1; }
+  mat-icon { flex-shrink: 0; }
+
+  &:active { background: var(--surface-strong); }
+
+  &.active {
+    background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
+    color: var(--text-main);
+    mat-icon:first-child { color: var(--brand-primary); }
+  }
+
+  .drawer-check { color: var(--brand-primary); }
+}
+
+.drawer-sair {
+  margin: 0 12px 16px;
+  width: auto;
+  color: var(--status-overdue);
+}
+
+/* Busca em tela cheia */
+.busca-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-app);
+  animation: fadeIn 160ms ease forwards;
+}
+
+.busca-fs-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+
+  .busca-fs-voltar,
+  .busca-fs-limpar {
+    flex-shrink: 0;
+    width: 40px; height: 40px;
+    display: grid; place-items: center;
+    border: none; background: transparent;
+    color: var(--text-main); cursor: pointer;
+  }
+
+  .busca-mobile-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-main);
+    font-size: 1rem;
+    font-family: inherit;
+    &:focus { outline: none; }
+    &::placeholder { color: var(--text-muted); }
+  }
+}
+
+.busca-fs-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 12px 24px;
+
+  .busca-fs-dica { color: var(--text-muted); font-size: 0.9rem; padding: 16px 6px; }
+
+  .busca-item {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    padding: 13px 10px; border: none; border-radius: 12px;
+    background: transparent; color: inherit; text-align: left; cursor: pointer;
+    &:active { background: var(--surface-soft); }
+    mat-icon { flex-shrink: 0; color: var(--text-muted); }
+    .busca-item-texto { display: flex; flex-direction: column; min-width: 0; }
+    strong { font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    small { color: var(--text-muted); font-size: 0.76rem; }
+  }
+
+  .busca-grupo {
+    display: block; padding: 12px 8px 4px;
+    color: var(--text-muted); font-size: 0.68rem; font-weight: 800;
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+}
+
+/* ---- Ajustes de header, toast e ações no mobile ---- */
+@media (max-width: 720px) {
+  /* Header em UMA linha compacta e fixa no topo: menu + titulo + ações */
+  .jp-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 1150; /* acima do toast, para o menu ficar sempre clicável */
+    padding: 8px 12px;
+    flex-wrap: nowrap;
+  }
+
+  .topbar-breadcrumb {
+    flex: 1;
+    min-width: 0;
+    .breadcrumb-atual { font-size: 0.98rem; }
+  }
+
+  /* Busca inline vira icone; troca de tema e paleta vao pro drawer */
+  .busca-global,
+  .desktop-only-action,
+  .topbar-user .user-texts { display: none; }
+
+  .busca-mobile-trigger { display: grid; }
+
+  /* Avatar do perfil sem a moldura de menu (só a foto) */
+  .topbar-user {
+    min-height: 40px;
+    padding: 0;
+    border: none;
+    background: transparent;
+  }
+
+  /* Ações nunca quebram linha (era o que deixava o header com 2 fileiras) */
+  .topbar-actions {
+    flex-wrap: nowrap;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .icon-action { width: 38px; height: 38px; }
+
+  /* Toast fixo ABAIXO do header (não cobre o menu), acima do conteúdo */
+  .jp-toast {
+    top: 60px;
+    bottom: auto;
+    left: 12px;
+    right: 12px;
+    max-width: none;
+    z-index: 1120;
+  }
+
+  /* Drawer substitui as pilulas horizontais */
+  .mobile-quick-nav { display: none; }
+
+  /* Acoes: "Novo processo" full-width; secundarias enxutas */
+  .workspace-actions {
+    padding: 12px 14px 0;
+    gap: 8px;
+  }
+
+  /* KPIs e cards mais compactos, menos padding lateral */
+  .jp-workspace { padding: 14px 14px 28px; gap: 14px; }
+
+  .attention-card { padding: 16px; gap: 12px; }
+  .attention-card .attention-icon { width: 40px; height: 40px; }
+  .attention-card h2 { font-size: 1.05rem; }
+
+  .agenda-hoje { padding: 16px; }
+}
+
+/* No desktop o drawer/overlay nunca aparecem mesmo se o estado ficar true */
+@media (min-width: 1081px) {
+  .drawer-overlay,
+  .mobile-drawer,
+  .busca-fullscreen { display: none !important; }
 }

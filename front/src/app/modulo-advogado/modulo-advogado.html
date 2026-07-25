@@ -129,6 +129,143 @@
     </div>
   </aside>
 
+  <!-- ============================================================
+       DRAWER MOBILE — navegação off-canvas com overlay animado
+       ============================================================ -->
+  <div
+    class="drawer-overlay"
+    [class.is-aberto]="drawerAberto"
+    (click)="fecharDrawer()"
+    aria-hidden="true"
+  ></div>
+
+  <nav
+    class="mobile-drawer"
+    [class.is-aberto]="drawerAberto"
+    aria-label="Menu de navegação"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div class="drawer-head">
+      <div class="drawer-brand">
+        <div class="brand-mark"><mat-icon>balance</mat-icon></div>
+        <strong class="font-heading">JustaPro</strong>
+      </div>
+      <button type="button" class="drawer-close" (click)="fecharDrawer()" aria-label="Fechar menu">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="drawer-user">
+      <div class="avatar" [class.has-image]="currentUser?.photoURL">
+        <img *ngIf="currentUser?.photoURL; else drawerAvatarFallback" [src]="currentUser?.photoURL" alt="" />
+        <ng-template #drawerAvatarFallback>
+          <span>{{ iniciaisDoNome(currentUser?.displayName || currentUser?.email) }}</span>
+        </ng-template>
+      </div>
+      <div class="drawer-user-texts">
+        <strong>{{ currentUser?.displayName || 'Usuario' }}</strong>
+        <span>{{ currentUser?.cargo || currentUser?.role || 'Equipe juridica' }}</span>
+      </div>
+    </div>
+
+    <div class="drawer-scroll">
+      <span class="drawer-group-label">Navegação</span>
+      <a class="drawer-item" routerLink="/advogado/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharDrawer()">
+        <mat-icon>dashboard</mat-icon><span>Dashboard</span>
+      </a>
+      <a class="drawer-item" routerLink="/advogado/processos" routerLinkActive="active" (click)="fecharDrawer()">
+        <mat-icon>folder_special</mat-icon><span>Processos</span>
+      </a>
+      <a class="drawer-item" routerLink="/advogado/clientes" routerLinkActive="active" (click)="fecharDrawer()">
+        <mat-icon>people</mat-icon><span>Clientes</span>
+      </a>
+      <a class="drawer-item" routerLink="/advogado/agenda" routerLinkActive="active" (click)="fecharDrawer()">
+        <mat-icon>calendar_month</mat-icon><span>Agenda</span>
+      </a>
+      <a class="drawer-item" routerLink="/advogado/documentos" routerLinkActive="active" (click)="fecharDrawer()">
+        <mat-icon>description</mat-icon><span>Documentos</span>
+      </a>
+      <a class="drawer-item" routerLink="/advogado/financeiro" routerLinkActive="active" (click)="fecharDrawer()">
+        <mat-icon>account_balance_wallet</mat-icon><span>Financeiro</span>
+      </a>
+
+      <span class="drawer-group-label">Conta</span>
+      <a class="drawer-item" routerLink="/perfil" (click)="fecharDrawer()">
+        <mat-icon>person</mat-icon><span>Meu perfil</span>
+      </a>
+      <a class="drawer-item" routerLink="/equipe" *ngIf="currentUser?.role === 'ADMIN'" (click)="fecharDrawer()">
+        <mat-icon>groups</mat-icon><span>Equipe</span>
+      </a>
+      <a class="drawer-item" routerLink="/auditoria" *ngIf="currentUser?.role === 'ADMIN'" (click)="fecharDrawer()">
+        <mat-icon>fact_check</mat-icon><span>Auditoria</span>
+      </a>
+
+      <span class="drawer-group-label">Tema</span>
+      <button type="button" class="drawer-item" *ngFor="let option of themeOptions" (click)="mudarTema(option.value)">
+        <mat-icon>{{ option.icon }}</mat-icon><span>{{ option.label }}</span>
+        <mat-icon class="drawer-check" *ngIf="temaAtual === option.value">check</mat-icon>
+      </button>
+    </div>
+
+    <button type="button" class="drawer-item drawer-sair" (click)="fecharDrawer(); sair()">
+      <mat-icon>logout</mat-icon><span>Sair</span>
+    </button>
+  </nav>
+
+  <!-- ============================================================
+       BUSCA EM TELA CHEIA (mobile)
+       ============================================================ -->
+  <div class="busca-fullscreen" *ngIf="buscaMobileAberta">
+    <div class="busca-fs-head">
+      <button type="button" class="busca-fs-voltar" (click)="fecharBuscaMobile()" aria-label="Voltar">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <input
+        type="text"
+        class="busca-mobile-input"
+        placeholder="Processo, cliente, CPF, tag..."
+        [(ngModel)]="termoBuscaGlobal"
+        (ngModelChange)="aoDigitarBusca()"
+        aria-label="Busca global"
+      />
+      <button type="button" class="busca-fs-limpar" *ngIf="termoBuscaGlobal" (click)="termoBuscaGlobal=''; aoDigitarBusca()" aria-label="Limpar">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="busca-fs-body">
+      <p class="busca-fs-dica" *ngIf="!resultadoBusca && !buscandoGlobal">
+        Digite ao menos 2 letras para buscar.
+      </p>
+      <p class="busca-fs-dica" *ngIf="resultadoBusca && totalResultadosBusca === 0 && !buscandoGlobal">
+        Nenhum resultado para "{{ resultadoBusca.termo }}".
+      </p>
+
+      <ng-container *ngIf="resultadoBusca?.processos?.length">
+        <span class="busca-grupo">Processos</span>
+        <button type="button" class="busca-item" *ngFor="let processo of resultadoBusca!.processos" (click)="abrirResultadoProcesso(processo.id); fecharBuscaMobile()">
+          <mat-icon>folder_open</mat-icon>
+          <span class="busca-item-texto">
+            <strong>{{ processo.titulo }}</strong>
+            <small>{{ processo.cliente || 'Sem cliente' }} · {{ processo.status }}</small>
+          </span>
+        </button>
+      </ng-container>
+
+      <ng-container *ngIf="resultadoBusca?.clientes?.length">
+        <span class="busca-grupo">Clientes</span>
+        <button type="button" class="busca-item" *ngFor="let cliente of resultadoBusca!.clientes" (click)="abrirResultadoCliente(); fecharBuscaMobile()">
+          <mat-icon>person</mat-icon>
+          <span class="busca-item-texto">
+            <strong>{{ cliente.nome }}</strong>
+            <small>{{ cliente.cpf || cliente.email || cliente.telefone || 'Sem contato' }}</small>
+          </span>
+        </button>
+      </ng-container>
+    </div>
+  </div>
+
   <main class="jp-main">
     <div class="jp-toast" *ngIf="notificacaoAtiva && notificacaoAtual">
       <div class="toast-content">
@@ -156,8 +293,8 @@
         <button
           type="button"
           class="breadcrumb-menu-mobile"
-          (click)="alternarSidebar()"
-          aria-label="Alternar menu lateral"
+          (click)="abrirDrawer()"
+          aria-label="Abrir menu de navegação"
         >
           <mat-icon>menu</mat-icon>
         </button>
@@ -167,6 +304,16 @@
       </nav>
 
       <div class="topbar-actions">
+        <!-- Mobile: ícone que abre a busca em tela cheia -->
+        <button
+          type="button"
+          class="icon-action busca-mobile-trigger"
+          (click)="abrirBuscaMobile()"
+          aria-label="Buscar"
+        >
+          <mat-icon>search</mat-icon>
+        </button>
+
         <div class="busca-global">
           <mat-icon class="busca-icone">search</mat-icon>
           <input
@@ -234,7 +381,7 @@
 
         <button
           type="button"
-          class="icon-action"
+          class="icon-action desktop-only-action"
           (click)="alternarModoClaroEscuro()"
           [matTooltip]="temaAtual === 'light' ? 'Mudar para tema escuro' : 'Mudar para tema claro'"
           [attr.aria-label]="temaAtual === 'light' ? 'Mudar para tema escuro' : 'Mudar para tema claro'"
@@ -244,7 +391,7 @@
 
         <button
           type="button"
-          class="icon-action"
+          class="icon-action desktop-only-action"
           [matMenuTriggerFor]="temaMenu"
           matTooltip="Escolher tema"
           aria-label="Escolher tema"
