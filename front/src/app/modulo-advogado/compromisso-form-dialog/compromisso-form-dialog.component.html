@@ -4,7 +4,7 @@
       <h3 class="font-heading m-0">{{ editando ? 'Editar compromisso' : 'Novo compromisso' }}</h3>
       <span class="text-muted">Audiências, reuniões, prazos e outros eventos da sua agenda</span>
     </div>
-    <button mat-icon-button class="btn-close" (click)="fechar()" [disabled]="salvando">
+    <button mat-icon-button class="btn-close" (click)="fechar()" [disabled]="salvando" aria-label="Fechar">
       <mat-icon>close</mat-icon>
     </button>
   </header>

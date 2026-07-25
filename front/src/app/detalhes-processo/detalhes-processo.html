@@ -397,11 +397,11 @@
                     {{ etapaAcaoPrincipal(etapa) }}
                   </button>
 
-                  <button mat-icon-button type="button" [disabled]="processandoEtapaId === etapa.id" (click)="editarEtapa(etapa)">
+                  <button mat-icon-button type="button" [disabled]="processandoEtapaId === etapa.id" (click)="editarEtapa(etapa)" aria-label="Editar etapa">
                     <mat-icon>edit</mat-icon>
                   </button>
 
-                  <button mat-icon-button type="button" class="danger-action" [disabled]="processandoEtapaId === etapa.id" (click)="excluirEtapa(etapa)">
+                  <button mat-icon-button type="button" class="danger-action" [disabled]="processandoEtapaId === etapa.id" (click)="excluirEtapa(etapa)" aria-label="Excluir etapa">
                     <mat-icon>delete_outline</mat-icon>
                   </button>
                 </div>
@@ -510,7 +510,7 @@
         <p class="drawer-intro">Mantenha titulo, prazo, referencia operacional e prioridade no mesmo fluxo, sem deixar o painel apertado.</p>
       </div>
 
-      <button mat-icon-button type="button" (click)="cancelarEdicaoEtapa()">
+      <button mat-icon-button type="button" (click)="cancelarEdicaoEtapa()" aria-label="Cancelar edição da etapa">
         <mat-icon>close</mat-icon>
       </button>
     </div>

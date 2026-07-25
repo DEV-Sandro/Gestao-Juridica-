@@ -18,7 +18,7 @@
         <mat-label>Senha de Acesso</mat-label>
         <mat-icon matPrefix class="icon-muted">lock</mat-icon>
         <input matInput [type]="mostrarSenha ? 'text' : 'password'" [(ngModel)]="senha" name="senha" required>
-        <button mat-icon-button matSuffix type="button" (click)="mostrarSenha = !mostrarSenha">
+        <button mat-icon-button matSuffix type="button" (click)="mostrarSenha = !mostrarSenha" [attr.aria-label]="mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'">
           <mat-icon class="icon-muted">{{ mostrarSenha ? 'visibility_off' : 'visibility' }}</mat-icon>
         </button>
       </mat-form-field>

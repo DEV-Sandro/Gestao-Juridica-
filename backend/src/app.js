@@ -153,11 +153,6 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/teste-back', (req, res) => {
-  console.log('🔥 BATEU NO BACKEND');
-  res.json({ ok: true });
-});
-
 app.get('/healthz', (req, res) => {
   res.status(200).json({ ok: true });
 });
