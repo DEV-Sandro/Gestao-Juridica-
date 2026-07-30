@@ -1,14 +1,14 @@
 <section class="docs-page">
   <div class="docs-hero card-glass">
-    <div>
-      <span class="eyebrow">Biblioteca juridica</span>
-      <h2 class="font-heading">Documentos editaveis prontos para fechamento externo</h2>
+    <div class="docs-hero-text">
+      <span class="eyebrow">Biblioteca jurídica</span>
+      <h2 class="font-heading">Documentos editáveis prontos para fechamento externo</h2>
       <p>
-        Escolha um modelo, selecione o cliente e gere um arquivo DOCX com os dados ja
-        pre-preenchidos para finalizar no editor de sua preferencia.
+        Escolha um modelo, selecione o cliente e gere um arquivo DOCX com os dados já
+        pré-preenchidos para finalizar no editor de sua preferência.
       </p>
       <p class="helper-copy">
-        Campos ainda nao cadastrados no sistema saem com linha de preenchimento no documento.
+        Campos ainda não cadastrados no sistema saem com linha de preenchimento no documento.
       </p>
     </div>
 
@@ -72,28 +72,74 @@
   </section>
 
   <div class="docs-grid">
+    <!-- ============================================================
+         BIBLIOTECA DE MODELOS
+         ============================================================ -->
     <article class="card-glass template-panel">
       <div class="panel-header">
         <div>
           <span class="eyebrow">Modelos</span>
-          <h3 class="font-heading">Modelos disponíveis</h3>
+          <h3 class="font-heading">Biblioteca de modelos</h3>
         </div>
-        <button
-          *ngIf="ehAdmin"
-          mat-stroked-button
-          type="button"
-          class="btn-upload-toggle"
-          (click)="alternarUpload()"
-        >
-          <mat-icon>{{ mostrarUpload ? 'close' : 'upload_file' }}</mat-icon>
-          {{ mostrarUpload ? 'Fechar' : 'Novo modelo' }}
+        <span class="panel-counter">{{ modelosFiltrados.length }}</span>
+      </div>
+
+      <!-- Ação principal: novo modelo (ADMIN), alinhada à direita acima da busca -->
+      <div class="lib-novo" *ngIf="ehAdmin">
+        <button mat-flat-button class="btn-premium" type="button" (click)="abrirNovoModelo()">
+          <mat-icon>add</mat-icon>
+          Novo modelo
         </button>
       </div>
 
-      <div class="upload-box" *ngIf="ehAdmin && mostrarUpload">
+      <!-- Toolbar: busca + filtro + ordenação -->
+      <div class="lib-toolbar">
+        <div class="lib-search">
+          <mat-icon>search</mat-icon>
+          <input
+            type="text"
+            [(ngModel)]="busca"
+            placeholder="Buscar modelo por nome ou categoria…"
+            aria-label="Buscar modelo"
+          />
+          <button type="button" *ngIf="busca" (click)="busca = ''" aria-label="Limpar busca">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <div class="lib-filtros">
+          <mat-form-field appearance="outline" class="lib-select">
+            <mat-label>Categoria</mat-label>
+            <mat-select [(ngModel)]="filtroCategoria">
+              <mat-option *ngFor="let cat of categoriasDisponiveis" [value]="cat">{{ cat }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="lib-select">
+            <mat-label>Ordenar</mat-label>
+            <mat-select [(ngModel)]="ordenacao">
+              <mat-option value="nome">Nome (A–Z)</mat-option>
+              <mat-option value="recentes">Mais recentes</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           FORM: novo modelo / edição (ADMIN)
+           ============================================================ -->
+      <div class="upload-box" id="form-modelo" *ngIf="ehAdmin && mostrarUpload">
+        <div class="upload-head">
+          <strong>{{ modeloEmEdicaoId ? 'Editar modelo' : 'Novo modelo' }}</strong>
+          <button mat-icon-button type="button" (click)="fecharFormModelo()" aria-label="Fechar">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
         <p class="helper-copy">
-          Envie um .docx com variáveis no formato <code>{{ '{' }}cliente_nome{{ '}' }}</code>.
-          O sistema detecta os campos automaticamente.
+          {{ modeloEmEdicaoId
+            ? 'Ajuste nome, descrição e categoria. Para trocar o arquivo, selecione um novo .docx (vira nova versão).'
+            : 'Envie um arquivo .docx com as variáveis entre chaves simples. O sistema detecta os campos automaticamente.' }}
         </p>
 
         <mat-form-field appearance="outline">
@@ -114,56 +160,198 @@
         <label class="file-picker">
           <input type="file" accept=".docx" (change)="aoSelecionarArquivo($event)" hidden />
           <mat-icon>attach_file</mat-icon>
-          <span>{{ novoTemplateArquivoNome || 'Selecionar arquivo .docx' }}</span>
+          <span>{{ novoTemplateArquivoNome || (modeloEmEdicaoId ? 'Trocar arquivo .docx (opcional)' : 'Selecionar arquivo .docx') }}</span>
         </label>
 
         <button
           mat-flat-button
           class="btn-premium"
           type="button"
-          (click)="enviarTemplate()"
+          (click)="salvarModelo()"
           [disabled]="enviandoTemplate"
         >
           <mat-spinner *ngIf="enviandoTemplate" diameter="18"></mat-spinner>
           <mat-icon *ngIf="!enviandoTemplate">save</mat-icon>
-          {{ enviandoTemplate ? 'Enviando...' : 'Cadastrar modelo' }}
+          {{ enviandoTemplate ? 'Salvando…' : (modeloEmEdicaoId ? 'Salvar alterações' : 'Cadastrar modelo') }}
         </button>
       </div>
 
-      <div class="loading" *ngIf="carregandoTemplates">
-        <mat-spinner diameter="24"></mat-spinner>
-        <span>Carregando modelos...</span>
+      <!-- Loading -->
+      <div class="lib-skeleton" *ngIf="carregandoTemplates">
+        <div class="skeleton-card" *ngFor="let s of [1,2,3]"></div>
       </div>
 
-      <div
-        class="template-card"
-        *ngFor="let modelo of modelos"
-        [class.active]="modelo.id === modeloSelecionado?.id"
-        (click)="selecionarModelo(modelo)"
-      >
-        <div class="template-card-main">
-          <strong>{{ modelo.titulo }}</strong>
-          <span>{{ modelo.descricao }}</span>
-          <div class="template-tags">
-            <span class="template-tag" *ngIf="modelo.origem === 'SERVIDOR'">v{{ modelo.versao }}</span>
-            <span class="template-tag" *ngIf="modelo.variaveis.length">{{ modelo.variaveis.length }} variáveis</span>
-            <span class="template-tag is-builtin" *ngIf="modelo.origem === 'EMBUTIDO'">Padrão</span>
-          </div>
-        </div>
-        <button
-          *ngIf="ehAdmin && modelo.origem === 'SERVIDOR'"
-          mat-icon-button
-          type="button"
-          class="btn-remove-template"
-          (click)="excluirModelo(modelo); $event.stopPropagation()"
-          aria-label="Remover modelo"
+      <!-- Estado vazio: nenhum modelo cadastrado -->
+      <div class="lib-empty" *ngIf="!carregandoTemplates && modelos.length === 0">
+        <mat-icon>folder_off</mat-icon>
+        <p>Nenhum modelo disponível ainda.</p>
+        <button *ngIf="ehAdmin" mat-flat-button class="btn-premium" type="button" (click)="abrirNovoModelo()">
+          <mat-icon>add</mat-icon> Cadastrar primeiro modelo
+        </button>
+      </div>
+
+      <!-- Estado vazio: busca sem resultado -->
+      <div class="lib-empty" *ngIf="!carregandoTemplates && modelos.length > 0 && modelosFiltrados.length === 0">
+        <mat-icon>search_off</mat-icon>
+        <p>Nenhum modelo encontrado para o filtro atual.</p>
+        <button mat-stroked-button type="button" (click)="limparFiltros()">Limpar filtros</button>
+      </div>
+
+      <!-- Lista de modelos -->
+      <div class="lib-lista" *ngIf="!carregandoTemplates">
+        <div
+          class="template-card"
+          *ngFor="let modelo of modelosFiltrados"
+          [class.active]="modelo.id === modeloSelecionado?.id"
+          [class.is-confirming]="modelo.id === modeloExcluindoId"
+          (click)="selecionarModelo(modelo)"
         >
-          <mat-icon>delete_outline</mat-icon>
-        </button>
+          <!-- Confirmação de exclusão (inline) -->
+          <div class="card-confirm" *ngIf="modelo.id === modeloExcluindoId" (click)="$event.stopPropagation()">
+            <mat-icon>delete_outline</mat-icon>
+            <div class="card-confirm-text">
+              <strong>Excluir “{{ modelo.titulo }}”?</strong>
+              <span>Esta ação arquiva o modelo e não pode ser desfeita aqui.</span>
+            </div>
+            <div class="card-confirm-actions">
+              <button mat-button type="button" (click)="cancelarExclusao()" [disabled]="acaoEmCursoId === modelo.id">
+                Cancelar
+              </button>
+              <button
+                mat-flat-button
+                class="btn-danger"
+                type="button"
+                (click)="confirmarExclusao(modelo)"
+                [disabled]="acaoEmCursoId === modelo.id"
+              >
+                <mat-spinner *ngIf="acaoEmCursoId === modelo.id" diameter="16"></mat-spinner>
+                Excluir
+              </button>
+            </div>
+          </div>
+
+          <!-- Conteúdo normal do card -->
+          <ng-container *ngIf="modelo.id !== modeloExcluindoId">
+            <div class="card-top">
+              <div class="card-title-wrap">
+                <!-- Renomear inline -->
+                <div class="rename-inline" *ngIf="modelo.id === modeloRenomeandoId; else tituloNormal" (click)="$event.stopPropagation()">
+                  <input
+                    type="text"
+                    [(ngModel)]="nomeEmEdicao"
+                    (keyup.enter)="confirmarRenomear(modelo)"
+                    (keyup.escape)="cancelarRenomear()"
+                    aria-label="Novo nome do modelo"
+                  />
+                  <button mat-icon-button type="button" (click)="confirmarRenomear(modelo)" aria-label="Salvar nome">
+                    <mat-icon>check</mat-icon>
+                  </button>
+                  <button mat-icon-button type="button" (click)="cancelarRenomear()" aria-label="Cancelar">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+                <ng-template #tituloNormal>
+                  <strong class="card-title">{{ modelo.titulo }}</strong>
+                </ng-template>
+                <span class="card-desc">{{ modelo.descricao }}</span>
+              </div>
+
+              <div class="card-actions">
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="btn-fav"
+                  [class.is-fav]="modelo.favorito"
+                  (click)="alternarFavorito(modelo, $event)"
+                  [attr.aria-label]="modelo.favorito ? 'Remover dos favoritos' : 'Marcar como favorito'"
+                  [matTooltip]="modelo.favorito ? 'Remover dos favoritos' : 'Favoritar'"
+                >
+                  <mat-icon>{{ modelo.favorito ? 'star' : 'star_border' }}</mat-icon>
+                </button>
+
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="btn-preview"
+                  (click)="abrirPreview(modelo, $event)"
+                  matTooltip="Pré-visualizar"
+                  aria-label="Pré-visualizar modelo"
+                >
+                  <mat-icon>visibility</mat-icon>
+                </button>
+
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="btn-menu"
+                  [matMenuTriggerFor]="menu"
+                  (click)="$event.stopPropagation()"
+                  aria-label="Ações do modelo"
+                >
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+
+                <mat-menu #menu="matMenu">
+                  <button mat-menu-item type="button" (click)="selecionarModelo(modelo)">
+                    <mat-icon>visibility</mat-icon> Visualizar
+                  </button>
+                  <button mat-menu-item type="button" (click)="gerarDeModelo(modelo)">
+                    <mat-icon>bolt</mat-icon> Gerar documento
+                  </button>
+                  <button
+                    mat-menu-item
+                    type="button"
+                    *ngIf="modelo.origem === 'SERVIDOR'"
+                    (click)="baixarModelo(modelo)"
+                  >
+                    <mat-icon>download</mat-icon> Baixar modelo (.docx)
+                  </button>
+
+                  <ng-container *ngIf="ehAdmin && modelo.origem === 'SERVIDOR'">
+                    <button mat-menu-item type="button" (click)="iniciarRenomear(modelo)">
+                      <mat-icon>drive_file_rename_outline</mat-icon> Renomear
+                    </button>
+                    <button mat-menu-item type="button" (click)="iniciarEdicao(modelo)">
+                      <mat-icon>edit</mat-icon> Editar
+                    </button>
+                    <button mat-menu-item type="button" (click)="duplicarModelo(modelo)">
+                      <mat-icon>content_copy</mat-icon> Duplicar
+                    </button>
+                    <button mat-menu-item type="button" class="menu-danger" (click)="pedirExclusao(modelo)">
+                      <mat-icon>delete_outline</mat-icon> Excluir
+                    </button>
+                  </ng-container>
+                </mat-menu>
+              </div>
+            </div>
+
+            <div class="card-meta">
+              <span class="meta-badge is-cat" *ngIf="modelo.categoria">
+                <mat-icon>sell</mat-icon> {{ modelo.categoria }}
+              </span>
+              <span class="meta-badge is-builtin" *ngIf="modelo.origem === 'EMBUTIDO'">Padrão do sistema</span>
+              <span class="meta-badge" *ngIf="modelo.origem === 'SERVIDOR'">v{{ modelo.versao }}</span>
+              <span class="meta-badge" *ngIf="modelo.variaveis.length">
+                {{ modelo.variaveis.length }} variáve{{ modelo.variaveis.length === 1 ? 'l' : 'is' }}
+              </span>
+              <span class="meta-badge is-status" *ngIf="modelo.origem === 'SERVIDOR'">
+                <mat-icon>check_circle</mat-icon> Ativo
+              </span>
+            </div>
+
+            <div class="card-dates" *ngIf="modelo.origem === 'SERVIDOR'">
+              <span *ngIf="modelo.criadoEm"><mat-icon>event</mat-icon> Criado {{ formatarData(modelo.criadoEm) }}</span>
+              <span *ngIf="modelo.atualizadoEm"><mat-icon>update</mat-icon> Alterado {{ formatarData(modelo.atualizadoEm) }}</span>
+            </div>
+          </ng-container>
+        </div>
       </div>
     </article>
 
-    <article class="card-glass document-panel">
+    <!-- ============================================================
+         MONTAGEM / GERAÇÃO
+         ============================================================ -->
+    <article class="card-glass document-panel" id="painel-geracao">
       <div class="panel-header">
         <div>
           <span class="eyebrow">Montagem</span>
@@ -178,7 +366,7 @@
 
       <div class="empty-state" *ngIf="!carregandoClientes && clientes.length === 0">
         <mat-icon>description</mat-icon>
-        <p>Cadastre ao menos um cliente para habilitar os modelos juridicos.</p>
+        <p>Cadastre ao menos um cliente para habilitar os modelos jurídicos.</p>
         <a mat-flat-button class="btn-premium" routerLink="/advogado/clientes">Cadastrar cliente</a>
       </div>
 
@@ -285,5 +473,67 @@
         </div>
       </ng-container>
     </article>
+  </div>
+
+  <!-- ============================================================
+       MODAL DE PRÉVIA DO DOCUMENTO
+       ============================================================ -->
+  <div class="preview-overlay" *ngIf="modeloPreview" (click)="fecharPreview()">
+    <div
+      class="preview-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="preview-titulo"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="preview-head">
+        <div class="preview-head-text">
+          <span class="eyebrow">Prévia do documento</span>
+          <h3 class="font-heading" id="preview-titulo">{{ modeloPreview.titulo }}</h3>
+        </div>
+        <button mat-icon-button type="button" (click)="fecharPreview()" aria-label="Fechar prévia">
+          <mat-icon>close</mat-icon>
+        </button>
+      </header>
+
+      <div class="preview-body">
+        <!-- Modelos padrão: estrutura real com as variáveis no lugar -->
+        <div class="preview-doc" *ngIf="modeloPreview.origem === 'EMBUTIDO' && modeloPreview.embutido">
+          <p class="preview-legenda">
+            Os campos entre chaves, como <code>&#123;cliente_nome&#125;</code>, são substituídos
+            automaticamente pelos dados do cliente ao gerar o documento.
+          </p>
+          <div class="preview-doc-section" *ngFor="let section of modeloPreview.embutido.sections">
+            <strong *ngIf="section.heading">{{ section.heading }}</strong>
+            <p *ngFor="let paragraph of section.paragraphs">{{ paragraph }}</p>
+          </div>
+        </div>
+
+        <!-- Modelos enviados (.docx): mostra variáveis detectadas -->
+        <div class="preview-doc" *ngIf="modeloPreview.origem === 'SERVIDOR'">
+          <p class="preview-legenda">
+            Este modelo veio de um arquivo <strong>.docx</strong> do escritório. Ao gerar, os campos
+            abaixo são preenchidos com os dados do cliente selecionado; o restante do texto vem do
+            seu documento original.
+          </p>
+          <div class="preview-vars" *ngIf="modeloPreview.variaveis.length; else semVars">
+            <span class="template-tag" *ngFor="let v of modeloPreview.variaveis">{{ v }}</span>
+          </div>
+          <ng-template #semVars>
+            <p class="preview-legenda">
+              Nenhuma variável detectada — o documento sai com o texto fixo do modelo.
+            </p>
+          </ng-template>
+        </div>
+      </div>
+
+      <footer class="preview-foot">
+        <button mat-stroked-button type="button" (click)="fecharPreview()">Fechar</button>
+        <button mat-flat-button class="btn-premium" type="button" (click)="confirmarPreviewGerar()">
+          <mat-icon>download</mat-icon>
+          Confirmar e gerar DOCX
+        </button>
+      </footer>
+    </div>
   </div>
 </section>

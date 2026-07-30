@@ -63,6 +63,10 @@ export class LoginComponent implements OnInit {
 
       if (token) {
         const resposta = await firstValueFrom(this.authService.enviarTokenParaBackend(token));
+        // Carrega e aplica o perfil completo (papel/cargo) já com token válido,
+        // para o role ficar correto de imediato — sem depender só do /api/me do
+        // construtor, que pode correr antes do token estar pronto.
+        await this.authService.carregarPerfilDoBackend().catch(() => {});
         await this.router.navigate([resposta.role === 'CLIENT' ? '/cliente' : '/advogado/dashboard']);
       }
     } catch (error: any) {

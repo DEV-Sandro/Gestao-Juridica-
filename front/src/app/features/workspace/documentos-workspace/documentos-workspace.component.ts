@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -21,15 +22,23 @@ import {
   LEGAL_TEMPLATES
 } from './document-generator.service';
 
+const MIME_DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
 interface ModeloView {
   origem: 'EMBUTIDO' | 'SERVIDOR';
   id: string;
   titulo: string;
   descricao: string;
+  categoria: string | null;
   variaveis: string[];
   versao: number | null;
+  criadoEm: string | null;
+  atualizadoEm: string | null;
+  favorito: boolean;
   embutido?: DocumentTemplateDefinition;
 }
+
+type Ordenacao = 'nome' | 'recentes';
 
 @Component({
   selector: 'app-documentos-workspace',
@@ -44,6 +53,7 @@ interface ModeloView {
     MatInputModule,
     MatSelectModule,
     MatExpansionModule,
+    MatMenuModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
     MatTooltipModule
@@ -73,6 +83,24 @@ export class DocumentosWorkspaceComponent implements OnInit {
   contratoValorExtenso = '';
 
   mostrarComoFunciona = false;
+
+  // Filtros / busca / ordenação da biblioteca de modelos.
+  busca = '';
+  filtroCategoria = 'Todas';
+  ordenacao: Ordenacao = 'nome';
+
+  // Favoritos são por usuário/navegador (não há campo no backend ainda).
+  private readonly FAV_KEY = 'justapro-templates-favoritos';
+  private favoritos = new Set<string>();
+
+  // Estados de ações inline.
+  modeloRenomeandoId: string | null = null;
+  nomeEmEdicao = '';
+  modeloExcluindoId: string | null = null;
+  acaoEmCursoId: string | null = null;
+
+  // Prévia do documento (modal).
+  modeloPreview: ModeloView | null = null;
 
   // Variáveis REAIS que o gerador preenche automaticamente (delimitador de chave
   // simples, padrão do docxtemplater). Fonte: buildPlaceholders no
@@ -115,17 +143,10 @@ export class DocumentosWorkspaceComponent implements OnInit {
     }
   ];
 
-  copiarVariavel(chave: string): void {
-    const texto = `{${chave}}`;
-    navigator.clipboard?.writeText(texto).then(
-      () => this.snack.open(`${texto} copiado`, 'OK', { duration: 1800, panelClass: ['snack-success'] }),
-      () => this.snack.open('Copie manualmente: ' + texto, 'OK', { duration: 2600 })
-    );
-  }
-
-  // Upload de novo modelo (apenas ADMIN)
+  // Upload / edição de modelo (apenas ADMIN)
   mostrarUpload = false;
   enviandoTemplate = false;
+  modeloEmEdicaoId: string | null = null;
   novoTemplateNome = '';
   novoTemplateDescricao = '';
   novoTemplateCategoria = '';
@@ -133,6 +154,7 @@ export class DocumentosWorkspaceComponent implements OnInit {
   novoTemplateArquivoNome = '';
 
   ngOnInit(): void {
+    this.favoritos = this.lerFavoritos();
     this.carregarClientes();
     this.carregarTemplates();
   }
@@ -141,14 +163,20 @@ export class DocumentosWorkspaceComponent implements OnInit {
     return this.authService.currentUser?.role === 'ADMIN';
   }
 
+  // ---------- Carga e montagem dos modelos ----------
+
   private montarModelosEmbutidos(): ModeloView[] {
     return LEGAL_TEMPLATES.map((template) => ({
       origem: 'EMBUTIDO' as const,
       id: `embutido-${template.id}`,
       titulo: template.title,
       descricao: template.description,
+      categoria: 'Modelo padrão',
       variaveis: [],
       versao: null,
+      criadoEm: null,
+      atualizadoEm: null,
+      favorito: this.favoritos.has(`embutido-${template.id}`),
       embutido: template
     }));
   }
@@ -159,8 +187,12 @@ export class DocumentosWorkspaceComponent implements OnInit {
       id: template.id,
       titulo: template.nome,
       descricao: template.descricao || 'Modelo cadastrado pelo escritório.',
+      categoria: template.categoria || null,
       variaveis: template.variaveis || [],
-      versao: template.versaoAtual
+      versao: template.versaoAtual,
+      criadoEm: template.criadoEm,
+      atualizadoEm: template.atualizadoEm,
+      favorito: this.favoritos.has(template.id)
     }));
   }
 
@@ -169,20 +201,32 @@ export class DocumentosWorkspaceComponent implements OnInit {
     this.authService.listarTemplates().subscribe({
       next: (templates) => {
         this.modelos = [...this.montarModelosEmbutidos(), ...this.montarModelosServidor(templates)];
-        if (!this.modeloSelecionado && this.modelos.length > 0) {
-          this.selecionarModelo(this.modelos[0]!);
-        }
+        this.garantirSelecao();
         this.carregandoTemplates = false;
       },
       error: () => {
         // Se o backend falhar, ao menos os modelos embutidos continuam disponíveis.
         this.modelos = this.montarModelosEmbutidos();
-        if (!this.modeloSelecionado && this.modelos.length > 0) {
-          this.selecionarModelo(this.modelos[0]!);
-        }
+        this.garantirSelecao();
         this.carregandoTemplates = false;
       }
     });
+  }
+
+  private garantirSelecao(): void {
+    const visiveis = this.modelosFiltrados;
+    if (this.modeloSelecionado && this.modelos.some((m) => m.id === this.modeloSelecionado!.id)) {
+      // mantém a seleção; sincroniza a referência caso o objeto tenha sido recriado
+      this.modeloSelecionado = this.modelos.find((m) => m.id === this.modeloSelecionado!.id) || null;
+      return;
+    }
+    if (visiveis.length > 0) {
+      this.selecionarModelo(visiveis[0]!);
+    } else if (this.modelos.length > 0) {
+      this.selecionarModelo(this.modelos[0]!);
+    } else {
+      this.modeloSelecionado = null;
+    }
   }
 
   carregarClientes(): void {
@@ -206,11 +250,112 @@ export class DocumentosWorkspaceComponent implements OnInit {
     });
   }
 
+  // ---------- Busca / filtro / ordenação ----------
+
+  private normalizar(valor: string): string {
+    return (valor || '')
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+  get categoriasDisponiveis(): string[] {
+    const set = new Set<string>();
+    for (const modelo of this.modelos) {
+      if (modelo.categoria) set.add(modelo.categoria);
+    }
+    return ['Todas', ...Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR'))];
+  }
+
+  get modelosFiltrados(): ModeloView[] {
+    const termo = this.normalizar(this.busca);
+
+    const lista = this.modelos.filter((modelo) => {
+      const okBusca =
+        !termo ||
+        this.normalizar(modelo.titulo).includes(termo) ||
+        this.normalizar(modelo.descricao).includes(termo) ||
+        this.normalizar(modelo.categoria || '').includes(termo);
+      const okCategoria = this.filtroCategoria === 'Todas' || modelo.categoria === this.filtroCategoria;
+      return okBusca && okCategoria;
+    });
+
+    return [...lista].sort((a, b) => {
+      // Favoritos sempre no topo, independentemente da ordenação escolhida.
+      if (a.favorito !== b.favorito) return a.favorito ? -1 : 1;
+      if (this.ordenacao === 'recentes') {
+        const da = a.atualizadoEm || a.criadoEm || '';
+        const db = b.atualizadoEm || b.criadoEm || '';
+        return db.localeCompare(da);
+      }
+      return a.titulo.localeCompare(b.titulo, 'pt-BR');
+    });
+  }
+
+  get totalFavoritos(): number {
+    return this.modelos.filter((m) => m.favorito).length;
+  }
+
+  get temFiltroAtivo(): boolean {
+    return !!this.busca.trim() || this.filtroCategoria !== 'Todas';
+  }
+
+  limparFiltros(): void {
+    this.busca = '';
+    this.filtroCategoria = 'Todas';
+  }
+
+  // ---------- Seleção / geração ----------
+
   selecionarModelo(modelo: ModeloView): void {
     this.modeloSelecionado = modelo;
     if (!this.nomeDocumento.trim()) {
       this.nomeDocumento = modelo.titulo;
     }
+  }
+
+  gerarDeModelo(modelo: ModeloView): void {
+    this.selecionarModelo(modelo);
+    // Em telas estreitas o painel de montagem fica abaixo: leva o usuário até ele.
+    setTimeout(() => {
+      document.getElementById('painel-geracao')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 60);
+  }
+
+  // ---------- Prévia (modal) ----------
+
+  abrirPreview(modelo: ModeloView, evento?: Event): void {
+    evento?.stopPropagation();
+    this.modeloPreview = modelo;
+  }
+
+  fecharPreview(): void {
+    this.modeloPreview = null;
+  }
+
+  // Confirma a prévia: seleciona o modelo e dispara a geração (usa o cliente já
+  // escolhido no painel de montagem; se não houver, avisa e leva o usuário até lá).
+  confirmarPreviewGerar(): void {
+    const modelo = this.modeloPreview;
+    if (!modelo) return;
+
+    this.selecionarModelo(modelo);
+    this.fecharPreview();
+
+    if (this.clienteId && this.clientes.length > 0) {
+      void this.gerarDocumento();
+    } else {
+      this.gerarDeModelo(modelo);
+    }
+  }
+
+  copiarVariavel(chave: string): void {
+    const texto = `{${chave}}`;
+    navigator.clipboard?.writeText(texto).then(
+      () => this.snack.open(`${texto} copiado`, 'OK', { duration: 1800, panelClass: ['snack-success'] }),
+      () => this.snack.open('Copie manualmente: ' + texto, 'OK', { duration: 2600 })
+    );
   }
 
   async gerarDocumento(): Promise<void> {
@@ -278,10 +423,196 @@ export class DocumentosWorkspaceComponent implements OnInit {
     }
   }
 
-  // ---- Upload de novo modelo (ADMIN) ----
+  // ---------- Favoritos ----------
 
-  alternarUpload(): void {
-    this.mostrarUpload = !this.mostrarUpload;
+  private lerFavoritos(): Set<string> {
+    try {
+      const bruto = localStorage.getItem(this.FAV_KEY);
+      const lista = bruto ? (JSON.parse(bruto) as string[]) : [];
+      return new Set(Array.isArray(lista) ? lista : []);
+    } catch {
+      return new Set<string>();
+    }
+  }
+
+  private persistirFavoritos(): void {
+    try {
+      localStorage.setItem(this.FAV_KEY, JSON.stringify(Array.from(this.favoritos)));
+    } catch {
+      /* armazenamento indisponível — favoritos ficam apenas na sessão atual */
+    }
+  }
+
+  alternarFavorito(modelo: ModeloView, evento?: Event): void {
+    evento?.stopPropagation();
+    if (this.favoritos.has(modelo.id)) {
+      this.favoritos.delete(modelo.id);
+      modelo.favorito = false;
+    } else {
+      this.favoritos.add(modelo.id);
+      modelo.favorito = true;
+    }
+    this.persistirFavoritos();
+  }
+
+  // ---------- Renomear (inline) ----------
+
+  iniciarRenomear(modelo: ModeloView, evento?: Event): void {
+    evento?.stopPropagation();
+    this.modeloExcluindoId = null;
+    this.modeloRenomeandoId = modelo.id;
+    this.nomeEmEdicao = modelo.titulo;
+  }
+
+  cancelarRenomear(): void {
+    this.modeloRenomeandoId = null;
+    this.nomeEmEdicao = '';
+  }
+
+  confirmarRenomear(modelo: ModeloView): void {
+    const nome = this.nomeEmEdicao.trim();
+    if (!nome || nome === modelo.titulo) {
+      this.cancelarRenomear();
+      return;
+    }
+
+    this.acaoEmCursoId = modelo.id;
+    this.authService.atualizarTemplate(modelo.id, { nome }).subscribe({
+      next: () => {
+        this.acaoEmCursoId = null;
+        this.cancelarRenomear();
+        this.snack.open('Modelo renomeado.', 'OK', { duration: 2400, panelClass: ['snack-success'] });
+        this.carregarTemplates();
+      },
+      error: (error) => {
+        this.acaoEmCursoId = null;
+        this.snack.open(error?.error?.mensagem || 'Não foi possível renomear.', 'Fechar', {
+          duration: 4000,
+          panelClass: ['snack-error']
+        });
+      }
+    });
+  }
+
+  // ---------- Duplicar ----------
+
+  duplicarModelo(modelo: ModeloView, evento?: Event): void {
+    evento?.stopPropagation();
+    if (modelo.origem !== 'SERVIDOR') return;
+
+    this.acaoEmCursoId = modelo.id;
+    this.authService.duplicarTemplate(modelo.id).subscribe({
+      next: (novo) => {
+        this.acaoEmCursoId = null;
+        this.snack.open(`Modelo duplicado como "${novo.nome}".`, 'OK', {
+          duration: 3200,
+          panelClass: ['snack-success']
+        });
+        this.carregarTemplates();
+      },
+      error: (error) => {
+        this.acaoEmCursoId = null;
+        this.snack.open(error?.error?.mensagem || 'Não foi possível duplicar o modelo.', 'Fechar', {
+          duration: 4000,
+          panelClass: ['snack-error']
+        });
+      }
+    });
+  }
+
+  // ---------- Baixar arquivo bruto do modelo ----------
+
+  async baixarModelo(modelo: ModeloView, evento?: Event): Promise<void> {
+    evento?.stopPropagation();
+    if (modelo.origem !== 'SERVIDOR') return;
+
+    this.acaoEmCursoId = modelo.id;
+    try {
+      const buffer = await firstValueFrom(this.authService.baixarTemplateArquivo(modelo.id));
+      const blob = new Blob([buffer as ArrayBuffer], { type: MIME_DOCX });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${modelo.titulo}.docx`;
+      link.click();
+      URL.revokeObjectURL(url);
+      this.snack.open('Modelo baixado.', 'OK', { duration: 2400, panelClass: ['snack-success'] });
+    } catch {
+      this.snack.open('Não foi possível baixar o modelo.', 'Fechar', {
+        duration: 3600,
+        panelClass: ['snack-error']
+      });
+    } finally {
+      this.acaoEmCursoId = null;
+    }
+  }
+
+  // ---------- Excluir (confirmação inline) ----------
+
+  pedirExclusao(modelo: ModeloView, evento?: Event): void {
+    evento?.stopPropagation();
+    if (modelo.origem !== 'SERVIDOR') return;
+    this.modeloRenomeandoId = null;
+    this.modeloExcluindoId = modelo.id;
+  }
+
+  cancelarExclusao(): void {
+    this.modeloExcluindoId = null;
+  }
+
+  confirmarExclusao(modelo: ModeloView): void {
+    this.acaoEmCursoId = modelo.id;
+    this.authService.excluirTemplate(modelo.id).subscribe({
+      next: () => {
+        this.acaoEmCursoId = null;
+        this.modeloExcluindoId = null;
+        if (this.modeloSelecionado?.id === modelo.id) {
+          this.modeloSelecionado = null;
+        }
+        this.snack.open('Modelo removido.', 'OK', { duration: 2800 });
+        this.carregarTemplates();
+      },
+      error: (error) => {
+        this.acaoEmCursoId = null;
+        this.snack.open(error?.error?.mensagem || 'Erro ao remover modelo.', 'Fechar', {
+          duration: 4000,
+          panelClass: ['snack-error']
+        });
+      }
+    });
+  }
+
+  // ---------- Upload / edição de modelo (ADMIN) ----------
+
+  abrirNovoModelo(): void {
+    this.modeloEmEdicaoId = null;
+    this.limparUpload();
+    this.mostrarUpload = true;
+    this.mostrarComoFunciona = true;
+    setTimeout(() => {
+      document.getElementById('form-modelo')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 60);
+  }
+
+  iniciarEdicao(modelo: ModeloView, evento?: Event): void {
+    evento?.stopPropagation();
+    if (modelo.origem !== 'SERVIDOR') return;
+    this.modeloEmEdicaoId = modelo.id;
+    this.novoTemplateNome = modelo.titulo;
+    this.novoTemplateDescricao = modelo.descricao === 'Modelo cadastrado pelo escritório.' ? '' : modelo.descricao;
+    this.novoTemplateCategoria = modelo.categoria || '';
+    this.novoTemplateArquivoBase64 = null;
+    this.novoTemplateArquivoNome = '';
+    this.mostrarUpload = true;
+    setTimeout(() => {
+      document.getElementById('form-modelo')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 60);
+  }
+
+  fecharFormModelo(): void {
+    this.mostrarUpload = false;
+    this.modeloEmEdicaoId = null;
+    this.limparUpload();
   }
 
   aoSelecionarArquivo(evento: Event): void {
@@ -306,11 +637,17 @@ export class DocumentosWorkspaceComponent implements OnInit {
     reader.readAsDataURL(arquivo);
   }
 
-  enviarTemplate(): void {
+  salvarModelo(): void {
     if (!this.novoTemplateNome.trim()) {
       this.snack.open('Informe o nome do modelo.', 'OK', { duration: 3000, panelClass: ['snack-error'] });
       return;
     }
+
+    if (this.modeloEmEdicaoId) {
+      this.salvarEdicao(this.modeloEmEdicaoId);
+      return;
+    }
+
     if (!this.novoTemplateArquivoBase64) {
       this.snack.open('Selecione o arquivo .docx do modelo.', 'OK', {
         duration: 3000,
@@ -335,8 +672,7 @@ export class DocumentosWorkspaceComponent implements OnInit {
             'OK',
             { duration: 4200, panelClass: ['snack-success'] }
           );
-          this.limparUpload();
-          this.mostrarUpload = false;
+          this.fecharFormModelo();
           this.carregarTemplates();
         },
         error: (error) => {
@@ -349,24 +685,47 @@ export class DocumentosWorkspaceComponent implements OnInit {
       });
   }
 
-  excluirModelo(modelo: ModeloView): void {
-    if (modelo.origem !== 'SERVIDOR') return;
-    if (!confirm(`Remover o modelo "${modelo.titulo}"?`)) return;
-
-    this.authService.excluirTemplate(modelo.id).subscribe({
-      next: () => {
-        this.snack.open('Modelo removido.', 'OK', { duration: 2800 });
-        if (this.modeloSelecionado?.id === modelo.id) {
-          this.modeloSelecionado = null;
+  private salvarEdicao(id: string): void {
+    this.enviandoTemplate = true;
+    this.authService
+      .atualizarTemplate(id, {
+        nome: this.novoTemplateNome.trim(),
+        descricao: this.novoTemplateDescricao.trim() || null,
+        categoria: this.novoTemplateCategoria.trim() || null
+      })
+      .subscribe({
+        next: () => {
+          // Se o admin também escolheu um novo arquivo, sobe como nova versão.
+          if (this.novoTemplateArquivoBase64) {
+            this.authService.adicionarVersaoTemplate(id, { arquivoBase64: this.novoTemplateArquivoBase64 }).subscribe({
+              next: () => this.finalizarEdicao('Modelo atualizado (nova versão do arquivo).'),
+              error: (error) => {
+                this.enviandoTemplate = false;
+                this.snack.open(error?.error?.mensagem || 'Metadados salvos, mas o arquivo falhou.', 'Fechar', {
+                  duration: 4200,
+                  panelClass: ['snack-error']
+                });
+              }
+            });
+          } else {
+            this.finalizarEdicao('Modelo atualizado.');
+          }
+        },
+        error: (error) => {
+          this.enviandoTemplate = false;
+          this.snack.open(error?.error?.mensagem || 'Não foi possível salvar as alterações.', 'Fechar', {
+            duration: 4200,
+            panelClass: ['snack-error']
+          });
         }
-        this.carregarTemplates();
-      },
-      error: (error) =>
-        this.snack.open(error?.error?.mensagem || 'Erro ao remover modelo.', 'Fechar', {
-          duration: 4000,
-          panelClass: ['snack-error']
-        })
-    });
+      });
+  }
+
+  private finalizarEdicao(mensagem: string): void {
+    this.enviandoTemplate = false;
+    this.snack.open(mensagem, 'OK', { duration: 3200, panelClass: ['snack-success'] });
+    this.fecharFormModelo();
+    this.carregarTemplates();
   }
 
   private limparUpload(): void {
@@ -375,6 +734,15 @@ export class DocumentosWorkspaceComponent implements OnInit {
     this.novoTemplateCategoria = '';
     this.novoTemplateArquivoBase64 = null;
     this.novoTemplateArquivoNome = '';
+  }
+
+  // ---------- Helpers de exibição ----------
+
+  formatarData(valor: string | null): string {
+    if (!valor) return '—';
+    const data = new Date(valor);
+    if (Number.isNaN(data.getTime())) return '—';
+    return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(data);
   }
 
   get clienteSelecionado(): ClienteRecord | null {

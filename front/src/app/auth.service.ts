@@ -218,23 +218,33 @@ export class AuthService {
   }
 
   async aplicarPerfilRecebido(dados: AppUser): Promise<AppUser> {
-    if (
-      this.auth.currentUser &&
-      (dados.displayName !== undefined || dados.photoURL !== undefined)
-    ) {
-      await updateProfile(this.auth.currentUser, {
-        displayName:
-          dados.displayName === undefined ? this.auth.currentUser.displayName : dados.displayName,
-        photoURL:
-          dados.photoURL === undefined ? this.auth.currentUser.photoURL : dados.photoURL
-      });
-    }
-
+    // Aplica o perfil (papel/cargo/etc.) ANTES de qualquer efeito colateral —
+    // assim o role correto (ex.: ADMIN) nunca é perdido caso o updateProfile
+    // abaixo falhe ou trave por rede.
     const merged: AppUser = {
       ...(this.currentUserSubject.value ?? ({} as AppUser)),
       ...dados
     };
     this.currentUserSubject.next(merged);
+
+    // Sincroniza displayName/photoURL no Firebase Auth em segundo plano; não é
+    // crítico para o funcionamento e não pode derrubar a aplicação do perfil.
+    if (
+      this.auth.currentUser &&
+      (dados.displayName !== undefined || dados.photoURL !== undefined)
+    ) {
+      try {
+        await updateProfile(this.auth.currentUser, {
+          displayName:
+            dados.displayName === undefined ? this.auth.currentUser.displayName : dados.displayName,
+          photoURL:
+            dados.photoURL === undefined ? this.auth.currentUser.photoURL : dados.photoURL
+        });
+      } catch (err) {
+        console.warn('[AuthService] updateProfile falhou (nao critico)', err);
+      }
+    }
+
     return merged;
   }
 
@@ -366,6 +376,17 @@ export class AuthService {
 
   adicionarVersaoTemplate(id: string, payload: { arquivoBase64: string; notas?: string | null }) {
     return this.http.post<TemplateDocumento>(`${this.apiUrl}/api/templates/${id}/versoes`, payload);
+  }
+
+  atualizarTemplate(
+    id: string,
+    payload: { nome?: string; descricao?: string | null; categoria?: string | null }
+  ) {
+    return this.http.put<TemplateDocumento>(`${this.apiUrl}/api/templates/${id}`, payload);
+  }
+
+  duplicarTemplate(id: string) {
+    return this.http.post<TemplateDocumento>(`${this.apiUrl}/api/templates/${id}/duplicar`, {});
   }
 
   excluirTemplate(id: string) {

@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const { z } = require('zod');
 const { admin } = require('../config/firebase');
+const { TENANT_PADRAO } = require('../config/tenant');
 const conviteRepository = require('../repositories/convite.repository');
 const usuarioRepository = require('../repositories/usuario.repository');
 
@@ -136,6 +137,8 @@ async function convidarMembro(adminUser, payload) {
     cargo: validado.data.cargo?.trim() || null,
     oab: validado.data.oab?.trim() || null,
     status: STATUS_CONVITE.PENDING,
+    // O novo membro herda o escritório (tenant) de quem o convidou.
+    tenantId: adminUser.tenantId,
     criadoEm: agora.toISOString(),
     atualizadoEm: agora.toISOString(),
     expiresAt,
@@ -257,6 +260,9 @@ async function aceitarConvite(payload) {
     email,
     displayName,
     role: convite.role || 'ADVOGADO',
+    // Herda o escritório (tenant) do convite — é assim que o novo membro passa a
+    // enxergar os dados do escritório certo (e só dele).
+    tenantId: convite.tenantId || TENANT_PADRAO,
     telefone,
     cargo,
     oab,

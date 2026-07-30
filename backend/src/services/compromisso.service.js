@@ -1,6 +1,8 @@
 const compromissoRepository = require('../repositories/compromisso.repository');
 const auditoriaService = require('./auditoria.service');
 const permissaoService = require('./permissao.service');
+const { mesmoTenant } = require('../config/tenant');
+const { tenantAtual } = require('../config/tenant-context');
 
 const TIPOS_PERMITIDOS = new Set(['AUDIENCIA', 'PRAZO', 'REUNIAO', 'EVENTO', 'OUTRO']);
 const STATUS_PERMITIDOS = new Set(['PENDENTE', 'CONCLUIDO', 'CANCELADO']);
@@ -151,6 +153,10 @@ async function obterComAcesso(id, user) {
     throw new Error('COMPROMISSO_NAO_ENCONTRADO');
   }
 
+  if (!mesmoTenant(compromisso, user.tenantId)) {
+    throw new Error('COMPROMISSO_NAO_ENCONTRADO');
+  }
+
   if (!podeAcessar(compromisso, user)) {
     throw new Error('ACESSO_NEGADO');
   }
@@ -168,6 +174,7 @@ async function criarCompromisso(dados, user) {
   const novo = {
     ...payload,
     deletado: false,
+    tenantId: user.tenantId,
     criadoEm: agora,
     criadoPor: user.uid,
     atualizadoEm: agora,
@@ -310,6 +317,7 @@ async function listarAgenda({ modo = 'individual', advogadoId, de, ate } = {}, u
   return compromissos
     .filter((compromisso) => {
       if (compromisso.deletado) return false;
+      if (!mesmoTenant(compromisso, user.tenantId)) return false;
       if (de && compromisso.dataFim && compromisso.dataFim < de) return false;
       if (ate && compromisso.dataInicio && compromisso.dataInicio > ate) return false;
       return true;

@@ -27,6 +27,7 @@ import { ClientesWorkspaceComponent } from '../features/workspace/clientes-works
 import { DocumentosWorkspaceComponent } from '../features/workspace/documentos-workspace/documentos-workspace.component';
 import { FinanceiroWorkspaceComponent } from '../features/workspace/financeiro-workspace/financeiro-workspace.component';
 import { AgendaCalendarioComponent } from './agenda-calendario/agenda-calendario.component';
+import { CentralPrazosComponent } from './central-prazos/central-prazos.component';
 import {
   CompromissoDialogData,
   CompromissoDialogResult,
@@ -154,6 +155,7 @@ type SidebarSection = 'dashboard' | 'processos' | 'clientes' | 'agenda' | 'docum
     NativeDateModule,
     MatSnackBarModule,
     AgendaCalendarioComponent,
+    CentralPrazosComponent,
     ClientesWorkspaceComponent,
     DocumentosWorkspaceComponent,
     FinanceiroWorkspaceComponent

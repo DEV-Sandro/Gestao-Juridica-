@@ -4,6 +4,8 @@ const auditoriaRepository = require('../repositories/auditoria.repository');
 const auditoriaService = require('./auditoria.service');
 const clienteRepository = require('../repositories/cliente.repository');
 const configuracaoService = require('./configuracao.service');
+const { mesmoTenant } = require('../config/tenant');
+const { tenantAtual } = require('../config/tenant-context');
 const {
   calcularStatusInteligente,
   normalizarCategoriaCompromisso
@@ -457,6 +459,12 @@ async function obterProcessoComAcesso(processoId, user, motivoAcessoNegado) {
     throw new Error('PROCESSO_NAO_ENCONTRADO');
   }
 
+  // Isolamento por escritório: processo de outro tenant é "inexistente" para este
+  // usuário (não revela sequer que existe).
+  if (!mesmoTenant(processo, user.tenantId)) {
+    throw new Error('PROCESSO_NAO_ENCONTRADO');
+  }
+
   if (user.role === 'CLIENT' && processo.clienteId !== user.uid) {
     await registrarAcessoNegado(processoId, user, motivoAcessoNegado);
     throw new Error('ACESSO_NEGADO');
@@ -735,16 +743,20 @@ async function carregarClientesMap() {
 }
 
 async function encontrarClienteExistente(clienteInformado) {
+  const tenantId = tenantAtual();
   if (clienteInformado.id) {
     const encontrado = await clienteRepository.buscarPorId(clienteInformado.id);
-    if (!encontrado || encontrado.ativo === false) {
+    if (!encontrado || encontrado.ativo === false || !mesmoTenant(encontrado, tenantId)) {
       throw new Error('CLIENTE_NAO_ENCONTRADO');
     }
 
     return encontrado;
   }
 
-  const clientes = await clienteRepository.listarTodos();
+  // Só considera clientes do próprio escritório ao deduplicar por CPF/e-mail/nome.
+  const clientes = (await clienteRepository.listarTodos()).filter((cliente) =>
+    mesmoTenant(cliente, tenantId)
+  );
   const documento = clienteInformado.cpfCnpj || null;
   const email = clienteInformado.email || null;
   const nomeNormalizado = normalizarNomeComparavel(clienteInformado.nome);
@@ -861,6 +873,7 @@ async function resolverClienteDoProcesso(dados, user, processoAtual = null) {
     ...novoClientePayload,
     nomeBusca: normalizarNomeComparavel(clienteInformado.nome),
     ativo: true,
+    tenantId: user.tenantId,
     criadoEm: agora,
     criadoPor: user.uid,
     atualizadoEm: agora,
@@ -936,6 +949,8 @@ async function listarProcessos(query, user) {
 
   for (const processo of processos) {
     if (processo.deletado) continue;
+    // Isolamento por escritório: nunca retorna processo de outro tenant.
+    if (!mesmoTenant(processo, user.tenantId)) continue;
     if (user.role === 'CLIENT' && processo.clienteId !== user.uid) continue;
     // Agenda individual: cada advogado ve somente os processos sob sua responsabilidade.
     // Apenas ADMIN mantem a visao geral de todos os processos do escritorio.
@@ -1013,6 +1028,7 @@ async function criarProcesso(dados, user) {
     clienteNomeBusca: normalizarNomeComparavel(cliente.clienteNome),
     arquivado: false,
     deletado: false,
+    tenantId: user.tenantId,
     criadoEm: agora,
     criadoPor: user.uid,
     atualizadoEm: agora,

@@ -15,6 +15,8 @@ router.get('/templates/:id/versoes', roleMiddleware('ADMIN', 'ADVOGADO'), contro
 // Cadastro/manutencao de modelos: apenas ADMIN.
 router.post('/templates', roleMiddleware('ADMIN'), controller.criar);
 router.post('/templates/:id/versoes', roleMiddleware('ADMIN'), controller.adicionarVersao);
+router.post('/templates/:id/duplicar', roleMiddleware('ADMIN'), controller.duplicar);
+router.put('/templates/:id', roleMiddleware('ADMIN'), controller.atualizar);
 router.delete('/templates/:id', roleMiddleware('ADMIN'), controller.inativar);
 
 module.exports = router;

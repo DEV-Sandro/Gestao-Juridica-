@@ -2,6 +2,8 @@ const { z } = require('zod');
 const clienteRepository = require('../repositories/cliente.repository');
 const processoRepository = require('../repositories/processo.repository');
 const auditoriaService = require('./auditoria.service');
+const { mesmoTenant } = require('../config/tenant');
+const { tenantAtual } = require('../config/tenant-context');
 
 const textoObrigatorio = (max, mensagem) =>
   z.string({ message: mensagem }).trim().min(1, mensagem).max(max, mensagem);
@@ -117,8 +119,10 @@ function validarCliente(dados) {
 }
 
 async function listarClientes() {
+  const tenantId = tenantAtual();
   const clientes = await clienteRepository.listarTodos();
   return clientes
+    .filter((cliente) => mesmoTenant(cliente, tenantId))
     .map(sanitizarCliente)
     .sort((primeiro, segundo) => primeiro.nome.localeCompare(segundo.nome, 'pt-BR'));
 }
@@ -130,6 +134,7 @@ async function criarCliente(dados, user) {
     ...payload,
     nomeBusca: normalizarNomeBusca(payload.nome),
     ativo: true,
+    tenantId: user.tenantId,
     criadoEm: agora,
     criadoPor: user.uid,
     atualizadoEm: agora,
@@ -142,7 +147,7 @@ async function criarCliente(dados, user) {
 
 async function atualizarCliente(id, dados, user) {
   const existente = await clienteRepository.buscarPorId(id);
-  if (!existente || existente.ativo === false) {
+  if (!existente || existente.ativo === false || !mesmoTenant(existente, user.tenantId)) {
     throw new Error('CLIENTE_NAO_ENCONTRADO');
   }
 
@@ -162,19 +167,21 @@ async function atualizarCliente(id, dados, user) {
   return sanitizarCliente(atualizado || { id, ...payload });
 }
 
-async function contarProcessosVinculados(clienteId) {
+async function contarProcessosVinculados(clienteId, tenantId) {
   const processos = await processoRepository.buscarTodos();
-  return processos.filter((processo) => processo.clienteId === clienteId && processo.deletado !== true)
-    .length;
+  return processos.filter(
+    (processo) =>
+      processo.clienteId === clienteId && processo.deletado !== true && mesmoTenant(processo, tenantId)
+  ).length;
 }
 
 async function arquivarCliente(id, user) {
   const existente = await clienteRepository.buscarPorId(id);
-  if (!existente || existente.ativo === false) {
+  if (!existente || existente.ativo === false || !mesmoTenant(existente, user.tenantId)) {
     throw new Error('CLIENTE_NAO_ENCONTRADO');
   }
 
-  const totalProcessosVinculados = await contarProcessosVinculados(id);
+  const totalProcessosVinculados = await contarProcessosVinculados(id, user.tenantId);
   const agora = new Date().toISOString();
 
   await clienteRepository.atualizar(id, {

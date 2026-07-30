@@ -333,6 +333,9 @@
   gap: 12px;
   flex-wrap: wrap;
   justify-content: flex-end;
+  // Fixa o grupo de ações (busca/sino/avatar) sempre à direita — no mobile, quando
+  // o título encurta, isso evita que os ícones fiquem amontoados à esquerda.
+  margin-left: auto;
 }
 
 .topbar-user {
@@ -716,6 +719,29 @@
 
 .financeiro-strip {
   margin-top: -4px;
+
+  // Estes cards têm layout em COLUNA (topo: rótulo + ícone; abaixo: valor; depois
+  // a legenda). O .stat-card base é horizontal — sem este override o valor
+  // monetário era espremido na mesma linha e cortava (ex.: "R$ 3.050,00").
+  .stat-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .stat-topline {
+    width: 100%;
+  }
+
+  .valor-monetario {
+    font-size: 1.4rem;
+    letter-spacing: -0.5px;
+  }
+
+  // Legenda pode quebrar linha em vez de ser cortada no card estreito.
+  small {
+    white-space: normal;
+  }
 }
 
 .busca-global {
@@ -2440,6 +2466,24 @@
   .attention-card h2 { font-size: 1.05rem; }
 
   .agenda-hoje { padding: 16px; }
+}
+
+/* Celular estreito: "Novo processo" ocupa a linha inteira e as duas ações
+   secundárias dividem a linha de baixo, com respiro — em vez de 3 botões
+   espremidos numa fileira só. */
+@media (max-width: 520px) {
+  .workspace-actions {
+    .btn-premium {
+      flex: 1 1 100%;
+      justify-content: center;
+    }
+
+    .secondary-action {
+      flex: 1 1 0;
+      min-width: 0;
+      justify-content: center;
+    }
+  }
 }
 
 /* No desktop o drawer/overlay nunca aparecem mesmo se o estado ficar true */

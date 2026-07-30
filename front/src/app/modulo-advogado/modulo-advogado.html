@@ -531,6 +531,9 @@
         </div>
       </section>
 
+      <!-- Central de Prazos Inteligente — centro de comando triado por risco -->
+      <app-central-prazos [eventos]="agendaEventos" (resolver)="abrirEventoAgenda($event)"></app-central-prazos>
+
       <!-- KPIs horizontais: icone + numero + apoio na mesma linha (menos altura). -->
       <section class="stats-grid">
         <article class="card-glass stat-card" *ngFor="let kpi of kpis">

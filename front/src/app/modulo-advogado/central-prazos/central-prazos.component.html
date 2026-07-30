@@ -1,0 +1,74 @@
+<section class="central-prazos card-glass" *ngIf="temPrazos">
+  <header class="cp-head">
+    <div class="cp-title">
+      <span class="eyebrow">Central de prazos</span>
+      <h3 class="font-heading">O que não pode passar</h3>
+    </div>
+
+    <!-- Semáforo de risco -->
+    <div class="cp-semaforo" role="status" aria-label="Resumo de risco dos prazos">
+      <span class="cp-farol is-critico" [class.apagado]="criticos.length === 0">
+        <span class="cp-farol-dot"></span>{{ criticos.length }} crítico{{ criticos.length === 1 ? '' : 's' }}
+      </span>
+      <span class="cp-farol is-alerta" [class.apagado]="alertas.length === 0">
+        <span class="cp-farol-dot"></span>{{ alertas.length }} em alerta
+      </span>
+      <span class="cp-farol is-tranquilo" [class.apagado]="tranquilos.length === 0">
+        <span class="cp-farol-dot"></span>{{ tranquilos.length }} sob controle
+      </span>
+    </div>
+  </header>
+
+  <!-- Prazos que exigem ação (críticos + alertas), do mais urgente ao menos -->
+  <ul class="cp-lista">
+    <li
+      class="cp-item"
+      *ngFor="let prazo of criticos.concat(alertas); trackBy: trackByPrazo"
+      [ngClass]="'nivel-' + prazo.nivel"
+      [class.ciente]="prazo.ciente"
+    >
+      <span class="cp-stripe" aria-hidden="true"></span>
+
+      <div class="cp-info">
+        <div class="cp-info-top">
+          <strong class="cp-evento">{{ prazo.evento.titulo }}</strong>
+          <span class="cp-badge">{{ prazo.evento.tipoLabel }}</span>
+        </div>
+        <span class="cp-sub">{{ prazo.evento.subtitulo || 'Sem cliente vinculado' }}</span>
+        <span class="cp-dias" [ngClass]="'nivel-' + prazo.nivel">
+          <mat-icon>{{ prazo.dias < 0 ? 'error' : (prazo.nivel === 'critico' ? 'priority_high' : 'schedule') }}</mat-icon>
+          {{ prazo.resumoDias }}
+        </span>
+      </div>
+
+      <div class="cp-acoes">
+        <button
+          type="button"
+          class="cp-ciencia"
+          [class.confirmada]="prazo.ciente"
+          (click)="confirmarCiencia(prazo, $event)"
+          [matTooltip]="prazo.ciente ? 'Ciência confirmada — clique para desfazer' : 'Confirmar que você está ciente'"
+        >
+          <mat-icon>{{ prazo.ciente ? 'task_alt' : 'radio_button_unchecked' }}</mat-icon>
+          <span>{{ prazo.ciente ? 'Ciente' : 'Confirmar ciência' }}</span>
+        </button>
+
+        <button mat-flat-button class="btn-premium cp-resolver" type="button" (click)="resolverAgora(prazo)">
+          <mat-icon>bolt</mat-icon>
+          Resolver agora
+        </button>
+      </div>
+    </li>
+  </ul>
+
+  <!-- Resumo "sob controle": não polui a lista de ação, mas dá a visão completa -->
+  <p class="cp-rodape" *ngIf="tranquilos.length > 0">
+    <mat-icon>event_available</mat-icon>
+    <span><strong>{{ tranquilos.length }}</strong> prazo{{ tranquilos.length === 1 ? '' : 's' }} sob controle nos próximos 60 dias — ainda com folga.</span>
+  </p>
+
+  <p class="cp-rodape is-vazio" *ngIf="criticos.length === 0 && alertas.length === 0">
+    <mat-icon>verified</mat-icon>
+    <span>Nenhum prazo crítico ou em alerta. Sua fila está sob controle.</span>
+  </p>
+</section>

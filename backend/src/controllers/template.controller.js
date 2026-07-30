@@ -49,6 +49,24 @@ async function baixar(req, res, next) {
   }
 }
 
+async function atualizar(req, res, next) {
+  try {
+    const template = await templateService.atualizarMetadados(req.params.id, req.body, req.user);
+    res.json(template);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function duplicar(req, res, next) {
+  try {
+    const template = await templateService.duplicarTemplate(req.params.id, req.user);
+    res.status(201).json(template);
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function inativar(req, res, next) {
   try {
     await templateService.inativarTemplate(req.params.id, req.user);
@@ -63,6 +81,8 @@ module.exports = {
   criar,
   adicionarVersao,
   listarVersoes,
+  atualizar,
+  duplicar,
   baixar,
   inativar
 };

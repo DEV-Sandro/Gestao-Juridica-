@@ -1,6 +1,7 @@
 const lancamentoRepository = require('../repositories/lancamento.repository');
 const processoRepository = require('../repositories/processo.repository');
 const auditoriaService = require('./auditoria.service');
+const { mesmoTenant } = require('../config/tenant');
 
 const TIPOS_PERMITIDOS = new Set(['HONORARIO', 'DESPESA', 'REEMBOLSO']);
 const STATUS_PERMITIDOS = new Set(['PENDENTE', 'PAGO', 'CANCELADO']);
@@ -162,6 +163,7 @@ function podeAcessar(lancamento, user) {
 async function obterComAcesso(id, user) {
   const lancamento = await lancamentoRepository.buscarPorId(id);
   if (!lancamento || lancamento.deletado) throw new Error('LANCAMENTO_NAO_ENCONTRADO');
+  if (!mesmoTenant(lancamento, user.tenantId)) throw new Error('LANCAMENTO_NAO_ENCONTRADO');
   if (!podeAcessar(lancamento, user)) throw new Error('ACESSO_NEGADO');
   return lancamento;
 }
@@ -197,6 +199,7 @@ async function listarLancamentos(query, user) {
   return lancamentos
     .filter((lancamento) => {
       if (lancamento.deletado) return false;
+      if (!mesmoTenant(lancamento, user.tenantId)) return false;
       if (!podeAcessar(lancamento, user)) return false;
       if (query.de && lancamento.vencimento && lancamento.vencimento < query.de) return false;
       if (query.ate && lancamento.vencimento && lancamento.vencimento > query.ate) return false;
@@ -221,6 +224,7 @@ async function criarLancamento(dados, user) {
     ...vinculo,
     advogadoId: vinculo.advogadoId || user.uid,
     deletado: false,
+    tenantId: user.tenantId,
     criadoEm: agora,
     criadoPor: user.uid,
     atualizadoEm: agora,

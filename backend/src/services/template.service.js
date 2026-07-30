@@ -3,6 +3,8 @@ const PizZip = require('pizzip');
 const templateRepository = require('../repositories/template.repository');
 const storageUtil = require('../utils/storage.util');
 const auditoriaService = require('./auditoria.service');
+const { mesmoTenant } = require('../config/tenant');
+const { tenantAtual } = require('../config/tenant-context');
 
 const MIME_DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const TAMANHO_MAXIMO = 5 * 1024 * 1024; // 5MB — mesmo teto do parser JSON do app.
@@ -71,8 +73,10 @@ function sanitizarTemplate(template) {
 }
 
 async function listarTemplates() {
+  const tenantId = tenantAtual();
   const templates = await templateRepository.listarAtivos();
   return templates
+    .filter((template) => mesmoTenant(template, tenantId))
     .map(sanitizarTemplate)
     .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR'));
 }
@@ -80,6 +84,9 @@ async function listarTemplates() {
 async function obterTemplate(id) {
   const template = await templateRepository.buscarPorId(id);
   if (!template || template.ativo === false) {
+    throw new Error('TEMPLATE_NAO_ENCONTRADO');
+  }
+  if (!mesmoTenant(template, tenantAtual())) {
     throw new Error('TEMPLATE_NAO_ENCONTRADO');
   }
   return template;
@@ -116,6 +123,7 @@ async function criarTemplate(dados, user) {
     versaoAtual: 1,
     variaveis,
     ativo: true,
+    tenantId: user.tenantId,
     criadoEm: agora,
     criadoPor: user.uid,
     atualizadoEm: agora,
@@ -200,6 +208,90 @@ async function baixarTemplate(id) {
   return { buffer, nome: template.nome };
 }
 
+// Edição de metadados (nome/descrição/categoria) — não altera o arquivo .docx.
+// Atende tanto "Renomear" (só nome) quanto "Editar" (demais campos).
+async function atualizarMetadados(id, dados, user) {
+  const template = await obterTemplate(id);
+
+  const patch = {};
+  if (dados.nome !== undefined) patch.nome = normalizarTexto(dados.nome, 140, true);
+  if (dados.descricao !== undefined) patch.descricao = normalizarTexto(dados.descricao, 500);
+  if (dados.categoria !== undefined) patch.categoria = normalizarTexto(dados.categoria, 80);
+
+  if (Object.keys(patch).length === 0) {
+    return sanitizarTemplate(template);
+  }
+
+  patch.atualizadoEm = new Date().toISOString();
+  patch.atualizadoPor = user.uid;
+  await templateRepository.atualizar(id, patch);
+
+  await auditoriaService.registrarEvento({
+    acao: 'ATUALIZAR',
+    entidade: 'TEMPLATE',
+    entidadeId: id,
+    usuario: user,
+    detalhes: { nome: patch.nome || template.nome, campos: Object.keys(patch) }
+  });
+
+  const atualizado = await templateRepository.buscarPorId(id);
+  return sanitizarTemplate(atualizado);
+}
+
+// Cria um novo modelo a partir de um existente, copiando o arquivo da versão atual.
+async function duplicarTemplate(id, user) {
+  const original = await obterTemplate(id);
+  if (!original.storagePath) {
+    throw new Error('TEMPLATE_NAO_ENCONTRADO');
+  }
+
+  const buffer = await storageUtil.lerArquivo(original.bucketName, original.storagePath);
+  const variaveis = original.variaveis && original.variaveis.length ? original.variaveis : extrairVariaveis(buffer);
+  const agora = new Date().toISOString();
+  const nome = `${original.nome} (cópia)`.slice(0, 140);
+
+  const novoId = await templateRepository.criar({
+    nome,
+    descricao: original.descricao || null,
+    categoria: original.categoria || null,
+    tipo: original.tipo || null,
+    versaoAtual: 1,
+    variaveis,
+    ativo: true,
+    tenantId: user.tenantId,
+    criadoEm: agora,
+    criadoPor: user.uid,
+    atualizadoEm: agora,
+    atualizadoPor: user.uid
+  });
+
+  const storagePath = `templates/${novoId}/v1.docx`;
+  const { bucketName } = await storageUtil.salvarArquivo(storagePath, buffer, { contentType: MIME_DOCX });
+
+  await templateRepository.adicionarVersao(novoId, {
+    numero: 1,
+    storagePath,
+    bucketName,
+    variaveis,
+    criadoEm: agora,
+    criadoPor: user.uid,
+    notas: `Duplicado de "${original.nome}"`
+  });
+
+  await templateRepository.atualizar(novoId, { storagePath, bucketName });
+
+  await auditoriaService.registrarEvento({
+    acao: 'CRIAR',
+    entidade: 'TEMPLATE',
+    entidadeId: novoId,
+    usuario: user,
+    detalhes: { nome, duplicadoDe: id }
+  });
+
+  const criado = await templateRepository.buscarPorId(novoId);
+  return sanitizarTemplate(criado);
+}
+
 async function inativarTemplate(id, user) {
   const template = await obterTemplate(id);
 
@@ -223,6 +315,8 @@ module.exports = {
   listarVersoes,
   criarTemplate,
   adicionarVersaoTemplate,
+  atualizarMetadados,
+  duplicarTemplate,
   baixarTemplate,
   inativarTemplate,
   extrairVariaveis

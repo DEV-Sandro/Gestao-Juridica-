@@ -20,6 +20,16 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/usuarios/$(meuUid())).data.role == 'ADMIN';
     }
 
+    // Tenant (escritório) do usuário logado, lido do próprio doc de usuário.
+    function meuTenant() {
+      return get(/databases/$(database)/documents/usuarios/$(meuUid())).data.tenantId;
+    }
+
+    // Defesa em profundidade multi-tenant: recurso pertence ao escritório do usuário.
+    function mesmoTenant(recurso) {
+      return autenticado() && recurso.tenantId == meuTenant();
+    }
+
     function ehAdvogado() {
       return autenticado()
         && exists(/databases/$(database)/documents/usuarios/$(meuUid()))
@@ -43,7 +53,9 @@ service cloud.firestore {
     // Cada usuário lê seu próprio doc; admin lê todos.
     // Escrita só via backend (admin SDK ignora rules), nunca direto pelo cliente.
     match /usuarios/{uid} {
-      allow read: if autenticado() && (meuUid() == uid || ehAdmin());
+      // O próprio doc sempre; admin só vê membros do mesmo escritório.
+      allow read: if autenticado()
+        && (meuUid() == uid || (ehAdmin() && mesmoTenant(resource.data)));
       allow write: if false;
     }
 
@@ -54,12 +66,15 @@ service cloud.firestore {
     // (advogadoId); admin mantém a visão geral do escritório.
     // Escrita só via backend.
     match /processos/{processoId} {
-      allow read: if autenticado() && podeVerProcesso(resource.data);
+      allow read: if autenticado()
+        && mesmoTenant(resource.data)
+        && podeVerProcesso(resource.data);
       allow write: if false;
 
-      // ETAPAS (subcoleção)
+      // ETAPAS (subcoleção) — herdam o escopo do processo pai.
       match /etapas/{etapaId} {
         allow read: if autenticado()
+          && mesmoTenant(get(/databases/$(database)/documents/processos/$(processoId)).data)
           && podeVerProcesso(get(/databases/$(database)/documents/processos/$(processoId)).data);
         allow write: if false;
       }
@@ -69,7 +84,7 @@ service cloud.firestore {
     // AUDITORIA — só leitura para admin, escrita só via backend
     // ============================================================
     match /auditoria/{eventoId} {
-      allow read: if ehAdmin();
+      allow read: if ehAdmin() && mesmoTenant(resource.data);
       allow write: if false;
     }
 
@@ -85,7 +100,7 @@ service cloud.firestore {
     // TEMPLATES (Feature 2 — gerador de documentos, futuro)
     // ============================================================
     match /templates/{templateId} {
-      allow read: if ehAdvogado();
+      allow read: if ehAdvogado() && mesmoTenant(resource.data);
       allow write: if false;
     }
 

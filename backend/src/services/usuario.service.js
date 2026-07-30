@@ -5,6 +5,8 @@ const { admin, bucket, defaultBucketName, projectId, sanitizeBucketName } = requ
 const usuarioRepository = require('../repositories/usuario.repository');
 const conviteService = require('./convite.service');
 const permissaoService = require('./permissao.service');
+const { mesmoTenant } = require('../config/tenant');
+const { tenantAtual } = require('../config/tenant-context');
 
 const ROLES_VALIDOS = ['ADMIN', 'ADVOGADO', 'CLIENT'];
 const urlFotoPermitida = /^(https:\/\/|http:\/\/).+/i;
@@ -301,8 +303,11 @@ async function removerMeuAvatar(user) {
 }
 
 async function listarEquipe() {
+  const tenantId = tenantAtual();
   const membros = await usuarioRepository.listarTodos();
-  return membros.map((membro) => sanitizarMembro(membro));
+  return membros
+    .filter((membro) => mesmoTenant(membro, tenantId))
+    .map((membro) => sanitizarMembro(membro));
 }
 
 async function convidarMembro(adminUser, payload) {

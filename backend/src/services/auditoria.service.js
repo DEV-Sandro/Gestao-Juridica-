@@ -1,4 +1,6 @@
 const auditoriaRepository = require('../repositories/auditoria.repository');
+const { mesmoTenant } = require('../config/tenant');
+const { tenantAtual } = require('../config/tenant-context');
 
 async function registrarEvento({
   acao,
@@ -11,6 +13,7 @@ async function registrarEvento({
     acao,
     entidade,
     entidadeId,
+    tenantId: usuario?.tenantId || null,
     usuarioId: usuario?.uid || null,
     usuarioEmail: usuario?.email || null,
     usuarioNome: usuario?.displayName || null,
@@ -27,9 +30,11 @@ async function registrarEvento({
 // atual e evita depender de indices compostos que ainda nao existem no projeto.
 async function listarAuditoria({ entidade, usuarioId, de, ate, limite } = {}) {
   const limiteNumero = Math.min(Math.max(Number(limite) || 100, 1), 500);
+  const tenantId = tenantAtual();
   const registros = await auditoriaRepository.listarRecentes({ entidade, usuarioId });
 
   const filtrados = registros.filter((registro) => {
+    if (!mesmoTenant(registro, tenantId)) return false;
     if (de && String(registro.criadoEm || '') < de) return false;
     if (ate && String(registro.criadoEm || '') > ate) return false;
     return true;

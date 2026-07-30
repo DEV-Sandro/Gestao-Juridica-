@@ -50,10 +50,18 @@
 
 .template-panel,
 .document-panel {
-  padding: 24px;
+  padding: 28px 24px 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
+  // Quando um painel é alvo de rolagem (mobile), deixa folga do header fixo.
+  scroll-margin-top: 76px;
+}
+
+// Título da biblioteca flutua com respiro — não colado no topo/barra superior.
+.template-panel .panel-header {
+  padding-top: 4px;
+  margin-bottom: 2px;
 }
 
 .panel-header {
@@ -67,13 +75,160 @@
   }
 }
 
+.panel-counter {
+  flex-shrink: 0;
+  min-width: 30px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+/* ---------- Toolbar da biblioteca ---------- */
+.lib-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lib-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface, transparent);
+  transition: border-color var(--motion-base) var(--ease-standard);
+
+  &:focus-within {
+    border-color: color-mix(in srgb, var(--color-primary) 45%, transparent);
+  }
+
+  > mat-icon {
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 0;
+    border: none;
+    background: transparent;
+    color: var(--text-main);
+    font-size: 14px;
+    font-family: inherit;
+
+    &:focus {
+      outline: none;
+    }
+    &::placeholder {
+      color: var(--text-muted);
+    }
+  }
+
+  button {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+.lib-filtros {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.lib-select {
+  width: 100%;
+
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+/* ---------- Skeleton de carregamento ---------- */
+.lib-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skeleton-card {
+  height: 92px;
+  border-radius: 18px;
+  border: 1px solid var(--border-subtle);
+  background: linear-gradient(
+    100deg,
+    var(--surface-soft) 30%,
+    color-mix(in srgb, var(--text-muted) 10%, var(--surface-soft)) 50%,
+    var(--surface-soft) 70%
+  );
+  background-size: 220% 100%;
+  animation: skeletonShimmer 1.3s ease-in-out infinite;
+}
+
+@keyframes skeletonShimmer {
+  from {
+    background-position: 180% 0;
+  }
+  to {
+    background-position: -20% 0;
+  }
+}
+
+/* ---------- Estados vazios ---------- */
+.lib-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    opacity: 0.5;
+  }
+
+  p {
+    margin: 0;
+    font-weight: 600;
+    color: var(--text-main);
+  }
+}
+
+/* ---------- Lista + card de modelo ---------- */
+.lib-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .template-card {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 18px;
-  border-radius: 20px;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 18px 16px;
+  border-radius: 18px;
   border: 1px solid var(--border-subtle);
   background: var(--surface-soft);
   text-align: left;
@@ -88,19 +243,198 @@
     box-shadow: var(--shadow-soft);
   }
 
-  .template-card-main {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 0;
+  &.active {
+    border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
+    background: color-mix(in srgb, var(--color-primary) 6%, var(--surface-soft));
   }
 
-  span {
-    color: var(--text-muted);
-    line-height: 1.6;
+  &.is-confirming {
+    cursor: default;
+    border-color: color-mix(in srgb, var(--color-danger) 40%, transparent);
   }
 }
 
+.card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.card-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.card-title {
+  font-size: 0.98rem;
+  line-height: 1.35;
+}
+
+.card-desc {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 2px;
+}
+
+.btn-fav {
+  color: var(--text-muted);
+
+  &.is-fav {
+    color: #f5b301;
+  }
+}
+
+.btn-menu {
+  color: var(--text-muted);
+}
+
+.menu-danger {
+  color: var(--color-danger);
+
+  ::ng-deep mat-icon {
+    color: var(--color-danger);
+  }
+}
+
+/* ---------- Metadados do card ---------- */
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.meta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--surface-strong, rgba(127, 127, 127, 0.14));
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+
+  mat-icon {
+    font-size: 13px;
+    width: 13px;
+    height: 13px;
+  }
+
+  &.is-cat {
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
+  }
+
+  &.is-builtin {
+    background: color-mix(in srgb, var(--brand-primary) 16%, transparent);
+    color: var(--brand-primary);
+  }
+
+  &.is-status {
+    background: var(--color-success-soft);
+    color: var(--color-success);
+  }
+}
+
+.card-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  color: var(--text-muted);
+  font-size: 11px;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  mat-icon {
+    font-size: 13px;
+    width: 13px;
+    height: 13px;
+  }
+}
+
+/* ---------- Renomear inline ---------- */
+.rename-inline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  input {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid color-mix(in srgb, var(--color-primary) 45%, transparent);
+    background: var(--bg-surface, transparent);
+    color: var(--text-main);
+    font-size: 0.92rem;
+    font-family: inherit;
+
+    &:focus {
+      outline: none;
+    }
+  }
+}
+
+/* ---------- Confirmação de exclusão inline ---------- */
+.card-confirm {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  > mat-icon {
+    color: var(--color-danger);
+    flex-shrink: 0;
+  }
+}
+
+.card-confirm-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+
+  strong {
+    font-size: 0.92rem;
+  }
+  span {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+}
+
+.card-confirm-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-danger {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+/* ---------- Reaproveitado no painel de geração ---------- */
 .template-tags {
   display: flex;
   flex-wrap: wrap;
@@ -131,9 +465,15 @@
   margin: 8px 0;
 }
 
-.btn-remove-template {
-  flex-shrink: 0;
-  color: var(--text-muted);
+.upload-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  strong {
+    font-size: 0.98rem;
+  }
 }
 
 .upload-box {
@@ -403,4 +743,154 @@
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   Ação "Novo modelo" (acima da busca, à direita)
+   ============================================================ */
+.lib-novo {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Ícone de prévia no card */
+.btn-preview {
+  color: var(--text-muted);
+
+  &:hover {
+    color: var(--color-primary);
+  }
+}
+
+/* ============================================================
+   MODAL DE PRÉVIA DO DOCUMENTO
+   ============================================================ */
+.preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400; /* acima do header fixo, toast e drawer */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(4, 6, 12, 0.62);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 160ms ease forwards;
+}
+
+.preview-modal {
+  width: 100%;
+  max-width: 640px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 22px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.preview-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 22px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+
+  .preview-head-text h3 {
+    margin: 2px 0 0;
+    font-size: 1.15rem;
+  }
+}
+
+.preview-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 22px;
+}
+
+.preview-legenda {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--color-info-soft);
+  color: var(--text-soft);
+  font-size: 0.85rem;
+  line-height: 1.55;
+
+  code {
+    padding: 1px 5px;
+    border-radius: 5px;
+    background: var(--surface-strong, rgba(127, 127, 127, 0.16));
+    color: var(--text-main);
+  }
+}
+
+.preview-doc {
+  /* Emula a folha do documento para leitura confortável */
+  border-radius: 14px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-soft);
+  padding: 22px 24px;
+}
+
+.preview-doc-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 0;
+  border-top: 1px solid var(--border-subtle);
+
+  &:first-of-type {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  strong {
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+  }
+
+  p {
+    margin: 0;
+    color: var(--text-soft);
+    line-height: 1.75;
+    font-size: 0.92rem;
+  }
+}
+
+.preview-vars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.preview-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 22px 18px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+@media (max-width: 560px) {
+  .preview-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .preview-modal {
+    max-width: none;
+    max-height: 92vh;
+    border-radius: 22px 22px 0 0;
+  }
+
+  .preview-foot {
+    /* Botões lado a lado, ocupando a largura no celular */
+    button {
+      flex: 1 1 0;
+    }
+  }
 }
