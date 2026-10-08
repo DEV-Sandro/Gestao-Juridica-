@@ -4,7 +4,12 @@
   "main": "src/server.js",
   "scripts": {
     "dev": "node --watch src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "tenant:backfill": "node scripts/backfill-tenant.js",
+    "tenant:verify": "node scripts/verify-tenant-isolation.js",
+    "tenant:migrate-subcollections": "node scripts/migrate-tenant-subcollections.js",
+    "deadlines:recalculate-risk": "node scripts/recalculate-deadline-risk.js",
+    "rentabilidade:rebuild-projections": "node scripts/rebuild-profitability-projections.js"
   },
   "engines": {
     "node": "20.x"

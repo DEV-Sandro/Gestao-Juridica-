@@ -1,0 +1,66 @@
+/*
+ * Tokens visuais do JustaPro.
+ *
+ * Componentes de produto devem consumir somente estes tokens --jp-* ou os
+ * aliases semanticos existentes. Assim, Material e estilos proprios seguem a
+ * mesma linguagem e os temas nao precisam conhecer detalhes de cada feature.
+ */
+:root {
+  /* Tipografia */
+  --jp-font-family: 'Inter', 'Segoe UI', sans-serif;
+  --jp-font-heading: 'Sora', var(--jp-font-family);
+
+  /* Brand */
+  --jp-brand-050: #eef2ff;
+  --jp-brand-600: #3655d6;
+  --jp-brand-700: #2942b8;
+
+  /* Neutros */
+  --jp-neutral-950: #101828;
+  --jp-neutral-700: #344054;
+  --jp-neutral-500: #667085;
+  --jp-neutral-200: #e4e7ec;
+  --jp-neutral-050: #f7f8fc;
+  --jp-surface: #ffffff;
+
+  /* Semantica */
+  --jp-success-600: #16845b;
+  --jp-danger-600: #c4320a;
+  --jp-warning-600: #b54708;
+
+  /* Espacamento e formas */
+  --jp-radius-sm: 4px;
+  --jp-radius-md: 8px;
+  --jp-radius-lg: 12px;
+  --jp-radius-xl: 16px;
+
+  /* Elevacao discreta */
+  --jp-shadow-1: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --jp-shadow-2: 0 8px 24px rgba(16, 24, 40, 0.1);
+
+  /* Aliases para usos comuns nas features. */
+  --jp-focus-ring: 0 0 0 4px color-mix(in srgb, var(--jp-brand-600) 18%, transparent);
+}
+
+/* A paleta-base e clara; os tokens conservam contraste correto nos temas ja
+ * existentes, sem obrigar cada componente a criar sua propria versao escura. */
+body[data-theme='corporate'],
+body[data-theme='dark'] {
+  --jp-neutral-950: #f4f7fb;
+  --jp-neutral-700: #d7e0ec;
+  --jp-neutral-500: #a0acbd;
+  --jp-neutral-200: rgba(148, 163, 184, 0.2);
+  --jp-neutral-050: #08111f;
+  --jp-surface: rgba(12, 28, 52, 0.94);
+  --jp-brand-050: rgba(54, 85, 214, 0.16);
+  --jp-brand-600: #6682ff;
+  --jp-brand-700: #90a4ff;
+  --jp-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.22);
+  --jp-shadow-2: 0 12px 28px rgba(0, 0, 0, 0.34);
+}
+
+body[data-theme='dark'] {
+  --jp-neutral-050: #05070d;
+  --jp-surface: rgba(24, 28, 38, 0.96);
+  --jp-neutral-200: rgba(255, 255, 255, 0.13);
+}

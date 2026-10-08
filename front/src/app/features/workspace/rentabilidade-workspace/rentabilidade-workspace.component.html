@@ -1,0 +1,298 @@
+<section class="rentabilidade-page">
+  <header class="page-head">
+    <div>
+      <span class="eyebrow">Gestão estratégica</span>
+      <h2 class="font-heading">Rentabilidade inteligente</h2>
+      <p>O painel combina automaticamente pagamentos, despesas, audiências e reuniões encerradas.</p>
+    </div>
+
+    <div class="head-actions">
+      <button mat-stroked-button type="button" (click)="carregar()" [disabled]="carregando">
+        <mat-icon>refresh</mat-icon>
+        Atualizar
+      </button>
+      <button mat-flat-button class="btn-premium" type="button" (click)="mostrarAjusteTempo = !mostrarAjusteTempo">
+        <mat-icon>add</mat-icon>
+        Ajustar tempo externo
+      </button>
+    </div>
+  </header>
+
+  <div class="loading-state" *ngIf="carregando">
+    <mat-icon>insights</mat-icon>
+    Calculando indicadores com os dados do escritório...
+  </div>
+
+  <div class="error-state" *ngIf="!carregando && erro">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ erro }}</span>
+    <button mat-button type="button" (click)="carregar()">Tentar novamente</button>
+  </div>
+
+  <ng-container *ngIf="!carregando && dados as resumo">
+    <section class="time-adjustment card-glass" *ngIf="mostrarAjusteTempo">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Só o que não foi capturado</span>
+          <h3 class="font-heading">Registrar tempo externo</h3>
+          <p>Audiências e reuniões da agenda já entram sozinhas. Use este ajuste para reuniões externas, estudo ou atividades sem agenda.</p>
+        </div>
+      </div>
+
+      <div class="time-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Processo</mat-label>
+          <mat-select [(ngModel)]="processoSelecionadoId">
+            <mat-option value="">Selecione</mat-option>
+            <mat-option *ngFor="let processo of resumo.processosDisponiveis" [value]="processo.id">
+              {{ processo.titulo }} · {{ processo.clienteNome }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Horas</mat-label>
+          <input matInput type="number" min="0.02" max="24" step="0.25" [(ngModel)]="horasManuais" placeholder="Ex.: 2" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Data</mat-label>
+          <input matInput type="date" [(ngModel)]="dataManual" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="description-field">
+          <mat-label>Referência</mat-label>
+          <input matInput [(ngModel)]="descricaoManual" placeholder="Ex.: reunião externa" />
+        </mat-form-field>
+
+        <button mat-flat-button class="btn-premium" type="button" (click)="salvarTempoManual()" [disabled]="salvandoTempo">
+          {{ salvandoTempo ? 'Registrando...' : 'Registrar tempo' }}
+        </button>
+      </div>
+    </section>
+
+    <section class="metric-grid">
+      <article class="metric-card card-glass">
+        <span>Receita bruta</span>
+        <strong>{{ formatarMoeda(resumo.indicadores.receitaBruta) }}</strong>
+        <small>Honorários e reembolsos recebidos</small>
+      </article>
+      <article class="metric-card card-glass">
+        <span>Receita líquida</span>
+        <strong>{{ formatarMoeda(resumo.indicadores.receitaLiquida) }}</strong>
+        <small>Honorários efetivamente recebidos</small>
+      </article>
+      <article class="metric-card card-glass">
+        <span>Lucro</span>
+        <strong>{{ formatarMoeda(resumo.indicadores.lucro) }}</strong>
+        <small>{{ formatarMoeda(resumo.indicadores.custos) }} em custos diretos</small>
+      </article>
+      <article class="metric-card card-glass accent">
+        <span>Rentabilidade média</span>
+        <strong>{{ resumo.indicadores.rentabilidadeMedia === null ? '--' : formatarMoeda(resumo.indicadores.rentabilidadeMedia) }}</strong>
+        <small>por hora · {{ formatarHoras(resumo.indicadores.horasTrabalhadas) }} trabalhadas</small>
+      </article>
+    </section>
+
+    <section class="performance-grid">
+      <article class="performance-card card-glass">
+        <span>Processo mais rentável</span>
+        <strong>{{ nomeItem(resumo.indicadores.processoMaisRentavel) }}</strong>
+        <small>{{ formatarRentabilidade(resumo.indicadores.processoMaisRentavel) }}</small>
+      </article>
+      <article class="performance-card card-glass warning">
+        <span>Processo com menor retorno</span>
+        <strong>{{ nomeItem(resumo.indicadores.processoMenosRentavel) }}</strong>
+        <small>{{ formatarRentabilidade(resumo.indicadores.processoMenosRentavel) }}</small>
+      </article>
+      <article class="performance-card card-glass">
+        <span>Cliente mais rentável</span>
+        <strong>{{ nomeItem(resumo.indicadores.clienteMaisRentavel) }}</strong>
+        <small>{{ formatarRentabilidade(resumo.indicadores.clienteMaisRentavel) }}</small>
+      </article>
+      <article class="performance-card card-glass warning">
+        <span>Cliente com menor retorno</span>
+        <strong>{{ nomeItem(resumo.indicadores.clienteMenosRentavel) }}</strong>
+        <small>{{ formatarRentabilidade(resumo.indicadores.clienteMenosRentavel) }}</small>
+      </article>
+      <article class="performance-card card-glass">
+        <span>Área mais lucrativa</span>
+        <strong>{{ nomeItem(resumo.indicadores.areaMaisLucrativa) }}</strong>
+        <small>{{ resumo.indicadores.areaMaisLucrativa ? formatarMoeda(resumo.indicadores.areaMaisLucrativa.lucro) + ' de lucro' : '--' }}</small>
+      </article>
+      <article class="performance-card card-glass warning">
+        <span>Área com menor lucro</span>
+        <strong>{{ nomeItem(resumo.indicadores.areaMenosLucrativa) }}</strong>
+        <small>{{ resumo.indicadores.areaMenosLucrativa ? formatarMoeda(resumo.indicadores.areaMenosLucrativa.lucro) + ' de lucro' : '--' }}</small>
+      </article>
+    </section>
+
+    <section class="overview-grid">
+      <article class="insights-panel card-glass">
+        <div class="section-heading compact">
+          <div>
+            <span class="eyebrow">Leitura automática</span>
+            <h3 class="font-heading">Insights do escritório</h3>
+          </div>
+          <mat-icon>auto_awesome</mat-icon>
+        </div>
+
+        <div class="insight-list">
+          <article class="insight" *ngFor="let insight of resumo.insights" [ngClass]="'insight-' + insight.tipo.toLowerCase()">
+            <mat-icon>{{ insight.tipo === 'SUCESSO' ? 'trending_up' : insight.tipo === 'ATENCAO' ? 'priority_high' : 'lightbulb' }}</mat-icon>
+            <div>
+              <strong>{{ insight.titulo }}</strong>
+              <p>{{ insight.descricao }}</p>
+              <a *ngIf="insight.processoId" [routerLink]="['/processo', insight.processoId]">Abrir processo</a>
+            </div>
+          </article>
+        </div>
+      </article>
+
+      <article class="data-quality card-glass">
+        <span class="eyebrow">Cobertura automática</span>
+        <h3 class="font-heading">De onde vêm as horas</h3>
+        <div class="source-row">
+          <span><mat-icon>event_available</mat-icon> Agenda</span>
+          <strong>{{ formatarHoras(resumo.indicadores.horasAgenda) }}</strong>
+        </div>
+        <div class="source-row">
+          <span><mat-icon>edit_note</mat-icon> Complementos manuais</span>
+          <strong>{{ formatarHoras(resumo.indicadores.horasManuais) }}</strong>
+        </div>
+        <div class="quality-note" *ngIf="resumo.qualidade.lancamentosSemProcesso > 0">
+          {{ resumo.qualidade.lancamentosSemProcesso }} lançamento(s) aguardam classificação manual.
+        </div>
+        <div class="quality-note neutral" *ngIf="resumo.qualidade.lancamentosClassificadosGerais > 0">
+          {{ resumo.qualidade.lancamentosClassificadosGerais }} lançamento(s) foram confirmados no resultado geral.
+        </div>
+        <div class="quality-note" *ngIf="resumo.qualidade.processosComReceitaSemHoras > 0">
+          {{ resumo.qualidade.processosComReceitaSemHoras }} processo(s) com receita aguardam horas para cálculo por hora.
+        </div>
+      </article>
+    </section>
+
+    <section class="classification-section card-glass" *ngIf="temLancamentosParaClassificar(resumo)">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Revisão assistida</span>
+          <h3 class="font-heading">Classificar lançamentos sem processo</h3>
+          <p>Vincule ao caso correto ou confirme que o valor deve ficar somente no resultado geral do escritório.</p>
+        </div>
+      </div>
+
+      <div class="classification-list">
+        <article class="classification-item" *ngFor="let lancamento of resumo.lancamentosParaClassificar; trackBy: trackById">
+          <div class="classification-copy">
+            <span class="classification-kind">{{ tipoLancamentoLabel(lancamento) }} · {{ formatarData(lancamento.pagoEm || lancamento.vencimento) }}</span>
+            <strong>{{ lancamento.descricao }}</strong>
+            <span>{{ formatarMoeda(lancamento.valorPago || lancamento.valor) }}</span>
+          </div>
+
+          <div class="classification-actions">
+            <mat-form-field appearance="outline">
+              <mat-label>Vincular a um processo</mat-label>
+              <mat-select [(ngModel)]="processoPorLancamento[lancamento.id]" [disabled]="salvandoClassificacaoId === lancamento.id">
+                <mat-option value="">Selecione o processo</mat-option>
+                <mat-option *ngFor="let processo of resumo.processosDisponiveis" [value]="processo.id">
+                  {{ processo.titulo }} · {{ processo.clienteNome }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <button mat-flat-button class="btn-premium" type="button" (click)="vincularLancamento(lancamento)" [disabled]="salvandoClassificacaoId === lancamento.id">
+              {{ salvandoClassificacaoId === lancamento.id ? 'Salvando...' : 'Vincular' }}
+            </button>
+            <button mat-stroked-button type="button" class="general-result-button" *ngIf="lancamento.classificacaoRentabilidade !== 'GERAL'" (click)="manterLancamentoNoGeral(lancamento)" [disabled]="salvandoClassificacaoId === lancamento.id">
+              Manter no geral
+            </button>
+            <span class="general-confirmed" *ngIf="lancamento.classificacaoRentabilidade === 'GERAL'">
+              <mat-icon>check_circle</mat-icon> Resultado geral confirmado
+            </span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="data-section card-glass">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Ranking automático</span>
+          <h3 class="font-heading">Processos mais rentáveis</h3>
+        </div>
+        <span class="method-note">Base: valores pagos e horas registradas</span>
+      </div>
+      <div class="table-scroll" *ngIf="resumo.rankings.processosMaisRentaveis.length; else semProcessos">
+        <table>
+          <thead><tr><th>Processo</th><th>Cliente</th><th>Receita</th><th>Horas</th><th>Lucro</th><th>R$/hora</th><th>Indicador</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let processo of resumo.rankings.processosMaisRentaveis; trackBy: trackById">
+              <td data-label="Processo"><a [routerLink]="['/processo', processo.id]">{{ processo.titulo }}</a></td>
+              <td data-label="Cliente">{{ processo.clienteNome }}</td>
+              <td data-label="Receita">{{ formatarMoeda(processo.receitaLiquida) }}</td>
+              <td data-label="Horas">{{ formatarHoras(processo.horas) }}</td>
+              <td data-label="Lucro">{{ formatarMoeda(processo.lucro) }}</td>
+              <td data-label="R$/hora">{{ processo.rentabilidade === null ? '--' : formatarMoeda(processo.rentabilidade) }}</td>
+              <td data-label="Indicador"><span class="indicator" [ngClass]="indicadorClasse(processo.indicador)">{{ indicadorLabel(processo.indicador) }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #semProcessos><p class="empty-inline">Registre pagamentos e horas para formar o ranking.</p></ng-template>
+    </section>
+
+    <section class="two-tables">
+      <article class="data-section card-glass">
+        <div class="section-heading compact"><div><span class="eyebrow">Visão por área</span><h3 class="font-heading">Áreas jurídicas</h3></div></div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Área</th><th>Receita</th><th>Horas</th><th>Lucro</th><th>R$/h</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let area of resumo.rankings.porArea; trackBy: trackById">
+                <td data-label="Área">{{ area.area }}</td><td data-label="Receita">{{ formatarMoeda(area.receitaLiquida) }}</td><td data-label="Horas">{{ formatarHoras(area.horas) }}</td><td data-label="Lucro">{{ formatarMoeda(area.lucro) }}</td><td data-label="R$/h">{{ area.rentabilidade === null ? '--' : formatarMoeda(area.rentabilidade) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="data-section card-glass">
+        <div class="section-heading compact"><div><span class="eyebrow">Visão por cliente</span><h3 class="font-heading">Quem consome mais tempo</h3></div></div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Cliente</th><th>Processos</th><th>Horas</th><th>Receita</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let cliente of resumo.rankings.clientesMaisTempo; trackBy: trackById">
+                <td data-label="Cliente">{{ nomeItem(cliente) }}</td><td data-label="Processos">{{ cliente.processos }}</td><td data-label="Horas">{{ formatarHoras(cliente.horas) }}</td><td data-label="Receita">{{ formatarMoeda(cliente.receitaLiquida) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <section class="data-section card-glass">
+      <div class="section-heading compact"><div><span class="eyebrow">Ranking automático</span><h3 class="font-heading">Clientes mais rentáveis</h3></div></div>
+      <div class="table-scroll" *ngIf="resumo.rankings.clientesMaisRentaveis.length; else semClientesRentaveis">
+        <table>
+          <thead><tr><th>Cliente</th><th>Receita</th><th>Horas</th><th>Lucro</th><th>R$/h</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let cliente of resumo.rankings.clientesMaisRentaveis; trackBy: trackById">
+              <td data-label="Cliente">{{ nomeItem(cliente) }}</td><td data-label="Receita">{{ formatarMoeda(cliente.receitaLiquida) }}</td><td data-label="Horas">{{ formatarHoras(cliente.horas) }}</td><td data-label="Lucro">{{ formatarMoeda(cliente.lucro) }}</td><td data-label="R$/h">{{ cliente.rentabilidade === null ? '--' : formatarMoeda(cliente.rentabilidade) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #semClientesRentaveis><p class="empty-inline">Vincule os lançamentos e as horas aos processos para formar este ranking.</p></ng-template>
+    </section>
+
+    <section class="recent-section card-glass" *ngIf="resumo.apontamentosRecentes.length">
+      <div class="section-heading compact"><div><span class="eyebrow">Complementos</span><h3 class="font-heading">Últimos ajustes manuais</h3></div></div>
+      <div class="recent-list">
+        <div class="recent-item" *ngFor="let apontamento of resumo.apontamentosRecentes">
+          <div><strong>{{ apontamento.processoTitulo }}</strong><span>{{ apontamento.descricao }} · {{ formatarData(apontamento.data) }}</span></div>
+          <div class="recent-actions"><b>{{ formatarHoras(apontamento.minutos / 60) }}</b><button mat-icon-button type="button" (click)="removerApontamento(apontamento)" aria-label="Remover apontamento"><mat-icon>delete_outline</mat-icon></button></div>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</section>

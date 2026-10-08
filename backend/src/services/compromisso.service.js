@@ -1,12 +1,17 @@
+const crypto = require('crypto');
 const compromissoRepository = require('../repositories/compromisso.repository');
 const auditoriaService = require('./auditoria.service');
 const permissaoService = require('./permissao.service');
+const deadlineOrchestrationService = require('./deadline-orchestration.service');
 const { mesmoTenant } = require('../config/tenant');
 const { tenantAtual } = require('../config/tenant-context');
 
 const TIPOS_PERMITIDOS = new Set(['AUDIENCIA', 'PRAZO', 'REUNIAO', 'EVENTO', 'OUTRO']);
 const STATUS_PERMITIDOS = new Set(['PENDENTE', 'CONCLUIDO', 'CANCELADO']);
 const VISIBILIDADE_PERMITIDA = new Set(['PUBLICO', 'RESTRITO']);
+const FREQUENCIAS_RECURRENCIA = new Set(['SEMANAL', 'QUINZENAL', 'MENSAL']);
+const CANAIS_LEMBRETE = new Set(['EMAIL', 'WHATSAPP']);
+const MAX_OCORRENCIAS_RECURRENCIA = 52;
 
 function normalizarTexto(valor, tamanhoMaximo, obrigatorio = false) {
   if (valor === undefined) return undefined;
@@ -47,6 +52,47 @@ function normalizarDataHora(valor) {
   return data.toISOString();
 }
 
+function normalizarRecorrencia(valor) {
+  if (valor === undefined) return undefined;
+  if (!valor || typeof valor !== 'object' || Array.isArray(valor)) return null;
+
+  const frequencia = String(valor.frequencia || '').trim().toUpperCase();
+  if (!FREQUENCIAS_RECURRENCIA.has(frequencia)) return null;
+
+  const totalInformado = Number(valor.total);
+  const total = Number.isInteger(totalInformado)
+    ? Math.min(Math.max(totalInformado, 2), MAX_OCORRENCIAS_RECURRENCIA)
+    : 4;
+  const ate = typeof valor.ate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(valor.ate)
+    ? valor.ate
+    : null;
+
+  return { frequencia, total, ate };
+}
+
+function normalizarLembretes(valor) {
+  if (valor === undefined) return undefined;
+  if (!Array.isArray(valor)) return [];
+
+  const vistos = new Set();
+  const lembretes = [];
+  for (const item of valor) {
+    if (!item || typeof item !== 'object') continue;
+    const canal = String(item.canal || '').trim().toUpperCase();
+    const minutosAntes = Number(item.minutosAntes);
+    if (!CANAIS_LEMBRETE.has(canal) || !Number.isInteger(minutosAntes) || minutosAntes < 5 || minutosAntes > 43200) {
+      continue;
+    }
+
+    const chave = `${canal}:${minutosAntes}`;
+    if (vistos.has(chave)) continue;
+    vistos.add(chave);
+    lembretes.push({ canal, minutosAntes });
+  }
+
+  return lembretes.slice(0, 6);
+}
+
 function montarPayload(dados, atual = null) {
   const payload = {};
 
@@ -68,6 +114,12 @@ function montarPayload(dados, atual = null) {
       ? [...new Set(dados.participantesIds.filter((id) => typeof id === 'string' && id.trim()))].slice(0, 20)
       : [];
   }
+
+  const recorrencia = normalizarRecorrencia(dados.recorrencia);
+  if (recorrencia !== undefined) payload.recorrencia = recorrencia;
+
+  const lembretes = normalizarLembretes(dados.lembretes);
+  if (lembretes !== undefined) payload.lembretes = lembretes;
 
   if (dados.dataInicio !== undefined) {
     payload.dataInicio = normalizarDataHora(dados.dataInicio);
@@ -100,6 +152,8 @@ function montarPayload(dados, atual = null) {
     if (!payload.visibilidade) payload.visibilidade = 'PUBLICO';
     if (payload.diaTodo === undefined) payload.diaTodo = false;
     if (!payload.participantesIds) payload.participantesIds = [];
+    if (payload.recorrencia === undefined) payload.recorrencia = null;
+    if (!payload.lembretes) payload.lembretes = [];
     if (!payload.dataFim) payload.dataFim = payload.dataInicio;
   }
 
@@ -112,19 +166,67 @@ function montarPayload(dados, atual = null) {
   return payload;
 }
 
+function adicionarRecorrencia(data, frequencia, indice) {
+  const proxima = new Date(data);
+  if (frequencia === 'MENSAL') {
+    proxima.setUTCMonth(proxima.getUTCMonth() + indice);
+  } else {
+    proxima.setUTCDate(proxima.getUTCDate() + (frequencia === 'QUINZENAL' ? 14 : 7) * indice);
+  }
+  return proxima;
+}
+
+function gerarOcorrencias(payload) {
+  const recorrencia = payload.recorrencia;
+  if (!recorrencia?.frequencia) {
+    return [{ ...payload, recorrencia: null, serieId: null }];
+  }
+
+  const inicioBase = new Date(payload.dataInicio);
+  const fimBase = new Date(payload.dataFim);
+  const duracao = fimBase.getTime() - inicioBase.getTime();
+  const limite = recorrencia.ate ? new Date(`${recorrencia.ate}T23:59:59.999Z`).getTime() : null;
+  const serieId = crypto.randomUUID();
+  const ocorrencias = [];
+
+  for (let indice = 0; indice < recorrencia.total; indice += 1) {
+    const inicio = adicionarRecorrencia(inicioBase, recorrencia.frequencia, indice);
+    if (limite && inicio.getTime() > limite) break;
+    const fim = new Date(inicio.getTime() + duracao);
+    ocorrencias.push({
+      ...payload,
+      dataInicio: inicio.toISOString(),
+      dataFim: fim.toISOString(),
+      diaISO: inicio.toISOString().slice(0, 10),
+      serieId,
+      recorrencia: {
+        frequencia: recorrencia.frequencia,
+        total: recorrencia.total,
+        ate: recorrencia.ate,
+        indice: indice + 1
+      }
+    });
+  }
+
+  return ocorrencias;
+}
+
 function sobrepoe(inicioA, fimA, inicioB, fimB) {
   return new Date(inicioA).getTime() < new Date(fimB).getTime() &&
     new Date(inicioB).getTime() < new Date(fimA).getTime();
 }
 
-async function detectarConflitos(advogadoId, dataInicio, dataFim, ignorarId = null) {
-  const existentes = await compromissoRepository.buscarPorAdvogados([advogadoId]);
+async function detectarConflitos(envolvidos, dataInicio, dataFim, ignorarId = null) {
+  const ids = [...new Set((Array.isArray(envolvidos) ? envolvidos : [envolvidos]).filter(Boolean))];
+  if (!ids.length) return [];
+  const existentes = await compromissoRepository.buscarTodos();
 
   return existentes.filter(
     (compromisso) =>
       compromisso.id !== ignorarId &&
       !compromisso.deletado &&
       compromisso.status !== 'CANCELADO' &&
+      (ids.includes(compromisso.advogadoId) || compromisso.participantesIds?.some((id) => ids.includes(id))) &&
       sobrepoe(dataInicio, dataFim, compromisso.dataInicio, compromisso.dataFim)
   );
 }
@@ -136,6 +238,20 @@ function resumirConflitos(conflitos) {
     dataInicio: conflito.dataInicio,
     dataFim: conflito.dataFim
   }));
+}
+
+function mesmoConjunto(a = [], b = []) {
+  return JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
+}
+
+function precisaRenovarCiencia(atual, proximo) {
+  return (
+    atual.dataInicio !== proximo.dataInicio ||
+    atual.advogadoId !== proximo.advogadoId ||
+    !mesmoConjunto(atual.participantesIds || [], proximo.participantesIds || []) ||
+    atual.status !== proximo.status ||
+    atual.tipo !== proximo.tipo
+  );
 }
 
 function podeAcessar(compromisso, user) {
@@ -167,35 +283,66 @@ async function obterComAcesso(id, user) {
 async function criarCompromisso(dados, user) {
   const payload = montarPayload(dados);
   if (!payload.advogadoId) payload.advogadoId = user.uid;
+  payload.participantesIds = (payload.participantesIds || []).filter((id) => id !== payload.advogadoId);
 
-  const conflitos = await detectarConflitos(payload.advogadoId, payload.dataInicio, payload.dataFim);
+  const ocorrencias = gerarOcorrencias(payload);
+  const envolvidos = [payload.advogadoId, ...payload.participantesIds];
+  const conflitosPorId = new Map();
+  for (const ocorrencia of ocorrencias) {
+    const conflitosOcorrencia = await detectarConflitos(envolvidos, ocorrencia.dataInicio, ocorrencia.dataFim);
+    conflitosOcorrencia.forEach((conflito) => conflitosPorId.set(conflito.id, conflito));
+  }
+  const conflitos = [...conflitosPorId.values()];
 
   const agora = new Date().toISOString();
-  const novo = {
-    ...payload,
-    deletado: false,
-    tenantId: user.tenantId,
-    criadoEm: agora,
-    criadoPor: user.uid,
-    atualizadoEm: agora,
-    atualizadoPor: user.uid
-  };
+  const novos = ocorrencias.map((ocorrencia) => {
+    const novo = {
+      ...ocorrencia,
+      deletado: false,
+      tenantId: user.tenantId,
+      criadoEm: agora,
+      criadoPor: user.uid,
+      atualizadoEm: agora,
+      atualizadoPor: user.uid,
+      lembretesEnviados: [],
+      deadlineAcknowledgedAt: null,
+      deadlineAcknowledgedBy: null,
+      deadlineAcknowledgedByName: null
+    };
 
-  const id = await compromissoRepository.criar(novo);
+    return {
+      ...novo,
+      deadlineRiskLevel: deadlineOrchestrationService.riscoDoPrazo(novo)
+    };
+  });
+
+  const ids = await compromissoRepository.criarVarios(novos);
+
+  const resultadosOrquestracao = await Promise.allSettled(
+    novos.map((compromisso, indice) =>
+      deadlineOrchestrationService.orquestrarPrazo({ ...compromisso, id: ids[indice] })
+    )
+  );
+  resultadosOrquestracao
+    .filter((resultado) => resultado.status === 'rejected')
+    .forEach((resultado) => console.error('[compromisso] falha na orquestracao de prazo', resultado.reason?.message));
 
   await auditoriaService.registrarEvento({
     acao: 'CRIAR',
     entidade: 'COMPROMISSO',
-    entidadeId: id,
+    entidadeId: ids[0],
     usuario: user,
     detalhes: {
-      titulo: novo.titulo,
-      advogadoId: novo.advogadoId,
+      titulo: payload.titulo,
+      advogadoId: payload.advogadoId,
+      participantes: payload.participantesIds.length,
+      ocorrenciasCriadas: ids.length,
+      recorrencia: payload.recorrencia?.frequencia || null,
       conflitos: conflitos.length
     }
   });
 
-  return { id, conflitos: resumirConflitos(conflitos) };
+  return { id: ids[0], ids, ocorrenciasCriadas: ids.length, conflitos: resumirConflitos(conflitos) };
 }
 
 async function atualizarCompromisso(id, dados, user) {
@@ -213,7 +360,13 @@ async function atualizarCompromisso(id, dados, user) {
 
   const dataInicioFinal = payload.dataInicio ?? atual.dataInicio;
   const dataFimFinal = payload.dataFim ?? atual.dataFim;
-  const conflitos = await detectarConflitos(atual.advogadoId, dataInicioFinal, dataFimFinal, id);
+  const participantesFinais = payload.participantesIds ?? atual.participantesIds ?? [];
+  const conflitos = await detectarConflitos(
+    [atual.advogadoId, ...participantesFinais],
+    dataInicioFinal,
+    dataFimFinal,
+    id
+  );
 
   const payloadPersistencia = {
     ...payload,
@@ -221,7 +374,25 @@ async function atualizarCompromisso(id, dados, user) {
     atualizadoPor: user.uid
   };
 
+  const proximo = { ...atual, ...payloadPersistencia };
+  if (proximo.tipo === 'PRAZO' && proximo.status === 'PENDENTE') {
+    payloadPersistencia.deadlineRiskLevel = deadlineOrchestrationService.riscoDoPrazo(proximo);
+    if (precisaRenovarCiencia(atual, proximo)) {
+      payloadPersistencia.deadlineAcknowledgedAt = null;
+      payloadPersistencia.deadlineAcknowledgedBy = null;
+      payloadPersistencia.deadlineAcknowledgedByName = null;
+      payloadPersistencia.deadlineActions = {};
+    }
+  } else {
+    payloadPersistencia.deadlineRiskLevel = 'normal';
+  }
+
   await compromissoRepository.atualizar(id, payloadPersistencia);
+  try {
+    await deadlineOrchestrationService.orquestrarPrazo({ ...atual, ...payloadPersistencia, id });
+  } catch (error) {
+    console.error('[compromisso] falha na reorquestracao de prazo', id, error.message);
+  }
 
   await auditoriaService.registrarEvento({
     acao: 'ATUALIZAR',
@@ -255,6 +426,38 @@ async function deletarCompromisso(id, user) {
     usuario: user,
     detalhes: { titulo: atual.titulo }
   });
+}
+
+async function confirmarCienciaPrazo(id, dados, user) {
+  const atual = await obterComAcesso(id, user);
+  if (!deadlineOrchestrationService.prazoEstaAberto(atual)) {
+    throw new Error('PRAZO_NAO_DISPONIVEL_PARA_CIENCIA');
+  }
+
+  const ciente = dados?.ciente !== false;
+  const agora = new Date().toISOString();
+  const atualizacao = ciente
+    ? {
+        deadlineAcknowledgedAt: agora,
+        deadlineAcknowledgedBy: user.uid,
+        deadlineAcknowledgedByName: user.displayName || user.email || 'Membro da equipe'
+      }
+    : {
+        deadlineAcknowledgedAt: null,
+        deadlineAcknowledgedBy: null,
+        deadlineAcknowledgedByName: null
+      };
+
+  await compromissoRepository.atualizar(id, { ...atualizacao, atualizadoEm: agora, atualizadoPor: user.uid });
+  await auditoriaService.registrarEvento({
+    acao: ciente ? 'CONFIRMAR_CIENCIA_PRAZO' : 'REVOGAR_CIENCIA_PRAZO',
+    entidade: 'COMPROMISSO',
+    entidadeId: id,
+    usuario: user,
+    detalhes: { titulo: atual.titulo, dataInicio: atual.dataInicio }
+  });
+
+  return { id, ciente, ...atualizacao };
 }
 
 function redigirCompromisso(compromisso, user) {
@@ -330,6 +533,7 @@ module.exports = {
   criarCompromisso,
   atualizarCompromisso,
   deletarCompromisso,
+  confirmarCienciaPrazo,
   obterComAcesso,
   listarAgenda,
   detectarConflitos

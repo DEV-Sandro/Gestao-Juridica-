@@ -2,10 +2,10 @@
   <div class="docs-hero card-glass">
     <div class="docs-hero-text">
       <span class="eyebrow">Biblioteca jurídica</span>
-      <h2 class="font-heading">Documentos editáveis prontos para fechamento externo</h2>
+      <h2 class="font-heading">Documentos jurídicos prontos em minutos</h2>
       <p>
-        Escolha um modelo, selecione o cliente e gere um arquivo DOCX com os dados já
-        pré-preenchidos para finalizar no editor de sua preferência.
+        Escolha um modelo, vincule o processo e gere um DOCX com dados do cliente,
+        processo e honorários preenchidos automaticamente.
       </p>
       <p class="helper-copy">
         Campos ainda não cadastrados no sistema saem com linha de preenchimento no documento.
@@ -22,6 +22,12 @@
         Gerenciar clientes
       </a>
     </div>
+
+    <ol class="docs-flow" aria-label="Fluxo para gerar documento">
+      <li [class.is-ready]="modeloSelecionado"><span>1</span><strong>Modelo</strong><small>Escolha o documento</small></li>
+      <li [class.is-ready]="processoId || clienteId"><span>2</span><strong>Dados</strong><small>Processo ou cliente</small></li>
+      <li><span>3</span><strong>DOCX</strong><small>Revise e assine</small></li>
+    </ol>
   </div>
 
   <!-- ============================================================
@@ -301,13 +307,12 @@
                   <button
                     mat-menu-item
                     type="button"
-                    *ngIf="modelo.origem === 'SERVIDOR'"
                     (click)="baixarModelo(modelo)"
                   >
                     <mat-icon>download</mat-icon> Baixar modelo (.docx)
                   </button>
 
-                  <ng-container *ngIf="ehAdmin && modelo.origem === 'SERVIDOR'">
+                  <ng-container *ngIf="ehAdmin">
                     <button mat-menu-item type="button" (click)="iniciarRenomear(modelo)">
                       <mat-icon>drive_file_rename_outline</mat-icon> Renomear
                     </button>
@@ -329,17 +334,16 @@
               <span class="meta-badge is-cat" *ngIf="modelo.categoria">
                 <mat-icon>sell</mat-icon> {{ modelo.categoria }}
               </span>
-              <span class="meta-badge is-builtin" *ngIf="modelo.origem === 'EMBUTIDO'">Padrão do sistema</span>
-              <span class="meta-badge" *ngIf="modelo.origem === 'SERVIDOR'">v{{ modelo.versao }}</span>
+              <span class="meta-badge">v{{ modelo.versao }}</span>
               <span class="meta-badge" *ngIf="modelo.variaveis.length">
                 {{ modelo.variaveis.length }} variáve{{ modelo.variaveis.length === 1 ? 'l' : 'is' }}
               </span>
-              <span class="meta-badge is-status" *ngIf="modelo.origem === 'SERVIDOR'">
+              <span class="meta-badge is-status">
                 <mat-icon>check_circle</mat-icon> Ativo
               </span>
             </div>
 
-            <div class="card-dates" *ngIf="modelo.origem === 'SERVIDOR'">
+            <div class="card-dates">
               <span *ngIf="modelo.criadoEm"><mat-icon>event</mat-icon> Criado {{ formatarData(modelo.criadoEm) }}</span>
               <span *ngIf="modelo.atualizadoEm"><mat-icon>update</mat-icon> Alterado {{ formatarData(modelo.atualizadoEm) }}</span>
             </div>
@@ -395,6 +399,18 @@
             </mat-select>
           </mat-form-field>
 
+          <mat-form-field appearance="outline" class="span-2 process-select">
+            <mat-label>Vincular a um processo (recomendado)</mat-label>
+            <mat-icon matPrefix>folder_copy</mat-icon>
+            <mat-select [(ngModel)]="processoId" (selectionChange)="preencherDadosDoProcesso()" [disabled]="carregandoProcessos">
+              <mat-option value="">Preencher manualmente</mat-option>
+              <mat-option *ngFor="let processo of processos" [value]="processo.id">
+                {{ processo.titulo }}<span *ngIf="processo.clienteNome"> â€¢ {{ processo.clienteNome }}</span>
+              </mat-option>
+            </mat-select>
+            <mat-hint>{{ carregandoProcessos ? 'Carregando processos...' : 'Preenche cliente, referência, assunto e honorários quando houver dados.' }}</mat-hint>
+          </mat-form-field>
+
           <mat-form-field appearance="outline">
             <mat-label>Referencia do processo</mat-label>
             <mat-icon matPrefix>folder_copy</mat-icon>
@@ -426,6 +442,15 @@
           </mat-form-field>
         </div>
 
+        <div class="process-automation" *ngIf="processoSelecionado as processo">
+          <mat-icon>auto_awesome</mat-icon>
+          <div>
+            <strong>Dados aplicados do processo</strong>
+            <span>{{ processo.titulo }} — a geração também ficará registrada no histórico do caso.</span>
+          </div>
+          <button mat-button type="button" (click)="limparVinculoProcesso()">Desvincular</button>
+        </div>
+
         <div class="client-summary" *ngIf="clienteSelecionado as cliente">
           <div class="summary-item">
             <span>Cliente</span>
@@ -445,15 +470,7 @@
           </div>
         </div>
 
-        <div class="template-preview" *ngIf="modeloSelecionado?.origem === 'EMBUTIDO'">
-          <span class="eyebrow">Estrutura do modelo</span>
-          <div class="preview-section" *ngFor="let section of modeloSelecionado?.embutido?.sections">
-            <strong *ngIf="section.heading">{{ section.heading }}</strong>
-            <p *ngFor="let paragraph of section.paragraphs">{{ paragraph }}</p>
-          </div>
-        </div>
-
-        <div class="template-preview" *ngIf="modeloSelecionado?.origem === 'SERVIDOR' && modeloSelecionado?.variaveis?.length">
+        <div class="template-preview" *ngIf="modeloSelecionado?.variaveis?.length">
           <span class="eyebrow">Variáveis detectadas neste modelo</span>
           <div class="variaveis-chips">
             <span class="template-tag" *ngFor="let v of modeloSelecionado?.variaveis">{{ v }}</span>
@@ -497,20 +514,8 @@
       </header>
 
       <div class="preview-body">
-        <!-- Modelos padrão: estrutura real com as variáveis no lugar -->
-        <div class="preview-doc" *ngIf="modeloPreview.origem === 'EMBUTIDO' && modeloPreview.embutido">
-          <p class="preview-legenda">
-            Os campos entre chaves, como <code>&#123;cliente_nome&#125;</code>, são substituídos
-            automaticamente pelos dados do cliente ao gerar o documento.
-          </p>
-          <div class="preview-doc-section" *ngFor="let section of modeloPreview.embutido.sections">
-            <strong *ngIf="section.heading">{{ section.heading }}</strong>
-            <p *ngFor="let paragraph of section.paragraphs">{{ paragraph }}</p>
-          </div>
-        </div>
-
-        <!-- Modelos enviados (.docx): mostra variáveis detectadas -->
-        <div class="preview-doc" *ngIf="modeloPreview.origem === 'SERVIDOR'">
+        <!-- O modelo é sempre um DOCX enviado pelo escritório. -->
+        <div class="preview-doc">
           <p class="preview-legenda">
             Este modelo veio de um arquivo <strong>.docx</strong> do escritório. Ao gerar, os campos
             abaixo são preenchidos com os dados do cliente selecionado; o restante do texto vem do

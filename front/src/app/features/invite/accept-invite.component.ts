@@ -49,6 +49,22 @@ export class AcceptInviteComponent implements OnInit {
   oab = '';
   password = '';
   confirmPassword = '';
+  mostrarSenha = false;
+  mostrarConfirmacao = false;
+
+  get requisitosSenha(): { label: string; atende: boolean }[] {
+    return [
+      { label: 'Pelo menos 8 caracteres', atende: this.password.length >= 8 },
+      { label: 'Uma letra maiúscula e uma minúscula', atende: /[A-Z]/.test(this.password) && /[a-z]/.test(this.password) },
+      { label: 'Um número', atende: /\d/.test(this.password) },
+      { label: 'Um caractere especial', atende: /[^A-Za-z0-9]/.test(this.password) },
+      { label: 'As senhas coincidem', atende: !!this.confirmPassword && this.password === this.confirmPassword }
+    ];
+  }
+
+  get senhaValida(): boolean {
+    return this.requisitosSenha.slice(0, 4).every((requisito) => requisito.atende);
+  }
 
   ngOnInit(): void {
     const temaSalvo = localStorage.getItem('justapro-theme') || 'corporate';
@@ -82,6 +98,11 @@ export class AcceptInviteComponent implements OnInit {
 
     if (!this.displayName.trim()) {
       this.notificarErro('Informe seu nome para concluir o cadastro.');
+      return;
+    }
+
+    if (!this.senhaValida) {
+      this.notificarErro('Crie uma senha que atenda aos requisitos de segurança.');
       return;
     }
 

@@ -2,6 +2,7 @@ const processoRepository = require('../repositories/processo.repository');
 const etapaRepository = require('../repositories/etapa.repository');
 const auditoriaRepository = require('../repositories/auditoria.repository');
 const auditoriaService = require('./auditoria.service');
+const rentabilidadeProjecaoService = require('./rentabilidade-projecao.service');
 const clienteRepository = require('../repositories/cliente.repository');
 const configuracaoService = require('./configuracao.service');
 const { mesmoTenant } = require('../config/tenant');
@@ -946,6 +947,10 @@ async function listarProcessos(query, user) {
   const lista = [];
   const updates = [];
   const isHistorico = query.historico === 'true';
+  // Relatorios gerenciais precisam considerar tambem os casos encerrados. A tela
+  // operacional continua com o comportamento atual, pois este recorte so e
+  // habilitado explicitamente pelo modulo de rentabilidade.
+  const incluirEncerrados = query.incluirEncerrados === 'true';
 
   for (const processo of processos) {
     if (processo.deletado) continue;
@@ -982,7 +987,10 @@ async function listarProcessos(query, user) {
       continue;
     }
 
-    if (['Arquivado', 'Cancelado', 'Indeferido'].includes(processoResposta.statusCalculado)) {
+    if (
+      !incluirEncerrados &&
+      ['Arquivado', 'Cancelado', 'Indeferido'].includes(processoResposta.statusCalculado)
+    ) {
       continue;
     }
 
@@ -1021,7 +1029,7 @@ async function criarProcesso(dados, user) {
   const payload = montarPayloadProcesso(dados);
   const cliente = await resolverClienteDoProcesso(dados, user);
 
-  const novo = {
+  const novoBase = {
     ...payload,
     ...cliente,
     tituloBusca: normalizarNomeComparavel(payload.titulo),
@@ -1033,6 +1041,13 @@ async function criarProcesso(dados, user) {
     criadoPor: user.uid,
     atualizadoEm: agora,
     atualizadoPor: user.uid
+  };
+
+  const novo = {
+    ...novoBase,
+    // Processos novos já nascem prontos para receber deltas de tempo. Os
+    // processos antigos continuam no modo compatível até o backfill seguro.
+    ...rentabilidadeProjecaoService.camposIniciaisDeProjecao(novoBase)
   };
 
   if (!novo.advogadoId) {
@@ -1112,6 +1127,12 @@ async function atualizarProcesso(id, dados, user) {
   if (possuiObservacao) {
     payloadPersistencia.ultimaObservacao = novaObservacao;
     payloadPersistencia.ultimaObservacaoEm = agora;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payloadPersistencia, 'prazo') && payloadPersistencia.prazo !== processoAtual.prazo) {
+    payloadPersistencia.prazoCienteEm = null;
+    payloadPersistencia.prazoCientePor = null;
+    payloadPersistencia.prazoCientePorNome = null;
   }
 
   await processoRepository.atualizar(id, payloadPersistencia);
@@ -1224,6 +1245,7 @@ async function atualizarOrcamento(id, dados, user) {
     atualizadoEm: agora,
     atualizadoPor: user.uid
   });
+  await rentabilidadeProjecaoService.sincronizarReceitaPrevista(id);
 
   const statusAlterado = (orcamentoAtual?.status || 'RASCUNHO') !== proximoOrcamento.status;
   const acaoAuditoria = !orcamentoAtual
@@ -1501,6 +1523,38 @@ async function deletarEtapa(procId, etapaId, user) {
   });
 }
 
+async function confirmarCienciaPrazo(id, dados, user) {
+  const processo = await obterProcessoComAcesso(id, user, 'Tentativa de confirmar ciencia em processo sem acesso');
+  if (!processo.prazo || ['ConcluÃ­do', 'Cancelado', 'Indeferido', 'Arquivado'].includes(processo.status)) {
+    throw new Error('PRAZO_NAO_DISPONIVEL_PARA_CIENCIA');
+  }
+
+  const ciente = dados?.ciente !== false;
+  const agora = new Date().toISOString();
+  const atualizacao = ciente
+    ? {
+        prazoCienteEm: agora,
+        prazoCientePor: user.uid,
+        prazoCientePorNome: user.displayName || user.email || 'Membro da equipe'
+      }
+    : {
+        prazoCienteEm: null,
+        prazoCientePor: null,
+        prazoCientePorNome: null
+      };
+
+  await processoRepository.atualizar(id, { ...atualizacao, atualizadoEm: agora, atualizadoPor: user.uid });
+  await auditoriaService.registrarEvento({
+    acao: ciente ? 'CONFIRMAR_CIENCIA_PRAZO' : 'REVOGAR_CIENCIA_PRAZO',
+    entidade: 'PROCESSO',
+    entidadeId: id,
+    usuario: user,
+    detalhes: { prazo: processo.prazo, titulo: processo.titulo || null }
+  });
+
+  return { id, ciente, ...atualizacao };
+}
+
 async function listarHistorico(id, user) {
   await obterProcessoComAcesso(id, user, 'Cliente tentou visualizar historico de outro processo');
 
@@ -1521,5 +1575,6 @@ module.exports = {
   criarEtapa,
   atualizarEtapa,
   deletarEtapa,
+  confirmarCienciaPrazo,
   listarHistorico
 };

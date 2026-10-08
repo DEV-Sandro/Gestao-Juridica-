@@ -43,6 +43,9 @@ export interface ProcessoApiModel {
   status?: string | null;
   statusCalculado?: string | null;
   prazo?: string | null;
+  prazoCienteEm?: string | null;
+  prazoCientePor?: string | null;
+  prazoCientePorNome?: string | null;
   urgenteManual?: boolean | null;
   categoriaCompromisso?: string | null;
   localCompromisso?: string | null;
@@ -89,11 +92,27 @@ export interface AgendaEvento {
   // (usada pelos eventos financeiros para terem cor própria no calendário).
   classe?: string;
   compromissoId?: string;
+  prazoCiente?: boolean;
+  prazoCientePorNome?: string | null;
 }
 
 export type CompromissoTipo = 'AUDIENCIA' | 'PRAZO' | 'REUNIAO' | 'EVENTO' | 'OUTRO';
 export type CompromissoStatus = 'PENDENTE' | 'CONCLUIDO' | 'CANCELADO';
 export type CompromissoVisibilidade = 'PUBLICO' | 'RESTRITO';
+export type FrequenciaRecorrencia = 'SEMANAL' | 'QUINZENAL' | 'MENSAL';
+export type CanalLembrete = 'EMAIL' | 'WHATSAPP';
+
+export interface RecorrenciaCompromisso {
+  frequencia: FrequenciaRecorrencia;
+  total: number;
+  ate?: string | null;
+  indice?: number;
+}
+
+export interface LembreteCompromisso {
+  canal: CanalLembrete;
+  minutosAntes: number;
+}
 
 export interface CompromissoApiModel {
   id: string;
@@ -107,9 +126,16 @@ export interface CompromissoApiModel {
   diaTodo: boolean;
   local?: string | null;
   observacao?: string | null;
+  recorrencia?: RecorrenciaCompromisso | null;
+  serieId?: string | null;
+  lembretes?: LembreteCompromisso[];
   status: CompromissoStatus;
   visibilidade: CompromissoVisibilidade;
   restrito?: boolean;
+  deadlineRiskLevel?: 'normal' | 'warning' | 'critical' | string;
+  deadlineAcknowledgedAt?: string | null;
+  deadlineAcknowledgedBy?: string | null;
+  deadlineAcknowledgedByName?: string | null;
 }
 
 export interface ConflitoCompromisso {
@@ -502,7 +528,9 @@ export function processarAgendaEvento(processo: ProcessoViewModel): AgendaEvento
     detalhe: formatarResumoPrazo(processo),
     localCompromisso: processo.localCompromisso || null,
     origem: 'PROCESSO',
-    categoria: processo.categoriaCompromisso
+    categoria: processo.categoriaCompromisso,
+    prazoCiente: Boolean(processo.prazoCienteEm),
+    prazoCientePorNome: processo.prazoCientePorNome || null
   };
 }
 
@@ -550,7 +578,9 @@ export function compromissoParaAgendaEvento(compromisso: CompromissoApiModel): A
     localCompromisso: compromisso.local || null,
     origem: 'COMPROMISSO',
     categoria: tipo,
-    compromissoId: compromisso.id
+    compromissoId: compromisso.id,
+    prazoCiente: Boolean(compromisso.deadlineAcknowledgedAt),
+    prazoCientePorNome: compromisso.deadlineAcknowledgedByName || null
   };
 }
 

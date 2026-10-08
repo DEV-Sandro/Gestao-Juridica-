@@ -1,6 +1,5 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { firstValueFrom, filter, take } from 'rxjs';
 import { AuthService } from '../auth.service';
 import { UserRole } from '../models/app-user.model';
 
@@ -14,12 +13,7 @@ export function roleGuard(...rolesPermitidos: UserRole[]): CanActivateFn {
     const auth = inject(AuthService);
     const router = inject(Router);
 
-    const user = await firstValueFrom(
-      auth.currentUser$.pipe(
-        filter((u) => u !== null),
-        take(1)
-      )
-    );
+    const user = await auth.aguardarSessaoInicial();
 
     if (user && rolesPermitidos.includes(user.role)) {
       return true;
@@ -33,12 +27,7 @@ export const authGuard: CanActivateFn = async () => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  const user = await firstValueFrom(
-    auth.currentUser$.pipe(
-      filter((u) => u !== null),
-      take(1)
-    )
-  );
+  const user = await auth.aguardarSessaoInicial();
 
   if (user) return true;
   return router.createUrlTree(['/login']);

@@ -1,0 +1,65 @@
+<div class="jp-layout-grid">
+  <nav class="jp-global-rail" aria-label="Navegacao principal">
+    <a class="rail-brand" routerLink="/advogado/dashboard" aria-label="JustaPro: ir para a visao geral">
+      <img src="assets/brand/justapro-mark.png" alt="" />
+    </a>
+
+    <div class="rail-links">
+      <a
+        class="rail-item"
+        routerLink="/advogado/dashboard"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: false }"
+        matTooltip="Operacao"
+        matTooltipPosition="right"
+        aria-label="Operacao"
+      >
+        <mat-icon>dashboard</mat-icon>
+      </a>
+      <a class="rail-item" routerLink="/advogado/clientes" routerLinkActive="active" matTooltip="Clientes" matTooltipPosition="right" aria-label="Clientes">
+        <mat-icon>people</mat-icon>
+      </a>
+      <a class="rail-item" routerLink="/advogado/financeiro" routerLinkActive="active" matTooltip="Financeiro" matTooltipPosition="right" aria-label="Financeiro">
+        <mat-icon>account_balance_wallet</mat-icon>
+      </a>
+      <a class="rail-item" routerLink="/advogado/documentos" routerLinkActive="active" matTooltip="Documentos" matTooltipPosition="right" aria-label="Documentos">
+        <mat-icon>description</mat-icon>
+      </a>
+    </div>
+
+    <div class="rail-bottom">
+      <button type="button" class="rail-item rail-search" (click)="abrirCommandPalette()" matTooltip="Buscar ou executar comando (Ctrl K)" matTooltipPosition="right" aria-label="Abrir busca e comandos">
+        <mat-icon>search</mat-icon>
+      </button>
+      <a class="rail-item" routerLink="/perfil" routerLinkActive="active" matTooltip="Minha conta" matTooltipPosition="right" aria-label="Minha conta">
+        <mat-icon>person</mat-icon>
+      </a>
+    </div>
+  </nav>
+
+  <aside class="jp-context-subnav" aria-label="Navegacao contextual">
+    <div class="subnav-heading">
+      <span>Workspace</span>
+      <h2 class="font-heading">{{ currentSectionTitle() }}</h2>
+    </div>
+
+    <nav class="subnav-links">
+      @for (link of currentSubnavLinks(); track link.path) {
+        <a [routerLink]="link.path" routerLinkActive="active-subnav" [routerLinkActiveOptions]="{ exact: link.exact ?? true }">
+          <mat-icon>{{ link.icon }}</mat-icon>
+          <span>{{ link.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <button type="button" class="subnav-command" (click)="abrirCommandPalette()">
+      <mat-icon>search</mat-icon>
+      <span>Buscar e comandos</span>
+      <kbd>Ctrl K</kbd>
+    </button>
+  </aside>
+
+  <main class="jp-main-content">
+    <ng-content></ng-content>
+  </main>
+</div>

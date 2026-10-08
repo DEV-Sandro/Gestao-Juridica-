@@ -1,5 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, HostListener, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+
+import { CommandPaletteService } from './core/search/command-palette.service';
 
 @Component({
   selector: 'app-root',
@@ -13,6 +15,7 @@ import { RouterOutlet } from '@angular/router';
 })
 export class AppComponent {
   title = 'front';
+  private readonly commandPalette = inject(CommandPaletteService);
 
   constructor() {
     this.aplicarTemaSalvo();
@@ -22,5 +25,13 @@ export class AppComponent {
     const temaSalvo = localStorage.getItem('justapro-theme') || 'corporate';
     document.body.setAttribute('data-theme', temaSalvo);
     document.documentElement.style.colorScheme = temaSalvo === 'light' ? 'light' : 'dark';
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent): void {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      this.commandPalette.open();
+    }
   }
 }

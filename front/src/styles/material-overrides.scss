@@ -1,0 +1,41 @@
+/* Ponte entre os tokens JustaPro e a camada MDC do Angular Material.
+ * O mixin permite aplicar os overrides no fim da cascata global. */
+@mixin apply {
+  html {
+    --mdc-typography-button-font-family: var(--jp-font-family);
+    --mdc-typography-button-letter-spacing: 0;
+    --mdc-typography-button-font-weight: 600;
+    --mdc-typography-button-text-transform: none;
+  }
+
+  .mat-mdc-dialog-surface,
+  .mat-mdc-menu-panel {
+    border: 1px solid var(--jp-neutral-200) !important;
+    border-radius: var(--jp-radius-xl) !important;
+    box-shadow: var(--jp-shadow-2) !important;
+  }
+
+  .mat-mdc-dialog-surface {
+    background: var(--jp-surface) !important;
+    color: var(--jp-neutral-700);
+  }
+
+  .mat-mdc-text-field-wrapper {
+    background-color: var(--jp-surface) !important;
+    border-radius: var(--jp-radius-md) !important;
+  }
+
+  .mdc-text-field--outlined {
+    --mdc-outlined-text-field-outline-color: var(--jp-neutral-200);
+    --mdc-outlined-text-field-hover-outline-color: var(--jp-neutral-500);
+    --mdc-outlined-text-field-focus-outline-color: var(--jp-brand-600);
+    --mdc-outlined-text-field-label-text-color: var(--jp-neutral-500);
+    --mdc-outlined-text-field-focus-label-text-color: var(--jp-brand-600);
+    --mdc-outlined-text-field-input-text-color: var(--jp-neutral-950);
+    --mdc-outlined-text-field-caret-color: var(--jp-brand-600);
+  }
+
+  .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
+    box-shadow: var(--jp-focus-ring) !important;
+  }
+}

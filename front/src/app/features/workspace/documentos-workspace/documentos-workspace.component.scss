@@ -32,6 +32,53 @@
   font-size: 0.95rem;
 }
 
+// Mostra o caminho de geraÃ§Ã£o logo no inÃ­cio, para que a tela seja entendida
+// em poucos segundos sem obrigar a pessoa a ler a explicaÃ§Ã£o completa.
+.docs-flow {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.docs-flow li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  column-gap: 9px;
+  align-items: center;
+  padding: 11px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-soft) 88%, transparent);
+  color: var(--text-muted);
+}
+
+.docs-flow li > span {
+  grid-row: span 2;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-strong);
+  color: var(--text-muted);
+  font-size: .75rem;
+  font-weight: 800;
+}
+
+.docs-flow strong { color: var(--text-main); font-size: .8rem; }
+.docs-flow small { overflow: hidden; font-size: .7rem; text-overflow: ellipsis; white-space: nowrap; }
+
+.docs-flow li.is-ready {
+  border-color: color-mix(in srgb, var(--brand-primary) 40%, transparent);
+  background: color-mix(in srgb, var(--brand-primary) 10%, var(--surface-soft));
+
+  > span { background: var(--brand-gradient); color: var(--color-on-accent); }
+}
+
 .eyebrow {
   display: inline-block;
   margin-bottom: 8px;
@@ -511,6 +558,28 @@
   }
 }
 
+.process-select {
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    min-height: 1.5rem;
+  }
+}
+
+.process-automation {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 28%, var(--border-subtle));
+  border-radius: 16px;
+  background: linear-gradient(105deg, color-mix(in srgb, var(--brand-primary) 10%, var(--surface-soft)), var(--surface-soft));
+
+  > mat-icon { color: var(--brand-primary); }
+  > div { flex: 1; min-width: 0; display: grid; gap: 2px; }
+  strong { font-size: .86rem; }
+  span { overflow: hidden; color: var(--text-muted); font-size: .78rem; text-overflow: ellipsis; white-space: nowrap; }
+  button { flex-shrink: 0; }
+}
+
 .btn-upload-toggle {
   font-size: 13px;
 }
@@ -876,6 +945,24 @@
 }
 
 @media (max-width: 560px) {
+  .docs-hero,
+  .template-panel,
+  .document-panel { padding: 20px 16px; }
+
+  .docs-hero-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    > * { min-width: 0; }
+  }
+
+  .docs-flow { grid-template-columns: 1fr; }
+  .docs-flow li { grid-template-columns: 28px minmax(0, 1fr); }
+
+  .process-automation { align-items: flex-start; }
+  .process-automation button { margin: -6px -6px 0 0; }
+  .process-automation span { white-space: normal; }
+
   .preview-overlay {
     padding: 0;
     align-items: flex-end;

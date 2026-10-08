@@ -1,8 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap');
+@use './styles/design-tokens';
+@use './styles/material-overrides' as material;
 
 :root {
-  --font-body: 'Manrope', 'Segoe UI', sans-serif;
-  --font-heading: 'Sora', 'Segoe UI', sans-serif;
+  --font-body: var(--jp-font-family);
+  --font-heading: var(--jp-font-heading);
 
   --space-1: 4px;
   --space-2: 8px;
@@ -73,9 +74,10 @@
   --border-subtle: rgba(148, 163, 184, 0.14);
   --border-strong: rgba(148, 163, 184, 0.22);
 
-  --brand-primary: #16a34a;
-  --brand-secondary: #0f172a;
-  --brand-gradient: linear-gradient(135deg, #16a34a 0%, #14b8a6 48%, #2563eb 100%);
+  --brand-primary: var(--jp-brand-600);
+  --brand-secondary: var(--jp-brand-700);
+  --brand-gradient: linear-gradient(135deg, var(--jp-brand-600) 0%, var(--jp-brand-700) 100%);
+  --primary: var(--jp-brand-600);
 
   --shadow-soft: 0 18px 36px rgba(0, 0, 0, 0.22);
   --shadow-card: 0 30px 70px rgba(0, 0, 0, 0.3);
@@ -98,9 +100,9 @@ body[data-theme='light'] {
   --border-subtle: rgba(18, 32, 51, 0.1);
   --border-strong: rgba(18, 32, 51, 0.16);
 
-  --brand-primary: #0f766e;
-  --brand-secondary: #0f172a;
-  --brand-gradient: linear-gradient(135deg, #0f766e 0%, #0ea5a4 55%, #38bdf8 100%);
+  --brand-primary: var(--jp-brand-600);
+  --brand-secondary: var(--jp-brand-700);
+  --brand-gradient: linear-gradient(135deg, var(--jp-brand-600) 0%, var(--jp-brand-700) 100%);
 
   --shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.06);
   --shadow-card: 0 24px 60px rgba(15, 23, 42, 0.08);
@@ -123,9 +125,9 @@ body[data-theme='corporate'] {
   --border-subtle: rgba(148, 163, 184, 0.14);
   --border-strong: rgba(148, 163, 184, 0.22);
 
-  --brand-primary: #16a34a;
-  --brand-secondary: #0f172a;
-  --brand-gradient: linear-gradient(135deg, #16a34a 0%, #14b8a6 48%, #2563eb 100%);
+  --brand-primary: var(--jp-brand-600);
+  --brand-secondary: var(--jp-brand-700);
+  --brand-gradient: linear-gradient(135deg, var(--jp-brand-600) 0%, var(--jp-brand-700) 100%);
 
   --shadow-soft: 0 18px 36px rgba(0, 0, 0, 0.22);
   --shadow-card: 0 30px 70px rgba(0, 0, 0, 0.3);
@@ -148,9 +150,9 @@ body[data-theme='dark'] {
   --border-subtle: rgba(255, 255, 255, 0.09);
   --border-strong: rgba(255, 255, 255, 0.15);
 
-  --brand-primary: #22c55e;
-  --brand-secondary: #111827;
-  --brand-gradient: linear-gradient(135deg, #22c55e 0%, #06b6d4 55%, #3b82f6 100%);
+  --brand-primary: var(--jp-brand-600);
+  --brand-secondary: var(--jp-brand-700);
+  --brand-gradient: linear-gradient(135deg, var(--jp-brand-600) 0%, var(--jp-brand-700) 100%);
 
   --shadow-soft: 0 18px 36px rgba(0, 0, 0, 0.28);
   --shadow-card: 0 34px 80px rgba(0, 0, 0, 0.42);
@@ -602,3 +604,24 @@ textarea.mat-mdc-input-element {
   background: rgba(239, 68, 68, 0.94) !important;
   color: #fff !important;
 }
+
+.jp-command-palette-backdrop {
+  background: rgba(16, 24, 40, 0.46);
+  backdrop-filter: blur(4px);
+}
+
+.cdk-overlay-pane.jp-command-palette-overlay {
+  margin-top: 10vh;
+  border-radius: var(--jp-radius-xl);
+  box-shadow: var(--jp-shadow-2);
+  overflow: hidden;
+}
+
+.jp-command-palette-overlay .cdk-dialog-container {
+  border: 1px solid var(--jp-neutral-200);
+  border-radius: var(--jp-radius-xl);
+  background: var(--jp-surface);
+  box-shadow: var(--jp-shadow-2);
+}
+
+@include material.apply();

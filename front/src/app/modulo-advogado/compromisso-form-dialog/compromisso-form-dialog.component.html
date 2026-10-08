@@ -58,6 +58,17 @@
       </mat-select>
     </mat-form-field>
 
+    <mat-form-field appearance="outline" *ngIf="membros.length > 0">
+      <mat-label>Participantes</mat-label>
+      <mat-icon matPrefix>group_add</mat-icon>
+      <mat-select [(ngModel)]="participantesIds" multiple>
+        <mat-option *ngFor="let membro of membros" [value]="membro.uid">
+          {{ membro.nome }}<span *ngIf="membro.cargo"> · {{ membro.cargo }}</span>
+        </mat-option>
+      </mat-select>
+      <mat-hint>Os participantes também recebem os lembretes selecionados.</mat-hint>
+    </mat-form-field>
+
     <mat-form-field appearance="outline">
       <mat-label>Visibilidade</mat-label>
       <mat-select [(ngModel)]="visibilidade">
@@ -71,6 +82,67 @@
       <textarea matInput rows="3" [(ngModel)]="observacao"></textarea>
     </mat-form-field>
 
+    <section class="agenda-automation" *ngIf="!editando">
+      <div class="automation-title">
+        <mat-icon>repeat</mat-icon>
+        <div>
+          <strong>Recorrência</strong>
+          <span>Crie a série de compromissos de uma vez.</span>
+        </div>
+      </div>
+
+      <div class="automation-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Repetir</mat-label>
+          <mat-select [(ngModel)]="frequenciaRecorrencia">
+            <mat-option value="">Não repetir</mat-option>
+            <mat-option *ngFor="let recorrencia of recorrencias" [value]="recorrencia.value">
+              {{ recorrencia.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" *ngIf="frequenciaRecorrencia">
+          <mat-label>Quantidade</mat-label>
+          <input matInput type="number" min="2" max="52" [(ngModel)]="recorrenciaTotal" />
+          <span matTextSuffix>ocorrências</span>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" *ngIf="frequenciaRecorrencia">
+          <mat-label>Encerrar em (opcional)</mat-label>
+          <input matInput type="date" [(ngModel)]="recorrenciaAte" />
+        </mat-form-field>
+      </div>
+    </section>
+
+    <section class="agenda-automation reminders-section">
+      <div class="automation-title">
+        <mat-icon>notifications_active</mat-icon>
+        <div>
+          <strong>Lembretes automáticos</strong>
+          <span>O envio depende das integrações configuradas pelo escritório.</span>
+        </div>
+      </div>
+
+      <div class="reminder-options">
+        <mat-checkbox [(ngModel)]="lembreteEmail">E-mail</mat-checkbox>
+        <mat-checkbox [(ngModel)]="lembreteWhatsApp">WhatsApp</mat-checkbox>
+        <mat-form-field appearance="outline" *ngIf="lembreteEmail || lembreteWhatsApp">
+          <mat-label>Quando avisar</mat-label>
+          <mat-select [(ngModel)]="lembreteAntecedencia">
+            <mat-option *ngFor="let antecedencia of antecedencias" [value]="antecedencia.value">
+              {{ antecedencia.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </section>
+
+    <p class="series-note" *ngIf="editando && dialogData.compromisso?.serieId">
+      <mat-icon>info</mat-icon>
+      Esta edição altera apenas esta ocorrência da série.
+    </p>
+
     <div class="erro" *ngIf="erro">
       <mat-icon>error_outline</mat-icon>
       {{ erro }}
@@ -81,6 +153,10 @@
     <button mat-button class="text-danger" *ngIf="editando" (click)="excluir()" [disabled]="salvando">
       <mat-icon>delete_outline</mat-icon>
       Excluir
+    </button>
+    <button mat-button *ngIf="editando" (click)="exportarParaCalendario()" [disabled]="salvando">
+      <mat-icon>calendar_month</mat-icon>
+      Baixar para Google/Outlook
     </button>
     <span class="spacer"></span>
     <button mat-button (click)="fechar()" [disabled]="salvando">Cancelar</button>

@@ -16,16 +16,11 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { AuthService, TemplateDocumento } from '../../../auth.service';
 import { ClienteRecord } from '../../../models/client.model';
-import {
-  DocumentGeneratorService,
-  DocumentTemplateDefinition,
-  LEGAL_TEMPLATES
-} from './document-generator.service';
+import { DocumentGeneratorService } from './document-generator.service';
 
 const MIME_DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
 interface ModeloView {
-  origem: 'EMBUTIDO' | 'SERVIDOR';
   id: string;
   titulo: string;
   descricao: string;
@@ -35,7 +30,15 @@ interface ModeloView {
   criadoEm: string | null;
   atualizadoEm: string | null;
   favorito: boolean;
-  embutido?: DocumentTemplateDefinition;
+}
+
+interface ProcessoDocumento {
+  id: string;
+  titulo: string;
+  clienteId?: string | null;
+  clienteNome?: string | null;
+  descricao?: string | null;
+  orcamento?: { valor?: number | null } | null;
 }
 
 type Ordenacao = 'nome' | 'recentes';
@@ -70,10 +73,13 @@ export class DocumentosWorkspaceComponent implements OnInit {
   modeloSelecionado: ModeloView | null = null;
 
   carregandoClientes = false;
+  carregandoProcessos = false;
   carregandoTemplates = false;
   gerando = false;
   clientes: ClienteRecord[] = [];
   clienteId = '';
+  processos: ProcessoDocumento[] = [];
+  processoId = '';
 
   nomeDocumento = '';
   localAssinatura = '';
@@ -156,6 +162,7 @@ export class DocumentosWorkspaceComponent implements OnInit {
   ngOnInit(): void {
     this.favoritos = this.lerFavoritos();
     this.carregarClientes();
+    this.carregarProcessos();
     this.carregarTemplates();
   }
 
@@ -165,25 +172,8 @@ export class DocumentosWorkspaceComponent implements OnInit {
 
   // ---------- Carga e montagem dos modelos ----------
 
-  private montarModelosEmbutidos(): ModeloView[] {
-    return LEGAL_TEMPLATES.map((template) => ({
-      origem: 'EMBUTIDO' as const,
-      id: `embutido-${template.id}`,
-      titulo: template.title,
-      descricao: template.description,
-      categoria: 'Modelo padrão',
-      variaveis: [],
-      versao: null,
-      criadoEm: null,
-      atualizadoEm: null,
-      favorito: this.favoritos.has(`embutido-${template.id}`),
-      embutido: template
-    }));
-  }
-
   private montarModelosServidor(templates: TemplateDocumento[]): ModeloView[] {
     return templates.map((template) => ({
-      origem: 'SERVIDOR' as const,
       id: template.id,
       titulo: template.nome,
       descricao: template.descricao || 'Modelo cadastrado pelo escritório.',
@@ -200,13 +190,12 @@ export class DocumentosWorkspaceComponent implements OnInit {
     this.carregandoTemplates = true;
     this.authService.listarTemplates().subscribe({
       next: (templates) => {
-        this.modelos = [...this.montarModelosEmbutidos(), ...this.montarModelosServidor(templates)];
+        this.modelos = this.montarModelosServidor(templates);
         this.garantirSelecao();
         this.carregandoTemplates = false;
       },
       error: () => {
-        // Se o backend falhar, ao menos os modelos embutidos continuam disponíveis.
-        this.modelos = this.montarModelosEmbutidos();
+        this.modelos = [];
         this.garantirSelecao();
         this.carregandoTemplates = false;
       }
@@ -246,6 +235,21 @@ export class DocumentosWorkspaceComponent implements OnInit {
           duration: 4000,
           panelClass: ['snack-error']
         });
+      }
+    });
+  }
+
+  carregarProcessos(): void {
+    this.carregandoProcessos = true;
+    this.authService.listarProcessos().subscribe({
+      next: (processos) => {
+        this.processos = Array.isArray(processos) ? processos : [];
+        this.carregandoProcessos = false;
+      },
+      error: () => {
+        // A montagem manual continua disponÃ­vel se a lista estiver indisponÃ­vel.
+        this.processos = [];
+        this.carregandoProcessos = false;
       }
     });
   }
@@ -402,17 +406,35 @@ export class DocumentosWorkspaceComponent implements OnInit {
     };
 
     try {
-      if (this.modeloSelecionado.origem === 'EMBUTIDO' && this.modeloSelecionado.embutido) {
-        await this.generator.download(this.modeloSelecionado.embutido, cliente, user, extras, nomeDocumento);
-      } else {
-        const buffer = await firstValueFrom(this.authService.baixarTemplateArquivo(this.modeloSelecionado.id));
-        await this.generator.downloadFromBuffer(buffer as ArrayBuffer, cliente, user, extras, nomeDocumento);
+      const buffer = await firstValueFrom(this.authService.baixarTemplateArquivo(this.modeloSelecionado.id));
+      await this.generator.downloadFromBuffer(buffer as ArrayBuffer, cliente, user, extras, nomeDocumento);
+
+      let registradoNoProcesso = false;
+      if (this.processoId && this.modeloSelecionado) {
+        try {
+          await firstValueFrom(
+            this.authService.registrarDocumentoGerado(this.processoId, {
+              templateId: this.modeloSelecionado.id,
+              templateNome: this.modeloSelecionado.titulo
+            })
+          );
+          registradoNoProcesso = true;
+        } catch {
+          // O download Ã© a operaÃ§Ã£o principal. Falha no registro de auditoria
+          // nÃ£o deve fazer o usuÃ¡rio perder o documento que jÃ¡ foi gerado.
+        }
       }
 
-      this.snack.open('Documento DOCX gerado com sucesso.', 'OK', {
-        duration: 3200,
-        panelClass: ['snack-success']
-      });
+      this.snack.open(
+        registradoNoProcesso
+          ? 'Documento DOCX gerado e registrado no processo.'
+          : 'Documento DOCX gerado com sucesso.',
+        'OK',
+        {
+          duration: 3200,
+          panelClass: ['snack-success']
+        }
+      );
     } catch (error: any) {
       this.snack.open(error?.message || 'Nao foi possivel gerar o documento.', 'Fechar', {
         duration: 4200,
@@ -498,8 +520,6 @@ export class DocumentosWorkspaceComponent implements OnInit {
 
   duplicarModelo(modelo: ModeloView, evento?: Event): void {
     evento?.stopPropagation();
-    if (modelo.origem !== 'SERVIDOR') return;
-
     this.acaoEmCursoId = modelo.id;
     this.authService.duplicarTemplate(modelo.id).subscribe({
       next: (novo) => {
@@ -524,8 +544,6 @@ export class DocumentosWorkspaceComponent implements OnInit {
 
   async baixarModelo(modelo: ModeloView, evento?: Event): Promise<void> {
     evento?.stopPropagation();
-    if (modelo.origem !== 'SERVIDOR') return;
-
     this.acaoEmCursoId = modelo.id;
     try {
       const buffer = await firstValueFrom(this.authService.baixarTemplateArquivo(modelo.id));
@@ -551,7 +569,6 @@ export class DocumentosWorkspaceComponent implements OnInit {
 
   pedirExclusao(modelo: ModeloView, evento?: Event): void {
     evento?.stopPropagation();
-    if (modelo.origem !== 'SERVIDOR') return;
     this.modeloRenomeandoId = null;
     this.modeloExcluindoId = modelo.id;
   }
@@ -596,7 +613,6 @@ export class DocumentosWorkspaceComponent implements OnInit {
 
   iniciarEdicao(modelo: ModeloView, evento?: Event): void {
     evento?.stopPropagation();
-    if (modelo.origem !== 'SERVIDOR') return;
     this.modeloEmEdicaoId = modelo.id;
     this.novoTemplateNome = modelo.titulo;
     this.novoTemplateDescricao = modelo.descricao === 'Modelo cadastrado pelo escritório.' ? '' : modelo.descricao;
@@ -747,6 +763,41 @@ export class DocumentosWorkspaceComponent implements OnInit {
 
   get clienteSelecionado(): ClienteRecord | null {
     return this.clientes.find((item) => item.id === this.clienteId) || null;
+  }
+
+  get processoSelecionado(): ProcessoDocumento | null {
+    return this.processos.find((item) => item.id === this.processoId) || null;
+  }
+
+  preencherDadosDoProcesso(): void {
+    const processo = this.processoSelecionado;
+    if (!processo) return;
+
+    const cliente = this.clientes.find((item) => item.id === processo.clienteId);
+    if (cliente) {
+      this.clienteId = cliente.id;
+      this.localAssinatura = cliente.cidade || this.localAssinatura;
+    }
+
+    this.referenciaProcesso = processo.titulo || this.referenciaProcesso;
+    this.objetoContrato = processo.descricao || this.objetoContrato;
+
+    const valor = processo.orcamento?.valor;
+    if (typeof valor === 'number' && Number.isFinite(valor)) {
+      this.contratoValor = new Intl.NumberFormat('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(valor);
+    }
+
+    if (!this.nomeDocumento.trim() || this.nomeDocumento === this.modeloSelecionado?.titulo) {
+      const nomeCliente = cliente?.nome || processo.clienteNome || '';
+      this.nomeDocumento = [this.modeloSelecionado?.titulo, nomeCliente].filter(Boolean).join(' - ');
+    }
+  }
+
+  limparVinculoProcesso(): void {
+    this.processoId = '';
   }
 
   enderecoResumo(cliente: ClienteRecord): string {

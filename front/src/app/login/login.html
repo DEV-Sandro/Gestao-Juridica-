@@ -2,7 +2,7 @@
   <div class="login-card card-glass">
     
     <div class="brand-header">
-      <div class="logo-shield"><mat-icon>balance</mat-icon></div>
+      <div class="logo-shield" aria-hidden="true"><img src="assets/brand/justapro-mark.png" alt="" /></div>
       <h1 class="font-heading">JustaPro</h1>
       <p class="brand-tagline">Gestão jurídica do seu escritório</p>
     </div>
@@ -25,17 +25,28 @@
 
       <div class="form-options">
         <mat-checkbox color="primary">Lembrar de mim</mat-checkbox>
-        <div class="options-links">
-          <button type="button" class="forgot-link link-button" (click)="esqueciSenha()">
-            Esqueci minha senha
-          </button>
-          <a routerLink="/convite/aceitar" class="forgot-link">Finalizar convite</a>
-        </div>
+        <button type="button" class="forgot-link link-button" (click)="esqueciSenha()">
+          Esqueci minha senha
+        </button>
       </div>
 
-      <button mat-flat-button class="btn-premium" type="submit" [disabled]="carregando">
-        {{ carregando ? 'Autenticando...' : 'Acessar Workspace' }}
-      </button>
+      <jp-button type="submit" [loading]="carregando" [disabled]="carregando" [block]="true">
+        Acessar Workspace
+      </jp-button>
+
+      <div class="invite-entry">
+        <div class="invite-entry-copy">
+          <mat-icon>mark_email_read</mat-icon>
+          <span>
+            <strong>Recebeu um convite?</strong>
+            <small>Ative a conta com o e-mail informado acima.</small>
+          </span>
+        </div>
+        <button type="button" class="invite-entry-action" (click)="continuarConvite()">
+          Ativar conta
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </div>
     </form>
     
   </div>

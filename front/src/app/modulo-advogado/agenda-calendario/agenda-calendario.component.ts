@@ -26,6 +26,7 @@ interface CalendarDay {
 export class AgendaCalendarioComponent implements OnChanges {
   @Input() eventos: AgendaEvento[] = [];
   @Output() abrirEvento = new EventEmitter<AgendaEvento>();
+  @Output() criarCompromisso = new EventEmitter<string>();
 
   readonly weekdayLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
 
@@ -67,6 +68,20 @@ export class AgendaCalendarioComponent implements OnChanges {
     ).length;
   }
 
+  get proximoEvento(): AgendaEvento | null {
+    const hoje = this.toIsoDate(new Date());
+    return (
+      this.eventos
+        .filter(
+          (evento) =>
+            evento.data >= hoje &&
+            evento.status !== 'Concluído' &&
+            evento.status !== 'Cancelado'
+        )
+        .sort((primeiro, segundo) => primeiro.data.localeCompare(segundo.data) || primeiro.titulo.localeCompare(segundo.titulo, 'pt-BR'))[0] || null
+    );
+  }
+
   irParaHoje(): void {
     this.visibleMonth = this.startOfMonth(new Date());
     this.selectedDateIso = this.toIsoDate(new Date());
@@ -103,6 +118,10 @@ export class AgendaCalendarioComponent implements OnChanges {
     this.visibleMonth = this.startOfMonth(this.parseIsoDate(evento.data));
     this.rebuildCalendar();
     this.abrirEvento.emit(evento);
+  }
+
+  criarNoDiaSelecionado(): void {
+    this.criarCompromisso.emit(this.selectedDateIso);
   }
 
   formatarCabecalhoDia(): string {

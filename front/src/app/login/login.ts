@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -13,6 +14,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { AuthService } from '../auth.service';
 import { RecuperarSenhaDialogComponent } from './recuperar-senha-dialog.component';
+import { JpButtonComponent } from '../shared/ui/jp-button/jp-button.component';
 
 @Component({
   selector: 'app-login',
@@ -20,14 +22,14 @@ import { RecuperarSenhaDialogComponent } from './recuperar-senha-dialog.componen
   imports: [
     CommonModule,
     FormsModule,
-    RouterLink,
     MatFormFieldModule,
     MatInputModule,
     MatIconModule,
     MatButtonModule,
     MatCheckboxModule,
     MatDialogModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    JpButtonComponent
   ],
   templateUrl: './login.html',
   styleUrls: ['./login.scss']
@@ -70,6 +72,11 @@ export class LoginComponent implements OnInit {
         await this.router.navigate([resposta.role === 'CLIENT' ? '/cliente' : '/advogado/dashboard']);
       }
     } catch (error: any) {
+      if (!this.credencialFirebaseInvalida(error)) {
+        this.notificar(this.mensagemFalhaAcesso(error));
+        return;
+      }
+
       const convite = await firstValueFrom(this.authService.verificarConvitePorEmail(this.email.trim())).catch(
         () => null
       );
@@ -98,10 +105,48 @@ export class LoginComponent implements OnInit {
     });
   }
 
+  async continuarConvite(): Promise<void> {
+    const email = this.email.trim();
+    await this.router.navigate(['/convite/aceitar'], {
+      queryParams: email ? { email } : undefined
+    });
+  }
+
   private notificar(mensagem: string): void {
     this.snack.open(mensagem, 'Fechar', {
       duration: 3600,
       panelClass: ['snack-error']
     });
+  }
+
+  private credencialFirebaseInvalida(error: unknown): boolean {
+    const codigo = String((error as { code?: string } | null)?.code || '');
+    return [
+      'auth/invalid-credential',
+      'auth/user-not-found',
+      'auth/wrong-password',
+      'auth/invalid-email'
+    ].includes(codigo);
+  }
+
+  private mensagemFalhaAcesso(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      if (error.status === 0) {
+        return 'Nao foi possivel conectar ao servidor local. Confirme se o backend esta em execucao.';
+      }
+
+      return 'Seu login foi aceito, mas nao foi possivel validar a sessao no servidor. Tente novamente.';
+    }
+
+    const codigo = String((error as { code?: string } | null)?.code || '');
+    if (codigo === 'auth/too-many-requests') {
+      return 'Muitas tentativas seguidas. Aguarde alguns minutos antes de tentar novamente.';
+    }
+
+    if (codigo === 'auth/network-request-failed') {
+      return 'Falha de conexao ao autenticar. Verifique sua internet e tente novamente.';
+    }
+
+    return 'Nao foi possivel concluir o acesso. Tente novamente.';
   }
 }

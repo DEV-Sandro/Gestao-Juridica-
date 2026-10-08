@@ -12,15 +12,31 @@
 }
 
 .login-card {
+  position: relative;
+  overflow: hidden;
   width: 100%;
-  max-width: 410px;
+  max-width: 430px;
   padding: 44px 40px;
   display: flex;
   flex-direction: column;
   gap: 28px;
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 22%, var(--border-subtle));
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -140px;
+    right: -130px;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--brand-primary) 16%, transparent), transparent 68%);
+    pointer-events: none;
+  }
 }
 
 .brand-header {
+  position: relative;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -29,17 +45,26 @@
   margin-bottom: 4px;
 
   .logo-shield {
-    background: var(--brand-gradient);
-    color: var(--color-on-accent);
-    width: 54px;
-    height: 54px;
-    border-radius: 16px;
+    // O detalhe interno do escudo precisa de uma base clara para continuar
+    // reconhecÃ­vel tanto no tema claro quanto no escuro.
+    background: linear-gradient(145deg, #ffffff, #eaf2ff);
+    width: 76px;
+    height: 76px;
+    border: 1px solid color-mix(in srgb, var(--brand-primary) 32%, #ffffff);
+    border-radius: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 14px 30px color-mix(in srgb, var(--brand-primary) 30%, transparent);
+    box-shadow: 0 16px 34px color-mix(in srgb, var(--brand-primary) 34%, transparent);
 
-    mat-icon { font-size: 30px; width: 30px; height: 30px; }
+    overflow: hidden;
+
+    img {
+      width: 112%;
+      height: 112%;
+      object-fit: contain;
+      filter: drop-shadow(0 5px 9px rgba(15, 32, 78, 0.18));
+    }
   }
 
   h1 {
@@ -57,9 +82,31 @@
 }
 
 .login-form {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 14px;
+
+  ::ng-deep .mat-mdc-form-field {
+    width: 100%;
+  }
+
+  ::ng-deep .mdc-text-field--outlined {
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--surface-soft) 84%, transparent);
+  }
+
+  ::ng-deep .mdc-notched-outline__leading,
+  ::ng-deep .mdc-notched-outline__notch,
+  ::ng-deep .mdc-notched-outline__trailing {
+    border-color: var(--border-subtle) !important;
+  }
+
+  ::ng-deep .mdc-text-field--focused .mdc-notched-outline__leading,
+  ::ng-deep .mdc-text-field--focused .mdc-notched-outline__notch,
+  ::ng-deep .mdc-text-field--focused .mdc-notched-outline__trailing {
+    border-color: var(--brand-primary) !important;
+  }
 }
 
 .icon-muted { color: var(--text-muted); margin-right: 8px; }
@@ -86,13 +133,6 @@
     color: var(--brand-primary);
   }
 
-  .options-links {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    flex-wrap: wrap;
-  }
-
   .link-button {
     background: none;
     border: none;
@@ -102,6 +142,66 @@
 
     &:hover:not(:disabled) { text-decoration: underline; }
     &:disabled { opacity: 0.6; cursor: default; }
+  }
+}
+
+.invite-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 14px;
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 20%, var(--border-subtle));
+  border-radius: 16px;
+  background: linear-gradient(110deg, color-mix(in srgb, var(--brand-primary) 10%, var(--surface-soft)), var(--surface-soft));
+}
+
+.invite-entry-copy {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+
+  mat-icon {
+    color: var(--brand-primary);
+  }
+
+  span {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  strong {
+    font-size: 0.8rem;
+  }
+
+  small {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    line-height: 1.35;
+  }
+}
+
+.invite-entry-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  border: none;
+  padding: 6px 0;
+  background: transparent;
+  color: var(--brand-primary);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+
+  mat-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
   }
 }
 

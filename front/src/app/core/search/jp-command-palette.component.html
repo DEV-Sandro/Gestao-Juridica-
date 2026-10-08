@@ -1,0 +1,57 @@
+<div class="command-palette-container" cdkTrapFocus cdkTrapFocusAutoCapture>
+  <div class="search-header">
+    <mat-icon>search</mat-icon>
+    <input
+      type="search"
+      placeholder="Busque clientes, processos ou digite um comando..."
+      class="search-input"
+      autocomplete="off"
+      (input)="onSearch($event)"
+      (keydown.escape)="fechar()"
+      aria-label="Buscar comandos, processos e clientes"
+    />
+    <kbd>Esc</kbd>
+  </div>
+
+  <div class="results-list">
+    <section class="result-group" *ngIf="comandosFiltrados().length">
+      <span class="group-label">Acoes rapidas</span>
+      <button type="button" class="result-item" *ngFor="let command of comandosFiltrados()" (click)="abrirComando(command)">
+        <mat-icon>{{ command.icon }}</mat-icon>
+        <span><strong>{{ command.label }}</strong><small>{{ command.description }}</small></span>
+        <mat-icon class="result-arrow">arrow_forward</mat-icon>
+      </button>
+    </section>
+
+    <section class="result-group" *ngIf="buscando()">
+      <span class="group-label">Buscando no workspace</span>
+      <div class="search-status">Consultando processos e clientes...</div>
+    </section>
+
+    <ng-container *ngIf="resultadoBusca() as resultado">
+      <section class="result-group" *ngIf="resultado.processos.length">
+        <span class="group-label">Processos</span>
+        <button type="button" class="result-item" *ngFor="let processo of resultado.processos" (click)="abrirProcesso(processo.id)">
+          <mat-icon>folder_open</mat-icon>
+          <span><strong>{{ processo.titulo }}</strong><small>{{ processo.cliente || 'Sem cliente' }} · {{ processo.status || 'Sem status' }}</small></span>
+          <mat-icon class="result-arrow">arrow_forward</mat-icon>
+        </button>
+      </section>
+
+      <section class="result-group" *ngIf="resultado.clientes.length">
+        <span class="group-label">Clientes</span>
+        <button type="button" class="result-item" *ngFor="let cliente of resultado.clientes" (click)="abrirClientes()">
+          <mat-icon>person</mat-icon>
+          <span><strong>{{ cliente.nome }}</strong><small>{{ cliente.cpf || cliente.email || cliente.telefone || 'Sem contato' }}</small></span>
+          <mat-icon class="result-arrow">arrow_forward</mat-icon>
+        </button>
+      </section>
+
+      <div class="search-status" *ngIf="!buscando() && !resultado.processos.length && !resultado.clientes.length">
+        Nenhum processo ou cliente encontrado.
+      </div>
+    </ng-container>
+  </div>
+
+  <footer class="palette-footer"><span><kbd>↑↓</kbd> navegar</span><span><kbd>Enter</kbd> abrir</span><span><kbd>Esc</kbd> fechar</span></footer>
+</div>

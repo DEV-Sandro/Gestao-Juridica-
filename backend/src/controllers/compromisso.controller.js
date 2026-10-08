@@ -36,6 +36,15 @@ async function deletar(req, res, next) {
   }
 }
 
+async function confirmarCienciaPrazo(req, res, next) {
+  try {
+    const resultado = await compromissoService.confirmarCienciaPrazo(req.params.id, req.body, req.user);
+    res.json(resultado);
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function listarAgenda(req, res, next) {
   try {
     const registros = await compromissoService.listarAgenda(
@@ -58,5 +67,6 @@ module.exports = {
   buscarPorId,
   atualizar,
   deletar,
+  confirmarCienciaPrazo,
   listarAgenda
 };

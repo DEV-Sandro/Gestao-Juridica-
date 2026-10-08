@@ -5,6 +5,18 @@ async function criar(dados) {
   return ref.id;
 }
 
+async function criarVarios(registros) {
+  if (!Array.isArray(registros) || registros.length === 0) {
+    return [];
+  }
+
+  const batch = db.batch();
+  const refs = registros.map(() => db.collection('compromissos').doc());
+  refs.forEach((ref, indice) => batch.set(ref, registros[indice]));
+  await batch.commit();
+  return refs.map((ref) => ref.id);
+}
+
 async function buscarPorId(id) {
   const doc = await db.collection('compromissos').doc(id).get();
   if (!doc.exists) return null;
@@ -49,6 +61,7 @@ async function buscarPorAdvogados(advogadoIds) {
 
 module.exports = {
   criar,
+  criarVarios,
   buscarPorId,
   atualizar,
   deletarSoft,

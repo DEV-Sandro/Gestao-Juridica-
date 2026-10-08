@@ -1,0 +1,72 @@
+:host {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+:host.jp-button-block {
+  display: flex;
+  width: 100%;
+}
+
+.jp-base-button {
+  position: relative;
+  min-height: 40px;
+  border-radius: var(--jp-radius-md) !important;
+  font-family: var(--jp-font-family) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+
+  :host.jp-button-block & {
+    width: 100%;
+  }
+
+  &.jp-size-compact {
+    min-height: 32px;
+    padding-inline: 12px;
+    font-size: 13px;
+  }
+
+  &.jp-btn-primary {
+    --mdc-filled-button-container-color: var(--jp-brand-600);
+    --mdc-filled-button-label-text-color: var(--jp-surface);
+    --mdc-protected-button-container-color: var(--jp-brand-600);
+    --mdc-protected-button-label-text-color: var(--jp-surface);
+    box-shadow: var(--jp-shadow-1);
+  }
+
+  &.jp-btn-danger {
+    --mdc-filled-button-container-color: var(--jp-danger-600);
+    --mdc-filled-button-label-text-color: #fff;
+    --mdc-protected-button-container-color: var(--jp-danger-600);
+    --mdc-protected-button-label-text-color: #fff;
+  }
+
+  &.jp-btn-secondary {
+    --mdc-outlined-button-outline-color: var(--jp-neutral-200);
+    --mdc-outlined-button-label-text-color: var(--jp-neutral-700);
+  }
+
+  &.jp-btn-ghost {
+    --mdc-text-button-label-text-color: var(--jp-brand-600);
+  }
+}
+
+.jp-button-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.jp-button-content-hidden {
+  visibility: hidden;
+}
+
+.jp-button-spinner {
+  --mdc-circular-progress-active-indicator-color: currentColor;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}

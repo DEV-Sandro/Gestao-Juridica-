@@ -47,7 +47,7 @@
           class="cp-ciencia"
           [class.confirmada]="prazo.ciente"
           (click)="confirmarCiencia(prazo, $event)"
-          [matTooltip]="prazo.ciente ? 'Ciência confirmada — clique para desfazer' : 'Confirmar que você está ciente'"
+          [matTooltip]="prazo.ciente ? 'Ciência confirmada no JustaPro — clique para desfazer' : 'Confirmar que você está ciente'"
         >
           <mat-icon>{{ prazo.ciente ? 'task_alt' : 'radio_button_unchecked' }}</mat-icon>
           <span>{{ prazo.ciente ? 'Ciente' : 'Confirmar ciência' }}</span>

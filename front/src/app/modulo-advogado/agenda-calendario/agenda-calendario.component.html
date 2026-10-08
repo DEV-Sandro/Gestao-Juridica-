@@ -2,21 +2,28 @@
   <header class="agenda-header">
     <div>
       <span class="agenda-eyebrow">Agenda juridica</span>
-      <h3 class="font-heading">Calendario premium de compromissos</h3>
-      <p>Visual maior, estados criticos destacados e leitura operacional imediata.</p>
+      <h3 class="font-heading">Seu calendário de compromissos</h3>
+      <p>Prazos, audiências, reuniões e financeiro em uma visão operacional.</p>
     </div>
 
-    <div class="agenda-controls">
-      <button mat-stroked-button type="button" (click)="irParaHoje()">Hoje</button>
+    <div class="agenda-header-actions">
+      <button mat-flat-button type="button" class="agenda-create" (click)="criarNoDiaSelecionado()">
+        <mat-icon>add</mat-icon>
+        Novo compromisso
+      </button>
 
-      <div class="month-switch">
-        <button mat-icon-button type="button" (click)="irParaMesAnterior()" aria-label="Mes anterior">
-          <mat-icon>chevron_left</mat-icon>
-        </button>
-        <strong>{{ monthLabel }}</strong>
-        <button mat-icon-button type="button" (click)="irParaMesSeguinte()" aria-label="Proximo mes">
-          <mat-icon>chevron_right</mat-icon>
-        </button>
+      <div class="agenda-controls">
+        <button mat-stroked-button type="button" (click)="irParaHoje()">Hoje</button>
+
+        <div class="month-switch">
+          <button mat-icon-button type="button" (click)="irParaMesAnterior()" aria-label="Mes anterior">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          <strong>{{ monthLabel }}</strong>
+          <button mat-icon-button type="button" (click)="irParaMesSeguinte()" aria-label="Proximo mes">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
       </div>
     </div>
   </header>
@@ -45,6 +52,22 @@
       <span class="legend-pill is-receita">Recebimento</span>
       <span class="legend-pill is-despesa">Pagamento</span>
     </div>
+
+    <button type="button" class="agenda-focus" *ngIf="proximoEvento as proximo; else agendaSemPendencias" (click)="selecionarEvento(proximo)">
+      <mat-icon>{{ proximo.icon }}</mat-icon>
+      <span>
+        <small>Próximo compromisso</small>
+        <strong>{{ proximo.titulo }}</strong>
+        <em>{{ proximo.data | date: 'dd/MM' }} · {{ proximo.subtitulo || proximo.tipoLabel }}</em>
+      </span>
+      <mat-icon class="agenda-focus-arrow">arrow_outward</mat-icon>
+    </button>
+    <ng-template #agendaSemPendencias>
+      <div class="agenda-focus is-empty">
+        <mat-icon>task_alt</mat-icon>
+        <span><small>Agenda sob controle</small><strong>Nenhum compromisso futuro</strong></span>
+      </div>
+    </ng-template>
   </div>
 
   <div class="agenda-layout">
@@ -125,6 +148,11 @@
         </div>
 
         <mat-icon class="event-forward">arrow_outward</mat-icon>
+      </button>
+
+      <button type="button" class="day-panel-create" (click)="criarNoDiaSelecionado()">
+        <mat-icon>add_circle</mat-icon>
+        Criar compromisso neste dia
       </button>
     </aside>
   </div>

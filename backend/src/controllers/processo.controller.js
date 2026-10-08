@@ -55,6 +55,15 @@ async function deletar(req, res, next) {
   }
 }
 
+async function confirmarCienciaPrazo(req, res, next) {
+  try {
+    const resultado = await service.confirmarCienciaPrazo(req.params.id, req.body, req.user);
+    res.json(resultado);
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function listarEtapas(req, res, next) {
   try {
     const etapas = await service.listarEtapas(req.params.id, req.user);
@@ -137,6 +146,7 @@ module.exports = {
   criar,
   atualizar,
   deletar,
+  confirmarCienciaPrazo,
   listarEtapas,
   criarEtapa,
   atualizarEtapa,

@@ -10,6 +10,7 @@ import {
   signOut,
   updateProfile
 } from '@angular/fire/auth';
+import { browserLocalPersistence, setPersistence } from 'firebase/auth';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
@@ -64,6 +65,7 @@ export interface LancamentoFinanceiro {
   clienteNome?: string | null;
   formaPagamento?: string | null;
   observacao?: string | null;
+  classificacaoRentabilidade?: 'PENDENTE' | 'GERAL' | 'PROCESSO';
 }
 
 export interface ResumoFinanceiro {
@@ -101,6 +103,89 @@ export interface DashboardResumo {
     itensDoDia: { id: string; titulo: string; dataInicio: string; tipo: string; local: string | null }[];
   };
   financeiro: ResumoFinanceiro | null;
+}
+
+export type IndicadorRentabilidade = 'ALTA' | 'MEDIA' | 'BAIXA' | 'SEM_HORAS';
+
+export interface RentabilidadeItem {
+  id: string | null;
+  titulo: string;
+  clienteId: string | null;
+  clienteNome: string;
+  area: string;
+  processos: number;
+  receitaBruta: number;
+  receitaLiquida: number;
+  custos: number;
+  lucro: number;
+  horas: number;
+  horasAgenda: number;
+  horasManuais: number;
+  rentabilidade: number | null;
+  indicador?: IndicadorRentabilidade;
+}
+
+export interface ApontamentoTempo {
+  id: string;
+  processoId: string;
+  processoTitulo: string;
+  clienteId: string | null;
+  clienteNome: string | null;
+  descricao: string;
+  minutos: number;
+  data: string;
+  origem: 'MANUAL';
+  criadoEm: string;
+}
+
+export interface InsightRentabilidade {
+  tipo: 'SUCESSO' | 'ATENCAO' | 'INFO';
+  titulo: string;
+  descricao: string;
+  processoId: string | null;
+}
+
+export interface RentabilidadeResumo {
+  geradoEm: string;
+  criterio: {
+    baseReceita: string;
+    receitaBruta: string;
+    receitaLiquida: string;
+    tempoAutomatico: string;
+  };
+  indicadores: {
+    receitaBruta: number;
+    receitaLiquida: number;
+    custos: number;
+    lucro: number;
+    horasTrabalhadas: number;
+    horasAgenda: number;
+    horasManuais: number;
+    rentabilidadeMedia: number | null;
+    processoMaisRentavel: RentabilidadeItem | null;
+    processoMenosRentavel: RentabilidadeItem | null;
+    clienteMaisRentavel: RentabilidadeItem | null;
+    clienteMenosRentavel: RentabilidadeItem | null;
+    areaMaisLucrativa: RentabilidadeItem | null;
+    areaMenosLucrativa: RentabilidadeItem | null;
+  };
+  rankings: {
+    processosMaisRentaveis: RentabilidadeItem[];
+    clientesMaisRentaveis: RentabilidadeItem[];
+    clientesMaisTempo: RentabilidadeItem[];
+    porArea: RentabilidadeItem[];
+  };
+  insights: InsightRentabilidade[];
+  qualidade: {
+    compromissosAutomaticos: number;
+    apontamentosManuais: number;
+    lancamentosSemProcesso: number;
+    lancamentosClassificadosGerais: number;
+    processosComReceitaSemHoras: number;
+  };
+  processosDisponiveis: { id: string; titulo: string; clienteNome: string; area: string }[];
+  lancamentosParaClassificar: LancamentoFinanceiro[];
+  apontamentosRecentes: ApontamentoTempo[];
 }
 
 export interface TemplateDocumento {
@@ -141,26 +226,54 @@ export class AuthService {
 
   private currentUserSubject = new BehaviorSubject<AppUser | null>(null);
   readonly currentUser$: Observable<AppUser | null> = this.currentUserSubject.asObservable();
+  private resolverSessaoInicial!: () => void;
+  private readonly sessaoInicialPronta = new Promise<void>((resolve) => {
+    this.resolverSessaoInicial = resolve;
+  });
+  private sessaoInicialResolvida = false;
 
   constructor() {
-    onAuthStateChanged(this.auth, async (fbUser) => {
-      if (!fbUser) {
-        this.currentUserSubject.next(null);
-        return;
-      }
+    // MantÃ©m a sessÃ£o no navegador depois de um F5 e aguarda a restauraÃ§Ã£o
+    // antes de deixar as rotas protegidas tomarem uma decisÃ£o.
+    setPersistence(this.auth, browserLocalPersistence)
+      .catch((err) => console.warn('[AuthService] NÃ£o foi possÃ­vel configurar a persistÃªncia local', err))
+      .finally(() => {
+        onAuthStateChanged(this.auth, async (fbUser) => {
+          if (!fbUser) {
+            this.currentUserSubject.next(null);
+            this.concluirSessaoInicial();
+            return;
+          }
 
-      this.currentUserSubject.next(this.fromFirebaseUser(fbUser));
+          this.currentUserSubject.next(this.fromFirebaseUser(fbUser));
 
-      try {
-        await this.carregarPerfilDoBackend();
-      } catch (err) {
-        console.error('[AuthService] Falha ao carregar perfil do backend', err);
-      }
-    });
+          try {
+            // O Firebase restaura a identidade, mas nÃ£o o papel do JustaPro.
+            // A Rentabilidade precisa esperar o perfil para nÃ£o ver um advogado
+            // como CLIENT durante o primeiro carregamento.
+            await this.carregarPerfilDoBackend();
+          } catch (err) {
+            console.error('[AuthService] Falha ao carregar perfil do backend', err);
+          } finally {
+            this.concluirSessaoInicial();
+          }
+        });
+      });
   }
 
   get currentUser(): AppUser | null {
     return this.currentUserSubject.value;
+  }
+
+  async aguardarSessaoInicial(): Promise<AppUser | null> {
+    await this.sessaoInicialPronta;
+    return this.currentUser;
+  }
+
+  private concluirSessaoInicial(): void {
+    if (this.sessaoInicialResolvida) return;
+    this.sessaoInicialResolvida = true;
+    this.resolverSessaoInicial();
   }
 
   private fromFirebaseUser(fb: FirebaseUser): AppUser {
@@ -300,7 +413,7 @@ export class AuthService {
   }
 
   criarCompromisso(dados: Partial<CompromissoApiModel>) {
-    return this.http.post<{ id: string; conflitos: ConflitoCompromisso[] }>(
+    return this.http.post<{ id: string; ids?: string[]; ocorrenciasCriadas?: number; conflitos: ConflitoCompromisso[] }>(
       `${this.apiUrl}/api/compromissos`,
       dados
     );
@@ -317,6 +430,26 @@ export class AuthService {
     return this.http.delete(`${this.apiUrl}/api/compromissos/${id}`);
   }
 
+  confirmarCienciaCompromisso(id: string, ciente: boolean) {
+    return this.http.post<{
+      id: string;
+      ciente: boolean;
+      deadlineAcknowledgedAt: string | null;
+      deadlineAcknowledgedBy: string | null;
+      deadlineAcknowledgedByName: string | null;
+    }>(`${this.apiUrl}/api/compromissos/${id}/prazo/ciencia`, { ciente });
+  }
+
+  confirmarCienciaPrazoProcesso(id: string, ciente: boolean) {
+    return this.http.post<{
+      id: string;
+      ciente: boolean;
+      prazoCienteEm: string | null;
+      prazoCientePor: string | null;
+      prazoCientePorNome: string | null;
+    }>(`${this.apiUrl}/api/processos/${id}/prazo/ciencia`, { ciente });
+  }
+
   buscarGlobal(termo: string) {
     return this.http.get<ResultadoBusca>(`${this.apiUrl}/api/busca`, {
       params: new HttpParams().set('q', termo)
@@ -325,6 +458,21 @@ export class AuthService {
 
   obterDashboard() {
     return this.http.get<DashboardResumo>(`${this.apiUrl}/api/dashboard`);
+  }
+
+  obterRentabilidade() {
+    return this.http.get<RentabilidadeResumo>(`${this.apiUrl}/api/rentabilidade`);
+  }
+
+  adicionarTempoManual(processoId: string, payload: { descricao?: string; minutos: number; data?: string }) {
+    return this.http.post<ApontamentoTempo>(
+      `${this.apiUrl}/api/rentabilidade/processos/${processoId}/apontamentos-tempo`,
+      payload
+    );
+  }
+
+  excluirApontamentoTempo(id: string) {
+    return this.http.delete(`${this.apiUrl}/api/rentabilidade/apontamentos-tempo/${id}`);
   }
 
   listarLancamentos(filtros: { processoId?: string; statusEfetivo?: string; de?: string; ate?: string } = {}) {
@@ -400,7 +548,7 @@ export class AuthService {
   }
 
   listarProcessos() {
-    return this.http.get(`${this.apiUrl}/api/processos`);
+    return this.http.get<any[]>(`${this.apiUrl}/api/processos`);
   }
 
   pegarProcessoPeloId(id: string) {

@@ -53,6 +53,76 @@
   gap: 10px;
 }
 
+.agenda-automation {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface-soft) 82%, transparent);
+}
+
+.automation-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+
+  > mat-icon {
+    color: var(--brand-primary);
+  }
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  strong {
+    font-size: 0.88rem;
+  }
+
+  span {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    line-height: 1.35;
+  }
+}
+
+.automation-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.reminder-options {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+
+  mat-form-field {
+    min-width: 180px;
+    flex: 1;
+  }
+}
+
+.series-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+
+  mat-icon {
+    width: 17px;
+    height: 17px;
+    color: var(--brand-primary);
+    font-size: 17px;
+  }
+}
+
 .erro {
   display: flex;
   align-items: center;
@@ -84,3 +154,10 @@
 .text-muted { color: var(--text-muted); }
 .text-danger { color: var(--status-urgent, var(--color-danger)); }
 .m-0 { margin: 0; }
+
+@media (max-width: 600px) {
+  .compromisso-dialog { min-width: 0; }
+
+  .data-hora-grid,
+  .automation-grid { grid-template-columns: 1fr; }
+}

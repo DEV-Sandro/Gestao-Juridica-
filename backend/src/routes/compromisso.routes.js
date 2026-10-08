@@ -13,6 +13,7 @@ router.get('/agenda', controller.listarAgenda);
 router.post('/compromissos', controller.criar);
 router.get('/compromissos/:id', controller.buscarPorId);
 router.put('/compromissos/:id', controller.atualizar);
+router.post('/compromissos/:id/prazo/ciencia', controller.confirmarCienciaPrazo);
 router.delete('/compromissos/:id', controller.deletar);
 
 module.exports = router;

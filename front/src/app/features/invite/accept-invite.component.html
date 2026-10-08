@@ -6,12 +6,22 @@
     </a>
 
     <div class="invite-header">
+      <div class="invite-brand" aria-label="JustaPro">
+        <div class="invite-brand-mark"><img src="assets/brand/justapro-mark.png" alt="" /></div>
+        <div>
+          <strong class="font-heading">JustaPro</strong>
+          <span>Ativação segura da equipe</span>
+        </div>
+      </div>
       <span class="eyebrow">Convite de equipe</span>
-      <h1 class="font-heading">Finalize sua conta no JustaPro</h1>
-      <p>
-        Conclua a criacao da senha e confirme seus dados basicos para entrar no workspace
-        juridico.
-      </p>
+      <h1 class="font-heading">Ative seu acesso</h1>
+      <p>Confirme seus dados, escolha uma senha segura e entre no workspace jurídico.</p>
+
+      <ol class="invite-steps" aria-label="Etapas de ativação">
+        <li class="is-current"><span>1</span> Convite</li>
+        <li><span>2</span> Perfil</li>
+        <li><span>3</span> Acesso</li>
+      </ol>
     </div>
 
     <div class="invite-loading" *ngIf="carregando">
@@ -108,7 +118,10 @@
           <mat-form-field appearance="outline">
             <mat-label>Criar senha</mat-label>
             <mat-icon matPrefix>lock</mat-icon>
-            <input matInput type="password" [(ngModel)]="password" name="password" required />
+            <input matInput [type]="mostrarSenha ? 'text' : 'password'" [(ngModel)]="password" name="password" required />
+            <button mat-icon-button matSuffix type="button" (click)="mostrarSenha = !mostrarSenha" [attr.aria-label]="mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'">
+              <mat-icon>{{ mostrarSenha ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
@@ -116,17 +129,25 @@
             <mat-icon matPrefix>lock_reset</mat-icon>
             <input
               matInput
-              type="password"
+              [type]="mostrarConfirmacao ? 'text' : 'password'"
               [(ngModel)]="confirmPassword"
               name="confirmPassword"
               required
             />
+            <button mat-icon-button matSuffix type="button" (click)="mostrarConfirmacao = !mostrarConfirmacao" [attr.aria-label]="mostrarConfirmacao ? 'Ocultar senha' : 'Mostrar senha'">
+              <mat-icon>{{ mostrarConfirmacao ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
           </mat-form-field>
         </div>
 
-        <div class="password-hint">
-          A senha deve ter pelo menos 8 caracteres, com letra maiuscula, minuscula, numero e
-          caractere especial.
+        <div class="password-hint" aria-live="polite">
+          <strong>Crie uma senha segura</strong>
+          <ul class="password-requirements">
+            <li *ngFor="let requisito of requisitosSenha" [class.is-complete]="requisito.atende">
+              <mat-icon>{{ requisito.atende ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+              {{ requisito.label }}
+            </li>
+          </ul>
         </div>
 
         <button mat-flat-button class="btn-premium" type="submit" [disabled]="salvando">

@@ -16,8 +16,12 @@ const compromissoRoutes = require('./routes/compromisso.routes');
 const configuracaoRoutes = require('./routes/configuracao.routes');
 const conviteRoutes = require('./routes/convite.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
+const deadlineOrchestrationRoutes = require('./routes/deadline-orchestration.routes');
 const honorarioRoutes = require('./routes/honorario.routes');
 const lancamentoRoutes = require('./routes/lancamento.routes');
+const lembreteRoutes = require('./routes/lembrete.routes');
+const rentabilidadeRoutes = require('./routes/rentabilidade.routes');
+const riskRoutes = require('./routes/risk.routes');
 const templateRoutes = require('./routes/template.routes');
 const usuarioRoutes = require('./routes/usuario.routes');
 const { notFoundMiddleware, errorMiddleware } = require('./middlewares/error.middleware');
@@ -35,7 +39,16 @@ function montarOrigensPermitidas() {
     .map((origin) => origin.trim())
     .filter(Boolean);
 
-  const defaults = ['http://localhost:4200', 'http://localhost:3000'];
+  // O Angular pode ser aberto tanto por localhost quanto por 127.0.0.1 no
+  // desenvolvimento local. Ambos representam a mesma maquina, mas sao
+  // origens distintas para o navegador e precisam constar explicitamente no CORS.
+  const defaults = [
+    'http://localhost:4200',
+    'http://127.0.0.1:4200',
+    'http://[::1]:4200',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000'
+  ];
   const firebaseHostingOrigins = projectId
     ? [`https://${projectId}.web.app`, `https://${projectId}.firebaseapp.com`]
     : [];
@@ -153,9 +166,14 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/healthz', (req, res) => {
+function responderHealthz(req, res) {
   res.status(200).json({ ok: true });
-});
+}
+
+app.get('/healthz', responderHealthz);
+// No Hosting, o backend e consumido sempre pelo prefixo /api. Manter este
+// alias torna a verificacao de disponibilidade acessivel pela mesma rota.
+app.get('/api/healthz', responderHealthz);
 
 // ============================================================
 // ROTAS API
@@ -169,8 +187,12 @@ app.use('/api', usuarioRoutes);
 app.use('/api', clienteRoutes);
 app.use('/api', configuracaoRoutes);
 app.use('/api', dashboardRoutes);
+app.use('/api', deadlineOrchestrationRoutes);
 app.use('/api', honorarioRoutes);
 app.use('/api', lancamentoRoutes);
+app.use('/api', lembreteRoutes);
+app.use('/api', rentabilidadeRoutes);
+app.use('/api', riskRoutes);
 app.use('/api', templateRoutes);
 app.use('/api/processos', processoRoutes);
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

@@ -43,6 +43,24 @@ function errorMiddleware(error, req, res, next) {
     });
   }
 
+  if (error.message === 'PRAZO_NAO_DISPONIVEL_PARA_CIENCIA') {
+    return res.status(409).json({
+      mensagem: 'Este prazo não está disponível para confirmação de ciência.'
+    });
+  }
+
+  if (error.message === 'APONTAMENTO_TEMPO_NAO_ENCONTRADO') {
+    return res.status(404).json({
+      mensagem: 'Apontamento de tempo não encontrado'
+    });
+  }
+
+  if (error.message === 'VALIDACAO_APONTAMENTO_TEMPO') {
+    return res.status(400).json({
+      mensagem: 'Informe uma duração entre 1 minuto e 24 horas e uma data válida.'
+    });
+  }
+
   if (error.message === 'VALIDACAO_LANCAMENTO') {
     return res.status(400).json({
       mensagem: 'Informe descrição, valor e vencimento válidos para o lançamento.'

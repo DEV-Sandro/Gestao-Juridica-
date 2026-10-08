@@ -1,0 +1,224 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.jp-layout-grid {
+  display: grid;
+  grid-template-columns: 80px 244px minmax(0, 1fr);
+  min-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background: var(--jp-neutral-050);
+}
+
+.jp-global-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 0;
+  background:
+    radial-gradient(circle at 50% 0, color-mix(in srgb, var(--jp-brand-600) 32%, transparent), transparent 28%),
+    #101828;
+  border-right: 1px solid color-mix(in srgb, #ffffff 9%, transparent);
+  z-index: 2;
+}
+
+.rail-brand,
+.rail-item {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  color: color-mix(in srgb, #ffffff 70%, var(--jp-brand-050));
+  text-decoration: none;
+  transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.rail-brand {
+  margin-bottom: 8px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+
+  img {
+    width: 112%;
+    height: 112%;
+    object-fit: contain;
+  }
+}
+
+.rail-links,
+.rail-bottom {
+  display: grid;
+  gap: 8px;
+}
+
+.rail-bottom {
+  margin-top: auto;
+}
+
+.rail-item {
+  background: transparent;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--jp-focus-ring);
+  }
+
+  &.active {
+    color: #ffffff;
+    background: color-mix(in srgb, var(--jp-brand-600) 72%, #ffffff 4%);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.rail-search {
+  border: 1px solid color-mix(in srgb, #ffffff 16%, transparent);
+}
+
+.jp-context-subnav {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 28px 14px 18px;
+  background: var(--jp-surface);
+  border-right: 1px solid var(--jp-neutral-200);
+}
+
+.subnav-heading {
+  padding: 0 10px 18px;
+  border-bottom: 1px solid var(--jp-neutral-200);
+
+  span {
+    color: var(--jp-neutral-500);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+  }
+
+  h2 {
+    margin: 5px 0 0;
+    color: var(--jp-neutral-950);
+    font-size: 1.25rem;
+  }
+}
+
+.subnav-links {
+  display: grid;
+  gap: 5px;
+  padding-top: 18px;
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 42px;
+    padding: 0 10px;
+    border-radius: var(--jp-radius-md);
+    color: var(--jp-neutral-700);
+    font-size: 0.9rem;
+    font-weight: 650;
+    text-decoration: none;
+    transition: background-color 180ms ease, color 180ms ease;
+
+    mat-icon {
+      color: var(--jp-neutral-500);
+      font-size: 20px;
+    }
+
+    &:hover {
+      background: var(--jp-brand-050);
+      color: var(--jp-brand-700);
+    }
+
+    &.active-subnav {
+      background: var(--jp-brand-050);
+      color: var(--jp-brand-700);
+      font-weight: 750;
+
+      mat-icon { color: var(--jp-brand-600); }
+    }
+  }
+}
+
+.subnav-command {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: auto;
+  padding: 10px;
+  border: 1px solid var(--jp-neutral-200);
+  border-radius: var(--jp-radius-md);
+  background: var(--jp-neutral-050);
+  color: var(--jp-neutral-700);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  text-align: left;
+
+  mat-icon { color: var(--jp-brand-600); font-size: 19px; }
+
+  kbd {
+    padding: 3px 5px;
+    border: 1px solid var(--jp-neutral-200);
+    border-radius: 4px;
+    background: var(--jp-surface);
+    color: var(--jp-neutral-500);
+    font-family: var(--jp-font-family);
+    font-size: 0.66rem;
+  }
+
+  &:hover { border-color: var(--jp-brand-600); }
+  &:focus-visible { outline: none; box-shadow: var(--jp-focus-ring); }
+}
+
+.jp-main-content {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--jp-neutral-050);
+}
+
+// Compatibilidade temporaria com o modulo existente, que ainda contem a
+// sidebar anterior no proprio template. O Shell passa a ser a unica
+// navegacao desktop; drawer e busca mobile continuam pertencendo ao modulo.
+:host ::ng-deep app-modulo-advogado {
+  display: block;
+  min-width: 0;
+}
+
+:host ::ng-deep app-modulo-advogado .jp-layout {
+  display: block !important;
+  min-height: 100%;
+}
+
+:host ::ng-deep app-modulo-advogado .jp-sidebar {
+  display: none !important;
+}
+
+@media (max-width: 1080px) {
+  .jp-layout-grid { display: block; overflow: visible; }
+  .jp-global-rail,
+  .jp-context-subnav { display: none; }
+  .jp-main-content { overflow: visible; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail-brand,
+  .rail-item,
+  .subnav-links a { transition: none; }
+}

@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './login/login';
 import { AjudaComponent } from './ajuda/ajuda';
 import { DetalhesProcessoComponent } from './detalhes-processo/detalhes-processo';
-import { ModuloAdvogadoComponent } from './modulo-advogado/modulo-advogado';
+import { AdvogadoShellPageComponent } from './shared/ui/jp-shell/advogado-shell-page.component';
 import { ModuloClienteComponent } from './modulo-cliente/modulo-cliente';
 import { AcceptInviteComponent } from './features/invite/accept-invite.component';
 import { authGuard, roleGuard } from './guards/role.guard';
@@ -17,39 +17,45 @@ export const routes: Routes = [
   { path: 'advogado', redirectTo: 'advogado/dashboard', pathMatch: 'full' },
   {
     path: 'advogado/dashboard',
-    component: ModuloAdvogadoComponent,
+    component: AdvogadoShellPageComponent,
     canActivate: [authGuard],
     data: { sidebarSection: 'dashboard' }
   },
   {
     path: 'advogado/processos',
-    component: ModuloAdvogadoComponent,
+    component: AdvogadoShellPageComponent,
     canActivate: [authGuard],
     data: { sidebarSection: 'processos' }
   },
   {
     path: 'advogado/clientes',
-    component: ModuloAdvogadoComponent,
+    component: AdvogadoShellPageComponent,
     canActivate: [authGuard],
     data: { sidebarSection: 'clientes' }
   },
   {
     path: 'advogado/agenda',
-    component: ModuloAdvogadoComponent,
+    component: AdvogadoShellPageComponent,
     canActivate: [authGuard],
     data: { sidebarSection: 'agenda' }
   },
   {
     path: 'advogado/documentos',
-    component: ModuloAdvogadoComponent,
+    component: AdvogadoShellPageComponent,
     canActivate: [authGuard],
     data: { sidebarSection: 'documentos' }
   },
   {
     path: 'advogado/financeiro',
-    component: ModuloAdvogadoComponent,
+    component: AdvogadoShellPageComponent,
     canActivate: [roleGuard('ADMIN', 'ADVOGADO')],
     data: { sidebarSection: 'financeiro' }
+  },
+  {
+    path: 'advogado/rentabilidade',
+    component: AdvogadoShellPageComponent,
+    canActivate: [roleGuard('ADMIN', 'ADVOGADO')],
+    data: { sidebarSection: 'rentabilidade' }
   },
   { path: 'cliente', component: ModuloClienteComponent, canActivate: [authGuard] },
   { path: 'processo/:id', component: DetalhesProcessoComponent, canActivate: [authGuard] },

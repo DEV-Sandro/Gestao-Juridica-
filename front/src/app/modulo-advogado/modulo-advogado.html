@@ -1,8 +1,8 @@
 ﻿<div class="jp-layout fade-in">
   <aside class="jp-sidebar" [class.is-recolhida]="sidebarRecolhida" aria-label="Menu lateral do workspace">
     <div class="sidebar-brand">
-      <div class="brand-mark">
-        <mat-icon>balance</mat-icon>
+      <div class="brand-mark" aria-hidden="true">
+        <img src="assets/brand/justapro-mark.png" alt="" />
       </div>
       <div class="brand-texts">
         <strong class="font-heading">JustaPro</strong>
@@ -122,6 +122,17 @@
         <span>Financeiro</span>
       </a>
 
+      <a
+        class="nav-item" [matTooltip]="sidebarRecolhida ? 'Rentabilidade' : ''" matTooltipPosition="right"
+        routerLink="/advogado/rentabilidade"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        *ngIf="currentUser?.role !== 'CLIENT'"
+      >
+        <mat-icon>insights</mat-icon>
+        <span>Rentabilidade</span>
+      </a>
+
       <button type="button" class="nav-item text-danger" [matTooltip]="sidebarRecolhida ? 'Sair' : ''" matTooltipPosition="right" (click)="sair()">
         <mat-icon>logout</mat-icon>
         <span>Sair</span>
@@ -148,7 +159,7 @@
   >
     <div class="drawer-head">
       <div class="drawer-brand">
-        <div class="brand-mark"><mat-icon>balance</mat-icon></div>
+        <div class="brand-mark" aria-hidden="true"><img src="assets/brand/justapro-mark.png" alt="" /></div>
         <strong class="font-heading">JustaPro</strong>
       </div>
       <button type="button" class="drawer-close" (click)="fecharDrawer()" aria-label="Fechar menu">
@@ -188,6 +199,9 @@
       </a>
       <a class="drawer-item" routerLink="/advogado/financeiro" routerLinkActive="active" (click)="fecharDrawer()">
         <mat-icon>account_balance_wallet</mat-icon><span>Financeiro</span>
+      </a>
+      <a class="drawer-item" routerLink="/advogado/rentabilidade" routerLinkActive="active" (click)="fecharDrawer()" *ngIf="currentUser?.role !== 'CLIENT'">
+        <mat-icon>insights</mat-icon><span>Rentabilidade</span>
       </a>
 
       <span class="drawer-group-label">Conta</span>
@@ -301,9 +315,12 @@
         >
           <mat-icon>menu</mat-icon>
         </button>
-        <span class="breadcrumb-raiz">Workspace</span>
+        <span class="breadcrumb-raiz">JustaPro</span>
         <mat-icon class="breadcrumb-sep">chevron_right</mat-icon>
-        <h1 class="font-heading breadcrumb-atual">{{ topbarTitulo }}</h1>
+        <div class="topbar-title-group">
+          <span class="topbar-kicker">Workspace jurídico</span>
+          <h1 class="font-heading breadcrumb-atual">{{ topbarTituloCurto }}</h1>
+        </div>
       </nav>
 
       <div class="topbar-actions">
@@ -385,16 +402,6 @@
         <button
           type="button"
           class="icon-action desktop-only-action"
-          (click)="alternarModoClaroEscuro()"
-          [matTooltip]="temaAtual === 'light' ? 'Mudar para tema escuro' : 'Mudar para tema claro'"
-          [attr.aria-label]="temaAtual === 'light' ? 'Mudar para tema escuro' : 'Mudar para tema claro'"
-        >
-          <mat-icon>{{ temaAtual === 'light' ? 'dark_mode' : 'light_mode' }}</mat-icon>
-        </button>
-
-        <button
-          type="button"
-          class="icon-action desktop-only-action"
           [matMenuTriggerFor]="temaMenu"
           matTooltip="Escolher tema"
           aria-label="Escolher tema"
@@ -408,6 +415,12 @@
             {{ option.label }}
           </button>
         </mat-menu>
+
+        <button type="button" class="quick-create desktop-create" [matMenuTriggerFor]="criarMenu">
+          <mat-icon>add</mat-icon>
+          <span>Criar</span>
+          <mat-icon class="quick-create-arrow">expand_more</mat-icon>
+        </button>
 
         <button class="user-menu topbar-user" type="button" [matMenuTriggerFor]="perfilMenu">
           <div class="user-texts">
@@ -452,20 +465,26 @@
       </div>
     </header>
 
-    <section class="workspace-actions">
-      <button mat-flat-button class="btn-premium" type="button" (click)="abrirNovoProcesso()">
+    <mat-menu #criarMenu="matMenu" class="criar-menu">
+      <button mat-menu-item type="button" (click)="abrirNovoProcesso()">
         <mat-icon>add</mat-icon>
         Novo processo
       </button>
-
-      <button mat-stroked-button type="button" class="secondary-action" (click)="abrirNovoCliente()">
+      <button mat-menu-item type="button" (click)="abrirNovoCliente()">
         <mat-icon>person_add</mat-icon>
         Novo cliente
       </button>
-
-      <button mat-stroked-button type="button" class="secondary-action" (click)="abrirCentralDocumentos()">
+      <button mat-menu-item type="button" (click)="abrirCentralDocumentos()">
         <mat-icon>description</mat-icon>
         Documentos
+      </button>
+    </mat-menu>
+
+    <section class="workspace-actions" aria-label="Criar item" *ngIf="activeSidebarSection !== 'agenda'">
+      <button type="button" class="quick-create workspace-create" [matMenuTriggerFor]="criarMenu">
+        <mat-icon>add</mat-icon>
+        <span>Criar no JustaPro</span>
+        <mat-icon class="quick-create-arrow">expand_more</mat-icon>
       </button>
     </section>
 
@@ -532,7 +551,11 @@
       </section>
 
       <!-- Central de Prazos Inteligente — centro de comando triado por risco -->
-      <app-central-prazos [eventos]="agendaEventos" (resolver)="abrirEventoAgenda($event)"></app-central-prazos>
+      <app-central-prazos
+        [eventos]="agendaEventos"
+        (resolver)="abrirEventoAgenda($event)"
+        (cienciaAlterada)="alterarCienciaPrazo($event)"
+      ></app-central-prazos>
 
       <!-- KPIs horizontais: icone + numero + apoio na mesma linha (menos altura). -->
       <section class="stats-grid">
@@ -732,14 +755,7 @@
 
     <section class="jp-workspace" *ngIf="activeSidebarSection === 'agenda'">
       <section class="card-glass agenda-dedicated-card">
-        <div class="agenda-toolbar">
-          <button mat-flat-button class="btn-premium" type="button" (click)="abrirNovoCompromisso()">
-            <mat-icon>add</mat-icon>
-            Novo compromisso
-          </button>
-        </div>
-
-        <div class="agenda-filtros" role="group" aria-label="Filtrar agenda por categoria">
+        <div class="agenda-filtros" [class.is-all-selected]="todosFiltrosAgendaAtivos" role="group" aria-label="Filtrar agenda por categoria">
           <button
             type="button"
             class="agenda-chip"
@@ -763,7 +779,11 @@
           </button>
         </div>
 
-        <app-agenda-calendario [eventos]="agendaEventosFiltrados" (abrirEvento)="abrirEventoAgenda($event)"></app-agenda-calendario>
+        <app-agenda-calendario
+          [eventos]="agendaEventosFiltrados"
+          (abrirEvento)="abrirEventoAgenda($event)"
+          (criarCompromisso)="abrirNovoCompromisso($event)"
+        ></app-agenda-calendario>
       </section>
     </section>
 
@@ -777,6 +797,10 @@
 
     <section class="jp-workspace" *ngIf="activeSidebarSection === 'financeiro'">
       <app-financeiro-workspace></app-financeiro-workspace>
+    </section>
+
+    <section class="jp-workspace" *ngIf="activeSidebarSection === 'rentabilidade'">
+      <app-rentabilidade-workspace></app-rentabilidade-workspace>
     </section>
 
     <section class="jp-workspace" *ngIf="activeSidebarSection === 'processos'">

@@ -16,12 +16,16 @@ export interface PrazoTriado {
   ciente: boolean;
 }
 
+export interface AlteracaoCienciaPrazo {
+  evento: AgendaEvento;
+  ciente: boolean;
+}
+
 /**
  * Central de Prazos Inteligente — centro de comando triado por risco.
- * Reaproveita os eventos que o sistema já calcula (prazos de processos +
- * compromissos) e os organiza por urgência com semáforo verde/amarelo/vermelho,
- * confirmação de ciência (persistida) e ação "Resolver agora". Não depende de
- * nenhuma integração externa — é o analgésico entregue com dados que já existem.
+ * Reaproveita os prazos jurídicos do sistema e os organiza por urgência com
+ * semáforo verde/amarelo/vermelho, confirmação de ciência persistida e ação
+ * "Resolver agora".
  */
 @Component({
   selector: 'app-central-prazos',
@@ -33,19 +37,13 @@ export interface PrazoTriado {
 export class CentralPrazosComponent {
   @Input() eventos: AgendaEvento[] = [];
   @Output() resolver = new EventEmitter<AgendaEvento>();
+  @Output() cienciaAlterada = new EventEmitter<AlteracaoCienciaPrazo>();
 
-  // Ciência (confirmação de leitura) por evento — persistida no navegador do
-  // usuário. Numa fase seguinte vira campo no backend + escalonamento real.
-  private readonly CIENCIA_KEY = 'justapro-prazos-ciencia';
-  private ciencia = new Set<string>(this.lerCiencia());
-
-  // Categorias financeiras não são "prazos jurídicos" — ficam fora da central.
-  private readonly FINANCEIRAS = new Set(['RECEBIMENTO', 'PAGAMENTO']);
   private readonly STATUS_FINAIS = new Set(['Concluído', 'Arquivado', 'Cancelado', 'Indeferido']);
 
   get prazos(): PrazoTriado[] {
     const hoje = this.eventos
-      .filter((evento) => !this.FINANCEIRAS.has(evento.categoria) && !this.STATUS_FINAIS.has(evento.status))
+      .filter((evento) => evento.tipo === 'PRAZO' && !this.STATUS_FINAIS.has(evento.status))
       .map((evento) => {
         const dias = diferencaDiasParaPrazo(evento.data);
         return { evento, dias: dias ?? 9999 };
@@ -95,7 +93,7 @@ export class CentralPrazosComponent {
       dias,
       nivel,
       resumoDias: this.resumoDias(dias),
-      ciente: this.ciencia.has(evento.id)
+      ciente: evento.prazoCiente === true
     };
   }
 
@@ -115,30 +113,7 @@ export class CentralPrazosComponent {
 
   confirmarCiencia(prazo: PrazoTriado, evento?: Event): void {
     evento?.stopPropagation();
-    if (this.ciencia.has(prazo.evento.id)) {
-      this.ciencia.delete(prazo.evento.id);
-    } else {
-      this.ciencia.add(prazo.evento.id);
-    }
-    this.persistirCiencia();
-  }
-
-  private lerCiencia(): string[] {
-    try {
-      const bruto = localStorage.getItem(this.CIENCIA_KEY);
-      const lista = bruto ? (JSON.parse(bruto) as string[]) : [];
-      return Array.isArray(lista) ? lista : [];
-    } catch {
-      return [];
-    }
-  }
-
-  private persistirCiencia(): void {
-    try {
-      localStorage.setItem(this.CIENCIA_KEY, JSON.stringify(Array.from(this.ciencia)));
-    } catch {
-      /* armazenamento indisponível — ciência fica só na sessão */
-    }
+    this.cienciaAlterada.emit({ evento: prazo.evento, ciente: !prazo.ciente });
   }
 
   trackByPrazo(_: number, prazo: PrazoTriado): string {

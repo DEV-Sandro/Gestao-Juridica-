@@ -5,6 +5,7 @@ const { mesmoTenant } = require('../config/tenant');
 
 const TIPOS_PERMITIDOS = new Set(['HONORARIO', 'DESPESA', 'REEMBOLSO']);
 const STATUS_PERMITIDOS = new Set(['PENDENTE', 'PAGO', 'CANCELADO']);
+const CLASSIFICACOES_RENTABILIDADE_PERMITIDAS = new Set(['PENDENTE', 'GERAL']);
 const MAX_PARCELAS = 60;
 
 function normalizarTexto(valor, tamanhoMaximo, obrigatorio = false) {
@@ -141,6 +142,14 @@ function montarPayload(dados, atual = null) {
   const processoId = normalizarTexto(dados.processoId, 120);
   if (processoId !== undefined) payload.processoId = processoId;
 
+  if (dados.classificacaoRentabilidade !== undefined) {
+    const classificacao = String(dados.classificacaoRentabilidade || '').trim().toUpperCase();
+    if (!CLASSIFICACOES_RENTABILIDADE_PERMITIDAS.has(classificacao)) {
+      throw new Error('VALIDACAO_LANCAMENTO');
+    }
+    payload.classificacaoRentabilidade = classificacao;
+  }
+
   if (!atual) {
     if (!payload.descricao) throw new Error('VALIDACAO_LANCAMENTO');
     if (payload.valor === undefined || payload.valor === null) throw new Error('VALIDACAO_LANCAMENTO');
@@ -170,11 +179,24 @@ async function obterComAcesso(id, user) {
 
 // Herda cliente/advogado do processo vinculado, mantendo o padrao de
 // desnormalizacao ja usado no projeto (clienteNome dentro do processo).
-async function resolverVinculoProcesso(processoId) {
-  if (!processoId) return {};
+async function resolverVinculoProcesso(processoId, user) {
+  // Ao remover o processo, tambem removemos os campos desnormalizados dele.
+  if (!processoId) {
+    return {
+      clienteId: null,
+      clienteNome: null,
+      processoTitulo: null
+    };
+  }
 
   const processo = await processoRepository.buscarPorId(processoId);
-  if (!processo || processo.deletado) return {};
+  if (!processo || processo.deletado || !mesmoTenant(processo, user.tenantId)) {
+    throw new Error('PROCESSO_NAO_ENCONTRADO');
+  }
+
+  if (user.role === 'ADVOGADO' && processo.advogadoId && processo.advogadoId !== user.uid) {
+    throw new Error('ACESSO_NEGADO');
+  }
 
   return {
     clienteId: processo.clienteId || null,
@@ -214,7 +236,7 @@ async function criarLancamento(dados, user) {
   if (user.role === 'CLIENT') throw new Error('ACESSO_NEGADO');
 
   const payload = montarPayload(dados);
-  const vinculo = await resolverVinculoProcesso(payload.processoId);
+  const vinculo = payload.processoId ? await resolverVinculoProcesso(payload.processoId, user) : {};
 
   const totalParcelas = Math.min(Math.max(Number(dados.parcelas) || 1, 1), MAX_PARCELAS);
   const agora = new Date().toISOString();
@@ -222,6 +244,9 @@ async function criarLancamento(dados, user) {
   const base = {
     ...payload,
     ...vinculo,
+    classificacaoRentabilidade: payload.processoId
+      ? 'PROCESSO'
+      : payload.classificacaoRentabilidade || 'PENDENTE',
     advogadoId: vinculo.advogadoId || user.uid,
     deletado: false,
     tenantId: user.tenantId,
@@ -284,6 +309,20 @@ async function atualizarLancamento(id, dados, user) {
   const atual = await obterComAcesso(id, user);
   const payload = montarPayload(dados, atual);
 
+  const processoFoiInformado = Object.prototype.hasOwnProperty.call(payload, 'processoId');
+  let vinculo = {};
+
+  if (processoFoiInformado) {
+    vinculo = await resolverVinculoProcesso(payload.processoId, user);
+    // O processo e a fonte de verdade: um valor ligado a ele nao pode ficar
+    // classificado como resultado geral por engano.
+    payload.classificacaoRentabilidade = payload.processoId
+      ? 'PROCESSO'
+      : payload.classificacaoRentabilidade || 'PENDENTE';
+  } else if (atual.processoId && payload.classificacaoRentabilidade) {
+    delete payload.classificacaoRentabilidade;
+  }
+
   if (!Object.keys(payload).length && dados.pago === undefined) {
     throw new Error('VALIDACAO_LANCAMENTO');
   }
@@ -301,16 +340,22 @@ async function atualizarLancamento(id, dados, user) {
 
   await lancamentoRepository.atualizar(id, {
     ...payload,
+    ...vinculo,
     atualizadoEm: new Date().toISOString(),
     atualizadoPor: user.uid
   });
 
   await auditoriaService.registrarEvento({
-    acao: dados.pago === true ? 'BAIXA_PAGAMENTO' : 'ATUALIZAR',
+    acao: dados.pago === true ? 'BAIXA_PAGAMENTO' : processoFoiInformado ? 'VINCULAR_PROCESSO' : 'ATUALIZAR',
     entidade: 'LANCAMENTO',
     entidadeId: id,
     usuario: user,
-    detalhes: { campos: Object.keys(payload) }
+    detalhes: {
+      campos: Object.keys(payload),
+      processoIdAnterior: atual.processoId || null,
+      processoId: processoFoiInformado ? payload.processoId || null : atual.processoId || null,
+      classificacaoRentabilidade: payload.classificacaoRentabilidade || atual.classificacaoRentabilidade || 'PENDENTE'
+    }
   });
 
   const atualizado = await lancamentoRepository.buscarPorId(id);

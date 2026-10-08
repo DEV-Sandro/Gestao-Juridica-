@@ -26,8 +26,9 @@ import { ClienteRecord } from '../models/client.model';
 import { ClientesWorkspaceComponent } from '../features/workspace/clientes-workspace/clientes-workspace.component';
 import { DocumentosWorkspaceComponent } from '../features/workspace/documentos-workspace/documentos-workspace.component';
 import { FinanceiroWorkspaceComponent } from '../features/workspace/financeiro-workspace/financeiro-workspace.component';
+import { RentabilidadeWorkspaceComponent } from '../features/workspace/rentabilidade-workspace/rentabilidade-workspace.component';
 import { AgendaCalendarioComponent } from './agenda-calendario/agenda-calendario.component';
-import { CentralPrazosComponent } from './central-prazos/central-prazos.component';
+import { AlteracaoCienciaPrazo, CentralPrazosComponent } from './central-prazos/central-prazos.component';
 import {
   CompromissoDialogData,
   CompromissoDialogResult,
@@ -130,7 +131,14 @@ interface ProcessoClienteForm {
   cep: string;
 }
 
-type SidebarSection = 'dashboard' | 'processos' | 'clientes' | 'agenda' | 'documentos' | 'financeiro';
+type SidebarSection =
+  | 'dashboard'
+  | 'processos'
+  | 'clientes'
+  | 'agenda'
+  | 'documentos'
+  | 'financeiro'
+  | 'rentabilidade';
 
 @Component({
   selector: 'app-modulo-advogado',
@@ -158,7 +166,8 @@ type SidebarSection = 'dashboard' | 'processos' | 'clientes' | 'agenda' | 'docum
     CentralPrazosComponent,
     ClientesWorkspaceComponent,
     DocumentosWorkspaceComponent,
-    FinanceiroWorkspaceComponent
+    FinanceiroWorkspaceComponent,
+    RentabilidadeWorkspaceComponent
   ],
   providers: [
     { provide: MAT_DATE_LOCALE, useValue: 'pt-BR' },
@@ -265,6 +274,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   paginaAtualProcessos = 1;
   temaAtual: ThemeOption['value'] = 'corporate';
   currentUser: AppUser | null = null;
+  membrosAgenda: AppUser[] = [];
   activeSidebarSection: SidebarSection = 'dashboard';
   dashboard: DashboardResumo | null = null;
   sidebarRecolhida = localStorage.getItem('justapro-sidebar') === 'recolhida';
@@ -315,6 +325,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     this.carregarCompromissos();
     this.carregarLancamentosAgenda();
     this.carregarDashboard();
+    this.carregarMembrosAgenda();
     this.iniciarBuscaGlobal();
   }
 
@@ -567,8 +578,31 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
         return 'Documentos juridicos editaveis';
       case 'processos':
         return 'Pipeline completo dos processos';
+      case 'financeiro':
+        return 'Fluxo financeiro do escritório';
+      case 'rentabilidade':
+        return 'Rentabilidade inteligente';
       default:
         return 'Mesa de controle dos processos';
+    }
+  }
+
+  get topbarTituloCurto(): string {
+    switch (this.activeSidebarSection) {
+      case 'agenda':
+        return 'Agenda';
+      case 'clientes':
+        return 'Clientes';
+      case 'documentos':
+        return 'Documentos';
+      case 'processos':
+        return 'Processos';
+      case 'financeiro':
+        return 'Financeiro';
+      case 'rentabilidade':
+        return 'Rentabilidade';
+      default:
+        return 'Visão geral';
     }
   }
 
@@ -582,6 +616,10 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
         return 'Selecione um modelo, puxe os dados do cliente e gere um DOCX pronto para edicao externa.';
       case 'processos':
         return 'Acompanhe cada caso com alertas inteligentes, filtros avancados e acoes operacionais em um so fluxo.';
+      case 'financeiro':
+        return 'Registre honorários, despesas e recebimentos para manter o fluxo de caixa atualizado.';
+      case 'rentabilidade':
+        return 'Indicadores automáticos de lucro, horas e retorno por processo, cliente e área jurídica.';
       default:
         return 'Decisoes mais rapidas, prazos sob controle e leitura clara do que exige acao agora.';
     }
@@ -655,7 +693,8 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
       value === 'clientes' ||
       value === 'agenda' ||
       value === 'documentos' ||
-      value === 'financeiro'
+      value === 'financeiro' ||
+      value === 'rentabilidade'
     ) {
       return value;
     }
@@ -995,10 +1034,71 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     this.abrirCaso(evento.processoId);
   }
 
+  alterarCienciaPrazo({ evento, ciente }: AlteracaoCienciaPrazo): void {
+    if (evento.origem === 'COMPROMISSO' && evento.compromissoId) {
+      const id = evento.compromissoId.replace(/^compromisso-/, '');
+      this.authService.confirmarCienciaCompromisso(id, ciente).subscribe({
+        next: (resultado) => {
+          this.compromissosRaw = this.compromissosRaw.map((compromisso) =>
+            compromisso.id === id
+              ? {
+                  ...compromisso,
+                  deadlineAcknowledgedAt: resultado.deadlineAcknowledgedAt,
+                  deadlineAcknowledgedBy: resultado.deadlineAcknowledgedBy,
+                  deadlineAcknowledgedByName: resultado.deadlineAcknowledgedByName
+                }
+              : compromisso
+          );
+          this.atualizarAgendaEventos();
+          this.snack.open(ciente ? 'Ciência do prazo confirmada.' : 'Ciência do prazo removida.', 'OK', {
+            duration: 2800
+          });
+        },
+        error: (error) =>
+          this.snack.open(error?.error?.mensagem || 'Não foi possível registrar a ciência do prazo.', 'Fechar', {
+            duration: 4200,
+            panelClass: ['snack-error']
+          })
+      });
+      return;
+    }
+
+    if (evento.origem === 'PROCESSO' && evento.processoId) {
+      this.authService.confirmarCienciaPrazoProcesso(evento.processoId, ciente).subscribe({
+        next: (resultado) => {
+          this.listaDeProcessosRaw = this.listaDeProcessosRaw.map((processo) =>
+            processo.id === evento.processoId
+              ? {
+                  ...processo,
+                  prazoCienteEm: resultado.prazoCienteEm,
+                  prazoCientePor: resultado.prazoCientePor,
+                  prazoCientePorNome: resultado.prazoCientePorNome
+                }
+              : processo
+          );
+          this.atualizarAgendaEventos();
+          this.snack.open(ciente ? 'Ciência do prazo confirmada.' : 'Ciência do prazo removida.', 'OK', {
+            duration: 2800
+          });
+        },
+        error: (error) =>
+          this.snack.open(error?.error?.mensagem || 'Não foi possível registrar a ciência do prazo.', 'Fechar', {
+            duration: 4200,
+            panelClass: ['snack-error']
+          })
+      });
+    }
+  }
+
   abrirNovoCompromisso(dataIso?: string): void {
     this.abrirDialogCompromisso({
       compromisso: null,
       processos: this.listaDeProcessosRaw.map((p) => ({ id: p.id, titulo: p.tipo })),
+      membros: this.membrosAgenda.map((membro) => ({
+        uid: membro.uid,
+        nome: membro.displayName || membro.email || 'Membro da equipe',
+        cargo: membro.cargo
+      })),
       dataPreSelecionada: dataIso || null
     });
   }
@@ -1018,6 +1118,11 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     this.abrirDialogCompromisso({
       compromisso,
       processos: this.listaDeProcessosRaw.map((p) => ({ id: p.id, titulo: p.tipo })),
+      membros: this.membrosAgenda.map((membro) => ({
+        uid: membro.uid,
+        nome: membro.displayName || membro.email || 'Membro da equipe',
+        cargo: membro.cargo
+      })),
       dataPreSelecionada: null
     });
   }
@@ -1058,14 +1163,20 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
         request$.subscribe({
           next: (resposta) => {
             this.carregarCompromissos();
+            const ocorrenciasCriadas = 'ocorrenciasCriadas' in resposta && typeof resposta.ocorrenciasCriadas === 'number'
+              ? resposta.ocorrenciasCriadas
+              : 0;
+            const mensagemBase = ocorrenciasCriadas > 1
+              ? `${ocorrenciasCriadas} compromissos recorrentes foram criados.`
+              : 'Compromisso salvo com sucesso.';
             if (resposta.conflitos?.length) {
               this.snack.open(
-                `Compromisso salvo, mas há ${resposta.conflitos.length} conflito(s) de horário na sua agenda.`,
+                `${mensagemBase} Há ${resposta.conflitos.length} conflito(s) de horário para você ou participantes.`,
                 'OK',
                 { duration: 5000, panelClass: ['snack-error'] }
               );
             } else {
-              this.snack.open('Compromisso salvo com sucesso.', 'OK', {
+              this.snack.open(mensagemBase, 'OK', {
                 duration: 2800,
                 panelClass: ['snack-success']
               });
@@ -1200,6 +1311,17 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
           duration: 3600,
           panelClass: ['snack-error']
         });
+      }
+    });
+  }
+
+  private carregarMembrosAgenda(): void {
+    this.authService.listarEquipe().subscribe({
+      next: (membros) => {
+        this.membrosAgenda = (membros || []).filter((membro) => membro.ativo !== false);
+      },
+      error: () => {
+        this.membrosAgenda = [];
       }
     });
   }

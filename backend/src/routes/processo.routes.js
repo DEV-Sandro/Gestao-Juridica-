@@ -14,6 +14,7 @@ router.get('/:id/etapas', controller.listarEtapas);
 
 router.post('/', roleMiddleware('ADVOGADO', 'ADMIN'), controller.criar);
 router.put('/:id', roleMiddleware('ADVOGADO', 'ADMIN'), controller.atualizar);
+router.post('/:id/prazo/ciencia', roleMiddleware('ADVOGADO', 'ADMIN'), controller.confirmarCienciaPrazo);
 router.put('/:id/orcamento', roleMiddleware('ADVOGADO', 'ADMIN'), controller.atualizarOrcamento);
 router.post(
   '/:id/orcamento/converter-contrato',

@@ -37,6 +37,27 @@ service cloud.firestore {
             || get(/databases/$(database)/documents/usuarios/$(meuUid())).data.role == 'ADMIN');
     }
 
+    // Modelo SaaS v2: o tenant fica na raiz do caminho. O claim reduz leituras
+    // para a sessao mais comum; o documento de membro e a verificacao de apoio
+    // para token recem-criado, usuarios multi-escritorio e defesa em profundidade.
+    function membroAtivoDoTenant(tenantId) {
+      return exists(/databases/$(database)/documents/tenants/$(tenantId)/members/$(meuUid()))
+        && get(/databases/$(database)/documents/tenants/$(tenantId)/members/$(meuUid())).data.isActive == true;
+    }
+
+    function possuiClaimDoTenant(tenantId) {
+      return autenticado() && request.auth.token.tenantId == tenantId;
+    }
+
+    function ehMembroDoTenant(tenantId) {
+      return autenticado() && (possuiClaimDoTenant(tenantId) || membroAtivoDoTenant(tenantId));
+    }
+
+    function ehAdminDoTenant(tenantId) {
+      return membroAtivoDoTenant(tenantId)
+        && get(/databases/$(database)/documents/tenants/$(tenantId)/members/$(meuUid())).data.role == 'admin';
+    }
+
     // Agenda individual: advogado comum so enxerga os proprios processos.
     // ADMIN mantem visao geral do escritorio.
     function podeVerProcesso(processo) {
@@ -102,6 +123,63 @@ service cloud.firestore {
     match /templates/{templateId} {
       allow read: if ehAdvogado() && mesmoTenant(resource.data);
       allow write: if false;
+    }
+
+    // ============================================================
+    // MODELO HIERARQUICO MULTI-TENANT (SaaS v2)
+    // ============================================================
+    // Dados globais de identidade/preferencias. Dados juridicos nunca devem
+    // ficar aqui: pertencem a um tenant e vivem apenas abaixo de /tenants.
+    match /users/{uid} {
+      allow read: if autenticado() && meuUid() == uid;
+      allow write: if false;
+    }
+
+    match /tenants/{tenantId} {
+      allow read: if ehMembroDoTenant(tenantId);
+      // Criacao de tenant e mudanca de plano passam pelo backend/Admin SDK.
+      allow create: if false;
+      allow update, delete: if ehAdminDoTenant(tenantId);
+
+      match /members/{uid} {
+        allow read: if ehMembroDoTenant(tenantId);
+        allow create, update, delete: if ehAdminDoTenant(tenantId);
+      }
+
+      match /clients/{clientId} {
+        allow read, create, update: if ehMembroDoTenant(tenantId);
+        allow delete: if ehAdminDoTenant(tenantId);
+      }
+
+      match /processes/{processId} {
+        allow read, create, update: if ehMembroDoTenant(tenantId);
+        allow delete: if ehAdminDoTenant(tenantId);
+      }
+
+      // A Fila de Acao consulta somente status + riskLevel + dueAt. O campo de
+      // risco e mantido pelo job horario, nao calculado pelo navegador.
+      match /deadlines/{deadlineId} {
+        allow read, create, update: if ehMembroDoTenant(tenantId);
+        allow delete: if ehAdminDoTenant(tenantId);
+      }
+
+      match /timeEntries/{entryId} {
+        allow read: if ehMembroDoTenant(tenantId);
+        allow create: if ehMembroDoTenant(tenantId)
+          && request.resource.data.userId == meuUid();
+        allow update: if ehMembroDoTenant(tenantId)
+          && (ehAdminDoTenant(tenantId)
+            || (resource.data.userId == meuUid()
+              && request.resource.data.userId == resource.data.userId));
+        allow delete: if ehMembroDoTenant(tenantId)
+          && (ehAdminDoTenant(tenantId) || resource.data.userId == meuUid());
+      }
+
+      // Novas subcolecoes so recebem leitura direta. Escritas fora das colecoes
+      // explicitamente auditadas continuam exclusivas do backend.
+      match /{collection}/{document=**} {
+        allow read: if ehMembroDoTenant(tenantId);
+      }
     }
 
     // ============================================================
