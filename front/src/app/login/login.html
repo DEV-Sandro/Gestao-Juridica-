@@ -1,36 +1,46 @@
 <div class="login-wrapper fade-in">
   <div class="login-card card-glass">
+    <button class="login-theme" type="button" (click)="alternarTema()" [attr.aria-label]="temaAtual === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro'">
+      <mat-icon>{{ temaAtual === 'light' ? 'dark_mode' : 'light_mode' }}</mat-icon>
+      {{ temaAtual === 'light' ? 'Modo escuro' : 'Modo claro' }}
+    </button>
     
     <div class="brand-header">
-      <div class="logo-shield"><mat-icon>balance</mat-icon></div>
+      <div class="logo-shield"><img src="assets/justapro-mark.svg" alt="Escudo e balança da JustaPro" /></div>
       <h1 class="font-heading">JustaPro</h1>
+      <p>Seu escritório, organizado em um só lugar.</p>
     </div>
 
     <form (ngSubmit)="acessar()" class="login-form">
-      <mat-form-field appearance="outline">
-        <mat-label>E-mail Profissional</mat-label>
-        <mat-icon matPrefix class="icon-muted">email</mat-icon>
-        <input matInput type="email" placeholder="nome@escritorio.com" [(ngModel)]="email" name="email" required>
-      </mat-form-field>
+      <label class="login-field">
+        <span>E-mail profissional</span>
+        <span class="login-input">
+          <mat-icon aria-hidden="true">mail</mat-icon>
+          <input type="email" placeholder="voce@escritorio.com" [(ngModel)]="email" name="email" autocomplete="username" required />
+        </span>
+      </label>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Senha de Acesso</mat-label>
-        <mat-icon matPrefix class="icon-muted">lock</mat-icon>
-        <input matInput [type]="mostrarSenha ? 'text' : 'password'" [(ngModel)]="senha" name="senha" required>
-        <button mat-icon-button matSuffix type="button" (click)="mostrarSenha = !mostrarSenha">
-          <mat-icon class="icon-muted">{{ mostrarSenha ? 'visibility_off' : 'visibility' }}</mat-icon>
-        </button>
-      </mat-form-field>
+      <label class="login-field">
+        <span>Senha</span>
+        <span class="login-input">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          <input [type]="mostrarSenha ? 'text' : 'password'" [(ngModel)]="senha" name="senha" autocomplete="current-password" required />
+          <button type="button" class="password-toggle" (click)="mostrarSenha = !mostrarSenha" [attr.aria-label]="mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'">
+            <mat-icon>{{ mostrarSenha ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+        </span>
+      </label>
 
       <div class="form-options">
-        <mat-checkbox color="primary">Lembrar de mim</mat-checkbox>
         <a routerLink="/convite/aceitar" class="forgot-link">Finalizar convite</a>
       </div>
 
       <button mat-flat-button class="btn-premium" type="submit" [disabled]="carregando">
-        {{ carregando ? 'Autenticando...' : 'Acessar Workspace' }}
+        {{ carregando ? 'Autenticando...' : 'Entrar no sistema' }}
       </button>
     </form>
+
+    <a routerLink="/politica-de-privacidade" class="privacy-link">Política de Privacidade</a>
     
   </div>
 </div>

@@ -100,14 +100,13 @@ export interface TimelineItem {
 }
 
 export interface ThemeOption {
-  value: 'light' | 'corporate' | 'dark';
+  value: 'light' | 'dark';
   label: string;
   icon: string;
 }
 
 export const THEME_OPTIONS: ThemeOption[] = [
   { value: 'light', label: 'Modo Claro', icon: 'light_mode' },
-  { value: 'corporate', label: 'Azul Corporativo', icon: 'business' },
   { value: 'dark', label: 'Modo Escuro', icon: 'dark_mode' }
 ];
 

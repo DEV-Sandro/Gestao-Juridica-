@@ -2,6 +2,7 @@ export interface ClienteRecord {
   id: string;
   nome: string;
   cpf: string | null;
+  cnpj: string | null;
   email: string | null;
   telefone: string | null;
   documentoSecundario: string | null;
@@ -21,6 +22,7 @@ export interface ClienteRecord {
 export interface ClientePayload {
   nome: string;
   cpf?: string | null;
+  cnpj?: string | null;
   email?: string | null;
   telefone?: string | null;
   documentoSecundario?: string | null;

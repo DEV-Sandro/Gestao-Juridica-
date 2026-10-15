@@ -5,6 +5,7 @@ import { DetalhesProcessoComponent } from './detalhes-processo/detalhes-processo
 import { ModuloAdvogadoComponent } from './modulo-advogado/modulo-advogado';
 import { ModuloClienteComponent } from './modulo-cliente/modulo-cliente';
 import { AcceptInviteComponent } from './features/invite/accept-invite.component';
+import { PoliticaPrivacidadeComponent } from './politica-privacidade/politica-privacidade';
 import { authGuard, roleGuard } from './guards/role.guard';
 
 export const routes: Routes = [
@@ -12,6 +13,7 @@ export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'convite/aceitar', component: AcceptInviteComponent },
   { path: 'ajuda', component: AjudaComponent },
+  { path: 'politica-de-privacidade', component: PoliticaPrivacidadeComponent },
 
   // Rotas da Jornada
   { path: 'advogado', redirectTo: 'advogado/dashboard', pathMatch: 'full' },

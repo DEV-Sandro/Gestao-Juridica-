@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -10,10 +10,13 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { AuthService } from '../../../auth.service';
 import { ClientePayload, ClienteRecord } from '../../../models/client.model';
+import { ViaCepService } from '../../../shared/viacep.service';
+import { BrasilApiCnpjService } from '../../../shared/brasilapi-cnpj.service';
 
 const FORM_VAZIO: ClientePayload = {
   nome: '',
   cpf: '',
+  cnpj: '',
   email: '',
   telefone: '',
   documentoSecundario: '',
@@ -43,11 +46,15 @@ const FORM_VAZIO: ClientePayload = {
   templateUrl: './clientes-workspace.component.html',
   styleUrls: ['./clientes-workspace.component.scss']
 })
-export class ClientesWorkspaceComponent implements OnInit {
+export class ClientesWorkspaceComponent implements OnInit, OnDestroy {
   readonly clientesPorPagina = 15;
 
   private authService = inject(AuthService);
   private snack = inject(MatSnackBar);
+  private viaCep = inject(ViaCepService);
+  private brasilApiCnpj = inject(BrasilApiCnpjService);
+  private consultaCep?: AbortController;
+  private consultaCnpj?: AbortController;
 
   clientes: ClienteRecord[] = [];
   carregando = false;
@@ -57,9 +64,19 @@ export class ClientesWorkspaceComponent implements OnInit {
   buscaCliente = '';
   paginaAtual = 1;
   form: ClientePayload = { ...FORM_VAZIO };
+  tipoDocumento: 'CPF' | 'CNPJ' = 'CPF';
+  consultandoCep = false;
+  mensagemCep = '';
+  consultandoCnpj = false;
+  mensagemCnpj = '';
 
   ngOnInit(): void {
     this.carregar();
+  }
+
+  ngOnDestroy(): void {
+    this.consultaCep?.abort();
+    this.consultaCnpj?.abort();
   }
 
   carregar(): void {
@@ -84,18 +101,29 @@ export class ClientesWorkspaceComponent implements OnInit {
   }
 
   novoCliente(): void {
+    this.consultaCep?.abort();
+    this.consultaCnpj?.abort();
     this.clienteSelecionadoId = null;
     this.form = { ...FORM_VAZIO };
+    this.tipoDocumento = 'CPF';
+    this.mensagemCep = '';
+    this.mensagemCnpj = '';
   }
 
   selecionarCliente(cliente: ClienteRecord): void {
+    this.consultaCep?.abort();
+    this.consultaCnpj?.abort();
     this.clienteSelecionadoId = cliente.id;
+    const cnpjLegado = (cliente.documentoSecundario || '').replace(/[^A-Za-z0-9]/g, '').length === 14
+      ? cliente.documentoSecundario : null;
+    this.tipoDocumento = cliente.cnpj || cnpjLegado ? 'CNPJ' : 'CPF';
     this.form = {
       nome: cliente.nome,
-      cpf: cliente.cpf,
+      cpf: this.tipoDocumento === 'CPF' ? cliente.cpf : null,
+      cnpj: cliente.cnpj || cnpjLegado,
       email: cliente.email,
       telefone: cliente.telefone,
-      documentoSecundario: cliente.documentoSecundario,
+      documentoSecundario: cnpjLegado ? null : cliente.documentoSecundario,
       endereco: cliente.endereco,
       numero: cliente.numero,
       complemento: cliente.complemento,
@@ -105,21 +133,96 @@ export class ClientesWorkspaceComponent implements OnInit {
       cep: cliente.cep,
       observacoes: cliente.observacoes
     };
+    this.mensagemCep = '';
+    this.mensagemCnpj = '';
+  }
+
+  alterarTipoDocumento(tipo: 'CPF' | 'CNPJ'): void {
+    this.consultaCnpj?.abort();
+    this.mensagemCnpj = '';
+    this.tipoDocumento = tipo;
+    if (tipo === 'CPF') this.form.cnpj = null;
+    else this.form.cpf = null;
+  }
+
+  aoAlterarCnpj(valor: string): void {
+    this.consultaCnpj?.abort();
+    this.consultandoCnpj = false;
+    this.mensagemCnpj = '';
+    this.form.cnpj = valor.toUpperCase().slice(0, 18);
+  }
+
+  async consultarCnpj(): Promise<void> {
+    const consulta = new AbortController();
+    this.consultaCnpj?.abort();
+    this.consultaCnpj = consulta;
+    this.consultandoCnpj = true;
+    this.mensagemCnpj = '';
+    try {
+      const dados = await this.brasilApiCnpj.buscar(this.form.cnpj || '', consulta.signal);
+      if (consulta.signal.aborted || this.tipoDocumento !== 'CNPJ') return;
+      this.form.nome ||= dados.razaoSocial;
+      this.form.cep ||= dados.cep.replace(/\D/g, '').replace(/^(\d{5})(\d{3})$/, '$1-$2');
+      this.form.endereco ||= dados.logradouro;
+      this.form.numero ||= dados.numero;
+      this.form.complemento ||= dados.complemento;
+      this.form.bairro ||= dados.bairro;
+      this.form.cidade ||= dados.cidade;
+      this.form.estado ||= dados.estado;
+      this.mensagemCnpj = 'Dados encontrados. Os campos vazios foram preenchidos; confira antes de salvar.';
+    } catch (error) {
+      if (!consulta.signal.aborted) {
+        this.mensagemCnpj = error instanceof Error ? error.message : 'Não foi possível consultar o CNPJ.';
+      }
+    } finally {
+      if (this.consultaCnpj === consulta) this.consultandoCnpj = false;
+    }
+  }
+
+  aoAlterarCep(valor: string): void {
+    this.consultaCep?.abort();
+    this.consultandoCep = false;
+    this.mensagemCep = '';
+    const digitos = valor.replace(/\D/g, '').slice(0, 8);
+    this.form.cep = digitos.length > 5 ? `${digitos.slice(0, 5)}-${digitos.slice(5)}` : digitos;
+    if (digitos.length === 8) void this.buscarCep(digitos);
+  }
+
+  private async buscarCep(cep: string): Promise<void> {
+    const consulta = new AbortController();
+    this.consultaCep = consulta;
+    this.consultandoCep = true;
+    try {
+      const endereco = await this.viaCep.buscar(cep, consulta.signal);
+      if (consulta.signal.aborted) return;
+      this.form.endereco = endereco.logradouro || '';
+      this.form.bairro = endereco.bairro || '';
+      this.form.cidade = endereco.localidade || this.form.cidade;
+      this.form.estado = endereco.uf || this.form.estado;
+      this.mensagemCep = 'Endereço localizado. Confira o número e os demais dados.';
+    } catch (error) {
+      if (!consulta.signal.aborted) {
+        this.mensagemCep = error instanceof Error ? error.message : 'Não foi possível consultar o CEP.';
+      }
+    } finally {
+      if (this.consultaCep === consulta) this.consultandoCep = false;
+    }
   }
 
   get clientesFiltrados(): ClienteRecord[] {
     const termo = this.buscaCliente.trim().toLowerCase();
+    const termoDocumento = termo.replace(/[^a-z0-9]/g, '');
 
     if (!termo) {
       return this.clientes;
     }
 
     return this.clientes.filter((cliente) => {
-      const documento = `${cliente.cpf || ''}${cliente.documentoSecundario || ''}`.toLowerCase();
+      const documento = `${cliente.cpf || ''}${cliente.cnpj || ''}${cliente.documentoSecundario || ''}`.toLowerCase().replace(/[^a-z0-9]/g, '');
       return (
         cliente.nome.toLowerCase().includes(termo) ||
         (cliente.email || '').toLowerCase().includes(termo) ||
-        documento.includes(termo)
+        (termoDocumento && documento.includes(termoDocumento))
       );
     });
   }
@@ -173,12 +276,24 @@ export class ClientesWorkspaceComponent implements OnInit {
       return;
     }
 
+    const documento = (this.tipoDocumento === 'CPF' ? this.form.cpf : this.form.cnpj) || '';
+    const caracteres = documento.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const formatoValido = this.tipoDocumento === 'CPF'
+      ? /^\d{11}$/.test(caracteres)
+      : /^[A-Z0-9]{12}\d{2}$/.test(caracteres);
+    if (caracteres && !formatoValido) {
+      this.snack.open(`Informe um ${this.tipoDocumento} no formato válido.`, 'OK', { duration: 3500 });
+      return;
+    }
+
     this.salvando = true;
     const emEdicao = !!this.clienteSelecionadoId;
 
     const payload: ClientePayload = {
       ...this.form,
       nome: this.form.nome.trim(),
+      cpf: this.tipoDocumento === 'CPF' ? this.form.cpf : null,
+      cnpj: this.tipoDocumento === 'CNPJ' ? this.form.cnpj : null,
       estado: this.form.estado?.trim().toUpperCase() || null
     };
 

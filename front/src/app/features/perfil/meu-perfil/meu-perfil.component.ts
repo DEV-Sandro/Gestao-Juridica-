@@ -65,8 +65,7 @@ export class MeuPerfilComponent implements OnInit, OnDestroy {
   private sub?: Subscription;
 
   ngOnInit(): void {
-    const temaSalvo = localStorage.getItem('justapro-theme') || 'corporate';
-    document.body.setAttribute('data-theme', temaSalvo);
+    document.body.setAttribute('data-theme', localStorage.getItem('justapro-theme') === 'dark' ? 'dark' : 'light');
 
     this.sub = this.authService.currentUser$.subscribe((user) => {
       this.user = user;

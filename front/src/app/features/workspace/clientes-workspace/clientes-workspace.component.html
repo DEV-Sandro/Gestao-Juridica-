@@ -28,7 +28,7 @@
       <mat-form-field appearance="outline" class="saas-search-field">
         <mat-label>Pesquisar cliente</mat-label>
         <mat-icon matPrefix>search</mat-icon>
-        <input matInput [(ngModel)]="buscaCliente" (ngModelChange)="onBuscaClienteChange()" placeholder="Nome, CPF ou e-mail" />
+        <input matInput [(ngModel)]="buscaCliente" (ngModelChange)="onBuscaClienteChange()" placeholder="Nome, CPF, CNPJ ou e-mail" />
       </mat-form-field>
 
       <div class="loading" *ngIf="carregando">
@@ -55,7 +55,7 @@
       >
         <div>
           <strong>{{ cliente.nome }}</strong>
-          <span>{{ cliente.cpf || 'CPF nao informado' }}</span>
+          <span>{{ cliente.cpf || cliente.cnpj || 'Documento não informado' }}</span>
         </div>
         <small>{{ cliente.email || cliente.telefone || 'Sem contato principal' }}</small>
       </button>
@@ -86,22 +86,41 @@
         <span class="editor-state" *ngIf="clienteSelecionadoId">Cadastro ativo</span>
       </div>
 
-      <p class="editor-helper">
-        Campos sem icone agora mantem o mesmo conforto visual dos campos com prefixo. O cadastro tambem pode ser arquivado sem perder historico juridico.
-      </p>
+      <p class="editor-helper">Mantenha os dados de contato e endereço atualizados para processos e documentos.</p>
+
+      <div class="document-type" role="group" aria-label="Tipo de documento do cliente">
+        <button type="button" [class.active]="tipoDocumento === 'CPF'" (click)="alterarTipoDocumento('CPF')">Pessoa física · CPF</button>
+        <button type="button" [class.active]="tipoDocumento === 'CNPJ'" (click)="alterarTipoDocumento('CNPJ')">Pessoa jurídica · CNPJ</button>
+      </div>
 
       <div class="form-grid">
         <mat-form-field appearance="outline">
-          <mat-label>Nome completo</mat-label>
+          <mat-label>{{ tipoDocumento === 'CPF' ? 'Nome completo' : 'Razão social' }}</mat-label>
           <mat-icon matPrefix>badge</mat-icon>
           <input matInput [(ngModel)]="form.nome" />
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="outline" *ngIf="tipoDocumento === 'CPF'">
           <mat-label>CPF</mat-label>
           <mat-icon matPrefix>fingerprint</mat-icon>
-          <input matInput [(ngModel)]="form.cpf" />
+          <input matInput [(ngModel)]="form.cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" />
         </mat-form-field>
+
+        <mat-form-field appearance="outline" *ngIf="tipoDocumento === 'CNPJ'">
+          <mat-label>CNPJ</mat-label>
+          <mat-icon matPrefix>business</mat-icon>
+          <input matInput [ngModel]="form.cnpj" (ngModelChange)="aoAlterarCnpj($event)" inputmode="text" maxlength="18" placeholder="00.000.000/E08G-12" />
+        </mat-form-field>
+
+        <div class="cnpj-lookup span-2" *ngIf="tipoDocumento === 'CNPJ'">
+          <button mat-stroked-button type="button" (click)="consultarCnpj()" [disabled]="consultandoCnpj || !form.cnpj">
+            <mat-spinner *ngIf="consultandoCnpj" diameter="18"></mat-spinner>
+            <mat-icon *ngIf="!consultandoCnpj">manage_search</mat-icon>
+            {{ consultandoCnpj ? 'Consultando...' : 'Buscar dados do CNPJ' }}
+          </button>
+          <small>Consulta opcional à BrasilAPI. O CNPJ será enviado para preencher campos vazios.</small>
+          <p *ngIf="mensagemCnpj" role="status">{{ mensagemCnpj }}</p>
+        </div>
 
         <mat-form-field appearance="outline">
           <mat-label>E-mail</mat-label>
@@ -124,11 +143,15 @@
         <mat-form-field appearance="outline">
           <mat-label>CEP</mat-label>
           <mat-icon matPrefix>markunread_mailbox</mat-icon>
-          <input matInput [(ngModel)]="form.cep" />
+          <input matInput [ngModel]="form.cep" (ngModelChange)="aoAlterarCep($event)" inputmode="numeric" maxlength="9" placeholder="00000-000" />
         </mat-form-field>
 
+        <p class="cep-feedback span-2" *ngIf="consultandoCep || mensagemCep" role="status">
+          {{ consultandoCep ? 'Consultando CEP...' : mensagemCep }}
+        </p>
+
         <mat-form-field appearance="outline" class="span-2">
-          <mat-label>Endereco</mat-label>
+          <mat-label>Endereço / rua</mat-label>
           <mat-icon matPrefix>home</mat-icon>
           <input matInput [(ngModel)]="form.endereco" />
         </mat-form-field>

@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { aplicarTema } from './shared/theme';
 
 @Component({
   selector: 'app-root',
@@ -19,8 +20,6 @@ export class AppComponent {
   }
 
   private aplicarTemaSalvo(): void {
-    const temaSalvo = localStorage.getItem('justapro-theme') || 'corporate';
-    document.body.setAttribute('data-theme', temaSalvo);
-    document.documentElement.style.colorScheme = temaSalvo === 'light' ? 'light' : 'dark';
+    aplicarTema(localStorage.getItem('justapro-theme'));
   }
 }

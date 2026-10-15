@@ -20,6 +20,10 @@ import { routes } from './app.routes';
 import { environment } from '../environments/environment';
 
 const authInterceptor: HttpInterceptorFn = (req, next) => {
+  // Credenciais do escritório devem acompanhar apenas chamadas à API própria.
+  if (!req.url.startsWith(`${environment.apiUrl}/api/`)) {
+    return next(req);
+  }
   const auth = inject(Auth);
 
   return from(auth.currentUser?.getIdToken() ?? Promise.resolve(null)).pipe(

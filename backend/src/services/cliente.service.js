@@ -8,15 +8,22 @@ const textoObrigatorio = (max, mensagem) =>
 
 const textoOpcional = (max) =>
   z
-    .union([z.string().trim().max(max), z.null(), z.undefined()])
+    .string()
+    .trim()
+    .max(max)
+    .nullish()
     .transform((valor) => (typeof valor === 'string' ? valor.trim() || null : null));
 
 const cpfRegex = /^\d{11}$/;
+const cnpjRegex = /^[A-Z0-9]{12}\d{2}$/;
 
 const schemaCliente = z.object({
   nome: textoObrigatorio(140, 'Informe o nome do cliente.'),
   cpf: textoOpcional(14).refine((valor) => !valor || cpfRegex.test(valor.replace(/\D/g, '')), {
     message: 'CPF invalido. Use 11 digitos.'
+  }),
+  cnpj: textoOpcional(18).refine((valor) => !valor || cnpjRegex.test(valor.toUpperCase().replace(/[^A-Z0-9]/g, '')), {
+    message: 'CNPJ invalido. Use 12 caracteres e 2 digitos verificadores.'
   }),
   email: textoOpcional(160).refine(
     (valor) => !valor || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor),
@@ -47,6 +54,14 @@ function formatarCpf(valor) {
   return digitos.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
 }
 
+function formatarCnpj(valor) {
+  if (!valor) return null;
+  const caracteres = valor.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return cnpjRegex.test(caracteres)
+    ? caracteres.replace(/(.{2})(.{3})(.{3})(.{4})(.{2})/, '$1.$2.$3/$4-$5')
+    : caracteres;
+}
+
 function normalizarNomeBusca(valor) {
   return String(valor || '')
     .normalize('NFD')
@@ -60,6 +75,7 @@ function sanitizarCliente(cliente) {
     id: cliente.id,
     nome: cliente.nome || '',
     cpf: formatarCpf(cliente.cpf || null),
+    cnpj: formatarCnpj(cliente.cnpj || (String(cliente.documentoSecundario || '').replace(/[^A-Za-z0-9]/g, '').length === 14 ? cliente.documentoSecundario : null)),
     email: cliente.email || null,
     telefone: cliente.telefone || null,
     documentoSecundario: cliente.documentoSecundario || null,
@@ -85,9 +101,16 @@ function validarCliente(dados) {
     throw erro;
   }
 
+  if (resultado.data.cpf && resultado.data.cnpj) {
+    const erro = new Error('VALIDACAO_CLIENTE');
+    erro.details = ['Informe CPF ou CNPJ, não os dois.'];
+    throw erro;
+  }
+
   return {
     ...resultado.data,
     cpf: resultado.data.cpf ? resultado.data.cpf.replace(/\D/g, '') : null,
+    cnpj: resultado.data.cnpj ? resultado.data.cnpj.toUpperCase().replace(/[^A-Z0-9]/g, '') : null,
     estado: resultado.data.estado ? resultado.data.estado.toUpperCase() : null
   };
 }

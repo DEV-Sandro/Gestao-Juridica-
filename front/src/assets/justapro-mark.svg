@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 112" fill="none" role="img" aria-labelledby="title">
+  <title id="title">JustaPro, escudo com balança da justiça</title>
+  <defs>
+    <linearGradient id="shield" x1="10" y1="17" x2="91" y2="98" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0A2C60"/>
+      <stop offset=".52" stop-color="#1254B5"/>
+      <stop offset="1" stop-color="#2587FF"/>
+    </linearGradient>
+  </defs>
+  <path d="M50 5C39 13 26 17 9 19v40c0 22 14 37 41 48 27-11 41-26 41-48V19C74 17 61 13 50 5Z" stroke="url(#shield)" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M50 25v62M31 91h38M50 38c-8-6-17-6-27-2m27 2c8-6 17-6 27-2" stroke="url(#shield)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M24 36 14 65m10-29 10 29m42-29L66 65m10-29 10 29" stroke="url(#shield)" stroke-width="3" stroke-linecap="round"/>
+  <path d="M11 65h26c-2 8-7 12-13 12S13 73 11 65Zm52 0h26c-2 8-7 12-13 12s-11-4-13-12Z" fill="url(#shield)"/>
+  <path d="m50 18 5 9-5 8-5-8 5-9Z" fill="url(#shield)"/>
+</svg>

@@ -28,7 +28,7 @@ function montarOrigensPermitidas() {
     .map((origin) => origin.trim())
     .filter(Boolean);
 
-  const defaults = ['http://localhost:4200', 'http://localhost:3000'];
+  const defaults = ['http://localhost:4200', 'http://127.0.0.1:4200', 'http://localhost:3000'];
   const firebaseHostingOrigins = projectId
     ? [`https://${projectId}.web.app`, `https://${projectId}.firebaseapp.com`]
     : [];

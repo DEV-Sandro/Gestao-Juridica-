@@ -1,0 +1,29 @@
+:host { display: block; }
+
+.policy-shell { min-height: 100vh; background: var(--bg-app); }
+.policy-header { height: 72px; padding: 0 max(24px, calc((100vw - 1100px) / 2)); display: flex; align-items: center; justify-content: space-between; background: #fff; border-bottom: 1px solid var(--border-subtle); }
+.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-size: 19px; color: var(--text-main); }
+.brand-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; background: var(--brand-primary); color: #fff; font-family: Georgia, serif; font-size: 23px; }
+.back-link { color: var(--brand-primary); text-decoration: none; font-weight: 700; font-size: 14px; }
+.policy-layout { max-width: 1100px; margin: 0 auto; padding: 56px 24px 32px; }
+.policy-intro { max-width: 760px; margin-bottom: 32px; }
+.eyebrow { color: var(--brand-primary); text-transform: uppercase; letter-spacing: .12em; font-weight: 800; font-size: 11px; }
+h1 { font-size: clamp(32px, 5vw, 48px); margin: 14px 0 12px; letter-spacing: -.045em; }
+.policy-intro p { font-size: 18px; color: var(--text-muted); line-height: 1.6; }
+.version { color: var(--text-muted); font-size: 13px; }
+.download-link { display: inline-block; margin-left: 18px; color: var(--brand-primary); font-size: 13px; font-weight: 700; text-decoration: none; }
+.pending-note { max-width: 780px; background: #fff8e7; border: 1px solid #efd59c; border-left: 4px solid #b77a1d; border-radius: 10px; padding: 18px 22px; color: #5a421b; margin-bottom: 32px; }
+.pending-note p { margin: 8px 0 0; line-height: 1.6; }
+.policy-content { max-width: 780px; background: #fff; border: 1px solid var(--border-subtle); border-radius: 14px; padding: 16px 40px 40px; box-shadow: var(--shadow-card); }
+section { border-bottom: 1px solid var(--border-subtle); padding: 22px 0; }
+section:last-child { border: 0; }
+h2 { font-size: 20px; margin: 0 0 14px; }
+p, li { color: var(--text-muted); line-height: 1.8; font-size: 15px; }
+section p { margin: 0 0 14px; }
+section p:last-child { margin-bottom: 0; }
+ul { padding-left: 22px; margin: 0 0 14px; }
+li { margin-bottom: 8px; }
+strong { color: var(--text-main); }
+.policy-footer { display: flex; justify-content: space-between; gap: 16px; max-width: 780px; padding: 24px 0; color: var(--text-muted); font-size: 13px; }
+.policy-footer a { color: var(--brand-primary); }
+@media (max-width: 650px) { .policy-header { padding: 0 20px; } .policy-layout { padding: 36px 16px 24px; } .policy-content { padding: 8px 22px 24px; } .policy-footer { flex-direction: column; } }

@@ -51,8 +51,7 @@ export class AcceptInviteComponent implements OnInit {
   confirmPassword = '';
 
   ngOnInit(): void {
-    const temaSalvo = localStorage.getItem('justapro-theme') || 'corporate';
-    document.body.setAttribute('data-theme', temaSalvo);
+    document.body.setAttribute('data-theme', localStorage.getItem('justapro-theme') === 'dark' ? 'dark' : 'light');
 
     this.route.queryParamMap.subscribe(async (params) => {
       this.token = params.get('token')?.trim() || '';

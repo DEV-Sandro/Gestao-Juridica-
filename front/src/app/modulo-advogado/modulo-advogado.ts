@@ -19,6 +19,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AuthService } from '../auth.service';
 import { AppUser } from '../models/app-user.model';
 import { ClienteRecord } from '../models/client.model';
+import { ViaCepService } from '../shared/viacep.service';
+import { aplicarTema } from '../shared/theme';
 import { ClientesWorkspaceComponent } from '../features/workspace/clientes-workspace/clientes-workspace.component';
 import { DocumentosWorkspaceComponent } from '../features/workspace/documentos-workspace/documentos-workspace.component';
 import { AgendaCalendarioComponent } from './agenda-calendario/agenda-calendario.component';
@@ -53,6 +55,7 @@ export const MEU_FORMATO_BR = {
 
 type FiltroPrincipal =
   | 'Todos'
+  | 'Ativos'
   | 'Aguardando An\u00E1lise'
   | 'Em Andamento'
   | 'Urgente'
@@ -92,6 +95,7 @@ interface KPIItem {
   apoio: string;
   icone: string;
   classe: string;
+  filtro: FiltroPrincipal;
 }
 
 interface ProcessoClienteForm {
@@ -197,30 +201,32 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   novoLocalCompromisso = '';
   urgenteManualForm = false;
   clienteForm: ProcessoClienteForm = this.criarClienteFormVazio();
+  consultandoCepCliente = false;
+  mensagemCepCliente = '';
 
   totalResultados = 0;
   paginaAtualProcessos = 1;
-  temaAtual: ThemeOption['value'] = 'corporate';
+  temaAtual: ThemeOption['value'] = 'light';
   currentUser: AppUser | null = null;
   activeSidebarSection: SidebarSection = 'dashboard';
 
   private userSub?: Subscription;
   private filtroSub?: Subscription;
   private routeDataSub?: Subscription;
+  private consultaCepCliente?: AbortController;
   private readonly filtroSubject = new Subject<void>();
 
   constructor(
     private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute,
-    private snack: MatSnackBar
+    private snack: MatSnackBar,
+    private viaCep: ViaCepService
   ) {}
 
   ngOnInit(): void {
-    const temaSalvo = localStorage.getItem('justapro-theme') as ThemeOption['value'] | null;
-    this.mudarTema(temaSalvo || 'corporate');
+    this.mudarTema(aplicarTema(localStorage.getItem('justapro-theme')));
     this.iniciarInteligenciaNotificacoes();
-    this.pedirPermissaoNotificacao();
 
     this.userSub = this.authService.currentUser$.subscribe((user) => {
       this.currentUser = user;
@@ -239,6 +245,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.consultaCepCliente?.abort();
     this.userSub?.unsubscribe();
     this.filtroSub?.unsubscribe();
     this.routeDataSub?.unsubscribe();
@@ -251,28 +258,32 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
         valor: this.countAtivos,
         apoio: 'Base em andamento',
         icone: 'folder_open',
-        classe: 'progress'
+        classe: 'progress',
+        filtro: 'Ativos'
       },
       {
         titulo: 'Urgentes',
         valor: this.countUrgentes,
         apoio: 'Precisam de priorizacao',
         icone: 'priority_high',
-        classe: 'urgent'
+        classe: 'urgent',
+        filtro: 'Urgente'
       },
       {
         titulo: 'Atrasados',
         valor: this.countAtrasados,
         apoio: 'Prazos ja vencidos',
         icone: 'error_outline',
-        classe: 'overdue'
+        classe: 'overdue',
+        filtro: 'Atrasado'
       },
       {
         titulo: 'Conclu\u00EDdos',
         valor: this.countConcluidos,
         apoio: 'Casos finalizados',
         icone: 'task_alt',
-        classe: 'complete'
+        classe: 'complete',
+        filtro: 'Concluído'
       }
     ];
   }
@@ -284,30 +295,30 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   get topbarTitulo(): string {
     switch (this.activeSidebarSection) {
       case 'agenda':
-        return 'Agenda juridica dedicada';
+        return 'Agenda e compromissos';
       case 'clientes':
-        return 'Base de clientes do escritorio';
+        return 'Clientes do escritório';
       case 'documentos':
-        return 'Documentos juridicos editaveis';
+        return 'Documentos do escritório';
       case 'processos':
-        return 'Pipeline completo dos processos';
+        return 'Processos do escritório';
       default:
-        return 'Mesa de controle dos processos';
+        return 'Visão geral do escritório';
     }
   }
 
   get topbarDescricao(): string {
     switch (this.activeSidebarSection) {
       case 'agenda':
-        return 'Calendario ampliado, leitura mais clara dos eventos e painel lateral com foco operacional no dia.';
+        return 'Consulte audiências, prazos e outros compromissos em um só lugar.';
       case 'clientes':
-        return 'Cadastre dados essenciais do cliente e mantenha a base pronta para automacoes e documentos.';
+        return 'Encontre, cadastre e atualize os dados de cada cliente.';
       case 'documentos':
-        return 'Selecione um modelo, puxe os dados do cliente e gere um DOCX pronto para edicao externa.';
+        return 'Escolha um modelo e gere documentos com os dados do caso.';
       case 'processos':
-        return 'Acompanhe cada caso com alertas inteligentes, filtros avancados e acoes operacionais em um so fluxo.';
+        return 'Busque casos, confira prazos e abra ou edite cada processo.';
       default:
-        return 'Decisoes mais rapidas, prazos sob controle e leitura clara do que exige acao agora.';
+        return 'Veja o que precisa da sua atenção e acesse os casos com um clique.';
     }
   }
 
@@ -317,14 +328,14 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
 
   get clientesFiltrados(): ClienteRecord[] {
     const termo = this.normalizarTextoBusca(this.buscaCliente);
-    const termoDigitos = this.extrairDigitos(this.buscaCliente);
+    const termoDocumento = this.normalizarDocumentoBusca(this.buscaCliente);
     if (!termo) {
       return this.clientesDisponiveis;
     }
 
     return this.clientesDisponiveis.filter((cliente) => {
-      const documento = this.extrairDigitos(`${cliente.cpf || ''}${cliente.documentoSecundario || ''}`);
-      const correspondeDocumento = termoDigitos ? documento.includes(termoDigitos) : false;
+      const documento = this.normalizarDocumentoBusca(`${cliente.cpf || ''}${cliente.cnpj || ''}${cliente.documentoSecundario || ''}`);
+      const correspondeDocumento = termoDocumento ? documento.includes(termoDocumento) : false;
       return (
         this.normalizarTextoBusca(cliente.nome).includes(termo) ||
         this.normalizarTextoBusca(cliente.email || '').includes(termo) ||
@@ -413,10 +424,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   }
 
   mudarTema(tema: ThemeOption['value']): void {
-    this.temaAtual = tema;
-    document.body.setAttribute('data-theme', tema);
-    document.documentElement.style.colorScheme = tema === 'light' ? 'light' : 'dark';
-    localStorage.setItem('justapro-theme', tema);
+    this.temaAtual = aplicarTema(tema);
   }
 
   toggleFiltroAvancado(): void {
@@ -430,6 +438,10 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   aplicarFiltro(status: FiltroPrincipal): void {
     this.filtroAtual = status;
     this.executarFiltros(true);
+  }
+
+  abrirKpi(filtro: FiltroPrincipal): void {
+    void this.router.navigate(['/advogado/processos']).then(() => this.aplicarFiltro(filtro));
   }
 
   limparFiltrosAvancados(): void {
@@ -494,7 +506,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     this.clienteSelecionadoId = clienteAtual?.id || null;
     this.clienteForm = {
       nome: clienteAtual?.nome || proc.cliente || proc.clienteId || '',
-      cpfCnpj: clienteAtual?.cpf || clienteAtual?.documentoSecundario || '',
+      cpfCnpj: clienteAtual?.cpf || clienteAtual?.cnpj || clienteAtual?.documentoSecundario || '',
       telefone: clienteAtual?.telefone || '',
       email: clienteAtual?.email || '',
       endereco: clienteAtual?.endereco || '',
@@ -515,6 +527,8 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   }
 
   cancelarEdicao(): void {
+    this.consultaCepCliente?.abort();
+    this.mensagemCepCliente = '';
     this.idEmEdicao = null;
     this.novoTipo = '';
     this.novaObservacao = '';
@@ -535,6 +549,12 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
         duration: 3200,
         panelClass: ['snack-error']
       });
+      return;
+    }
+
+    const documento = this.normalizarDocumentoBusca(this.clienteForm.cpfCnpj).toUpperCase();
+    if (documento && !/^\d{11}$|^[A-Z0-9]{12}\d{2}$/.test(documento)) {
+      this.snack.open('Informe um CPF ou CNPJ no formato válido.', 'OK', { duration: 3600 });
       return;
     }
 
@@ -670,7 +690,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
 
   fecharNotificacao(): void {
     if (this.notificacaoAtual) {
-      this.marcarNotificacaoComoLida(this.notificacaoAtual);
+      sessionStorage.setItem(this.chaveAvisoDispensado(), this.notificacaoAtual.id);
     }
     this.notificacaoAtiva = false;
   }
@@ -795,7 +815,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
 
     this.clienteForm = {
       nome: cliente.nome || '',
-      cpfCnpj: cliente.cpf || cliente.documentoSecundario || '',
+      cpfCnpj: cliente.cpf || cliente.cnpj || cliente.documentoSecundario || '',
       telefone: cliente.telefone || '',
       email: cliente.email || '',
       endereco: cliente.endereco || '',
@@ -846,6 +866,40 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
 
   private extrairDigitos(valor: string): string {
     return (valor || '').replace(/\D/g, '');
+  }
+
+  private normalizarDocumentoBusca(valor: string): string {
+    return (valor || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+
+  aoAlterarCepCliente(valor: string): void {
+    this.consultaCepCliente?.abort();
+    this.consultandoCepCliente = false;
+    this.mensagemCepCliente = '';
+    const digitos = valor.replace(/\D/g, '').slice(0, 8);
+    this.clienteForm.cep = digitos.length > 5 ? `${digitos.slice(0, 5)}-${digitos.slice(5)}` : digitos;
+    if (digitos.length === 8) void this.buscarCepCliente(digitos);
+  }
+
+  private async buscarCepCliente(cep: string): Promise<void> {
+    const consulta = new AbortController();
+    this.consultaCepCliente = consulta;
+    this.consultandoCepCliente = true;
+    try {
+      const endereco = await this.viaCep.buscar(cep, consulta.signal);
+      if (consulta.signal.aborted) return;
+      this.clienteForm.endereco = endereco.logradouro || '';
+      this.clienteForm.bairro = endereco.bairro || '';
+      this.clienteForm.cidade = endereco.localidade || this.clienteForm.cidade;
+      this.clienteForm.estado = endereco.uf || this.clienteForm.estado;
+      this.mensagemCepCliente = 'Endereço localizado. Confira o número e os demais dados.';
+    } catch (error) {
+      if (!consulta.signal.aborted) {
+        this.mensagemCepCliente = error instanceof Error ? error.message : 'Não foi possível consultar o CEP.';
+      }
+    } finally {
+      if (this.consultaCepCliente === consulta) this.consultandoCepCliente = false;
+    }
   }
 
   private criarClienteFormVazio(): ProcessoClienteForm {
@@ -912,7 +966,11 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
       .slice(0, 5);
 
     const naoLidas = this.notificacoes.filter((notificacao) => !notificacao.lida);
-    if (naoLidas.length > 0 && !this.toastJaMostradoSessao) {
+    if (
+      naoLidas.length > 0 &&
+      !this.toastJaMostradoSessao &&
+      sessionStorage.getItem(this.chaveAvisoDispensado()) !== naoLidas[0]!.id
+    ) {
       this.notificacaoAtual = naoLidas[0] || null;
       this.notificacaoAtiva = !!this.notificacaoAtual;
       this.toastJaMostradoSessao = true;
@@ -951,10 +1009,6 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
 
     if (!timestampSalvo) {
       localStorage.setItem(tsKey, String(timestamp));
-      this.notificar(
-        status === 'Atrasado' ? 'Processo atrasado' : 'Processo urgente',
-        `${proc.cliente}: ${detalhe}`
-      );
     }
 
     const id = `${proc.id}-${status}`;
@@ -1043,11 +1097,14 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
       const passaPill =
         this.filtroAtual === 'Todos'
           ? !['Arquivado', 'Cancelado', 'Indeferido'].includes(proc.statusDinamico)
+          : this.filtroAtual === 'Ativos'
+            ? !['Arquivado', 'Cancelado', 'Indeferido', 'Concluído'].includes(proc.statusDinamico)
           : proc.statusDinamico === this.filtroAtual;
 
+      const termoBusca = this.normalizarTextoBusca(this.filtroNomeCliente);
       const passaNome =
-        !this.filtroNomeCliente ||
-        proc.cliente.toLowerCase().includes(this.filtroNomeCliente.trim().toLowerCase());
+        !termoBusca ||
+        this.normalizarTextoBusca(`${proc.cliente} ${proc.tipo} ${proc.descricao}`).includes(termoBusca);
 
       const passaTipo =
         !this.filtroTipoAcao ||
@@ -1128,21 +1185,10 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     this.idsNotificacoesLidas = lidas ? (JSON.parse(lidas) as string[]) : [];
   }
 
-  private async pedirPermissaoNotificacao(): Promise<void> {
-    if (!('Notification' in window)) return;
-
-    if (Notification.permission === 'default') {
-      await Notification.requestPermission();
-    }
+  private chaveAvisoDispensado(): string {
+    return `justapro-alerta-dispensado-${this.dataLocalIso()}`;
   }
 
-  private notificar(titulo: string, mensagem: string): void {
-    if (!('Notification' in window) || Notification.permission !== 'granted') {
-      return;
-    }
-
-    new Notification(titulo, { body: mensagem });
-  }
 
   private formatarDataParaApi(data: Date): string {
     const local = new Date(data);

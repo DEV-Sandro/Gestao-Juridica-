@@ -4,9 +4,11 @@ backend/node_modules/
 front/node_modules/
 */node_modules/
 front/.angular/
+front/.angular-tmp/
 front/.tmp-docx-check/
 front/.vscode/
 .firebase/
+tmp/
 
 # --- ARQUIVOS DE SISTEMA ---
 .DS_Store

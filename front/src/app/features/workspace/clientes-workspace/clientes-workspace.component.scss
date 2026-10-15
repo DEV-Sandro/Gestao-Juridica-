@@ -82,6 +82,46 @@
   line-height: 1.65;
 }
 
+.document-type {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  button {
+    padding: 10px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-weight: 700;
+  }
+
+  button.active {
+    background: color-mix(in srgb, var(--brand-primary) 15%, var(--bg-surface));
+    border-color: var(--brand-primary);
+    color: var(--brand-primary);
+  }
+}
+
+.cep-feedback {
+  margin: -14px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.cnpj-lookup {
+  display: flex;
+  align-items: center;
+  gap: 8px 14px;
+  flex-wrap: wrap;
+  margin: -12px 0 2px;
+
+  button { min-height: 42px; }
+  small { color: var(--text-muted); line-height: 1.5; }
+  p { width: 100%; margin: 0; color: var(--text-main); font-size: 13px; }
+}
+
 .panel-counter {
   padding: 8px 12px;
   border-radius: 999px;

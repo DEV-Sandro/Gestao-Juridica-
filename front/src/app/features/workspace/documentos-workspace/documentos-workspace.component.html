@@ -65,7 +65,7 @@
             <mat-icon matPrefix>person_search</mat-icon>
             <mat-select [(ngModel)]="clienteId">
               <mat-option *ngFor="let cliente of clientes" [value]="cliente.id">
-                {{ cliente.nome }} {{ cliente.cpf ? '• ' + cliente.cpf : '' }}
+                {{ cliente.nome }} {{ cliente.cpf || cliente.cnpj ? '• ' + (cliente.cpf || cliente.cnpj) : '' }}
               </mat-option>
             </mat-select>
           </mat-form-field>
@@ -102,13 +102,14 @@
         </div>
 
         <div class="client-summary" *ngIf="clienteSelecionado as cliente">
+          <p *ngIf="cliente.cnpj" class="document-alert">Os modelos disponíveis usam texto de pessoa física. Revise a qualificação e o documento da pessoa jurídica antes de utilizar o arquivo gerado.</p>
           <div class="summary-item">
             <span>Cliente</span>
             <strong>{{ cliente.nome }}</strong>
           </div>
           <div class="summary-item">
-            <span>CPF</span>
-            <strong>{{ cliente.cpf || 'Nao informado' }}</strong>
+            <span>CPF / CNPJ</span>
+            <strong>{{ cliente.cpf || cliente.cnpj || 'Não informado' }}</strong>
           </div>
           <div class="summary-item">
             <span>Contato</span>

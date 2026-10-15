@@ -4,13 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { AuthService } from '../auth.service';
+import { aplicarTema, AppTheme } from '../shared/theme';
 
 @Component({
   selector: 'app-login',
@@ -19,11 +17,8 @@ import { AuthService } from '../auth.service';
     CommonModule,
     FormsModule,
     RouterLink,
-    MatFormFieldModule,
-    MatInputModule,
     MatIconModule,
     MatButtonModule,
-    MatCheckboxModule,
     MatSnackBarModule
   ],
   templateUrl: './login.html',
@@ -38,11 +33,14 @@ export class LoginComponent implements OnInit {
   senha = '';
   mostrarSenha = false;
   carregando = false;
+  temaAtual: AppTheme = 'light';
 
   ngOnInit() {
-    const temaSalvo = localStorage.getItem('justapro-theme') || 'corporate';
-    document.body.setAttribute('data-theme', temaSalvo);
-    document.documentElement.style.colorScheme = temaSalvo === 'light' ? 'light' : 'dark';
+    this.temaAtual = aplicarTema(localStorage.getItem('justapro-theme'));
+  }
+
+  alternarTema(): void {
+    this.temaAtual = aplicarTema(this.temaAtual === 'light' ? 'dark' : 'light');
   }
 
   async acessar() {

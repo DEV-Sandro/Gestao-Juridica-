@@ -105,6 +105,18 @@
   gap: 14px;
 }
 
+.document-alert {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #e8cb8d;
+  border-radius: 10px;
+  background: #fff8e8;
+  color: #654b1e;
+  line-height: 1.5;
+  font-size: 13px;
+}
+
 .summary-item {
   padding: 16px;
   border-radius: 18px;

@@ -146,8 +146,8 @@ function rotuloCategoriaCompromisso(tipo) {
 
 function normalizarDocumento(valor) {
   if (!valor) return null;
-  const digitos = String(valor).replace(/\D/g, '');
-  return digitos || null;
+  const caracteres = String(valor).toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return caracteres || null;
 }
 
 function normalizarEmail(valor) {
@@ -622,6 +622,9 @@ function extrairClientePayload(dados = {}) {
         dados.clienteCpf ??
         dados.clienteDocumento
     ) ?? null;
+  if (cpfCnpj && !/^\d{11}$|^[A-Z0-9]{12}\d{2}$/.test(cpfCnpj)) {
+    throw new Error('VALIDACAO_FALHOU');
+  }
   const email = normalizarEmail(clienteObj.email ?? dados.clienteEmail);
   const telefone = normalizarTexto(clienteObj.telefone ?? dados.clienteTelefone, 32) ?? null;
   const endereco = normalizarTexto(clienteObj.endereco ?? dados.clienteEndereco, 180) ?? null;
@@ -668,7 +671,8 @@ function montarPayloadClientePersistencia(cliente) {
   return {
     nome: cliente.nome,
     cpf: documento && documento.length === 11 ? documento : null,
-    documentoSecundario: documento && documento.length !== 11 ? documento : null,
+    cnpj: documento && documento.length === 14 ? documento : null,
+    documentoSecundario: null,
     email: cliente.email || null,
     telefone: cliente.telefone || null,
     endereco: cliente.endereco || null,
@@ -703,7 +707,7 @@ async function encontrarClienteExistente(clienteInformado) {
 
   return (
     clientes.find((cliente) => {
-      const docCliente = normalizarDocumento(cliente.cpf || cliente.documentoSecundario);
+      const docCliente = normalizarDocumento(cliente.cpf || cliente.cnpj || cliente.documentoSecundario);
       const emailCliente = normalizarEmail(cliente.email);
       const nomeCliente = normalizarNomeComparavel(cliente.nome);
 
@@ -763,8 +767,12 @@ async function resolverClienteDoProcesso(dados, user, processoAtual = null) {
       nome: nomeAtualizado
     });
 
+    if (clienteInformado.cpfCnpj) {
+      atualizacao.cpf = payloadCliente.cpf;
+      atualizacao.cnpj = payloadCliente.cnpj;
+    }
+
     for (const campo of [
-      'cpf',
       'documentoSecundario',
       'email',
       'telefone',
