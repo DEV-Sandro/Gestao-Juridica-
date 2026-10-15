@@ -25,11 +25,9 @@
         <span class="panel-counter">{{ clientesFiltrados.length }} de {{ clientes.length }}</span>
       </div>
 
-      <mat-form-field appearance="outline" class="saas-search-field">
-        <mat-label>Pesquisar cliente</mat-label>
-        <mat-icon matPrefix>search</mat-icon>
-        <input matInput [(ngModel)]="buscaCliente" (ngModelChange)="onBuscaClienteChange()" placeholder="Nome, CPF, CNPJ ou e-mail" />
-      </mat-form-field>
+      <label class="client-field saas-search-field">Pesquisar cliente
+        <input [(ngModel)]="buscaCliente" (ngModelChange)="onBuscaClienteChange()" placeholder="Nome, CPF, CNPJ ou e-mail" />
+      </label>
 
       <div class="loading" *ngIf="carregando">
         <mat-spinner diameter="30"></mat-spinner>
@@ -94,23 +92,9 @@
       </div>
 
       <div class="form-grid">
-        <mat-form-field appearance="outline">
-          <mat-label>{{ tipoDocumento === 'CPF' ? 'Nome completo' : 'Razão social' }}</mat-label>
-          <mat-icon matPrefix>badge</mat-icon>
-          <input matInput [(ngModel)]="form.nome" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" *ngIf="tipoDocumento === 'CPF'">
-          <mat-label>CPF</mat-label>
-          <mat-icon matPrefix>fingerprint</mat-icon>
-          <input matInput [(ngModel)]="form.cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" *ngIf="tipoDocumento === 'CNPJ'">
-          <mat-label>CNPJ</mat-label>
-          <mat-icon matPrefix>business</mat-icon>
-          <input matInput [ngModel]="form.cnpj" (ngModelChange)="aoAlterarCnpj($event)" inputmode="text" maxlength="18" placeholder="00.000.000/E08G-12" />
-        </mat-form-field>
+        <label class="client-field">{{ tipoDocumento === 'CPF' ? 'Nome completo' : 'Razão social' }} <input [(ngModel)]="form.nome" autocomplete="name" placeholder="Informe o nome do cliente" /></label>
+        <label class="client-field" *ngIf="tipoDocumento === 'CPF'">CPF <input [(ngModel)]="form.cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" /></label>
+        <label class="client-field" *ngIf="tipoDocumento === 'CNPJ'">CNPJ <input [ngModel]="form.cnpj" (ngModelChange)="aoAlterarCnpj($event)" inputmode="text" maxlength="18" placeholder="00.000.000/0000-00" /></label>
 
         <div class="cnpj-lookup span-2" *ngIf="tipoDocumento === 'CNPJ'">
           <button mat-stroked-button type="button" (click)="consultarCnpj()" [disabled]="consultandoCnpj || !form.cnpj">
@@ -122,69 +106,22 @@
           <p *ngIf="mensagemCnpj" role="status">{{ mensagemCnpj }}</p>
         </div>
 
-        <mat-form-field appearance="outline">
-          <mat-label>E-mail</mat-label>
-          <mat-icon matPrefix>email</mat-icon>
-          <input matInput [(ngModel)]="form.email" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Telefone</mat-label>
-          <mat-icon matPrefix>phone</mat-icon>
-          <input matInput [(ngModel)]="form.telefone" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Documento auxiliar</mat-label>
-          <mat-icon matPrefix>id_card</mat-icon>
-          <input matInput [(ngModel)]="form.documentoSecundario" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>CEP</mat-label>
-          <mat-icon matPrefix>markunread_mailbox</mat-icon>
-          <input matInput [ngModel]="form.cep" (ngModelChange)="aoAlterarCep($event)" inputmode="numeric" maxlength="9" placeholder="00000-000" />
-        </mat-form-field>
+        <label class="client-field">E-mail <input type="email" [(ngModel)]="form.email" autocomplete="email" placeholder="cliente@exemplo.com" /></label>
+        <label class="client-field">Telefone <input type="tel" [(ngModel)]="form.telefone" autocomplete="tel" placeholder="(11) 99999-9999" /></label>
+        <label class="client-field">Documento auxiliar <input [(ngModel)]="form.documentoSecundario" placeholder="RG ou inscrição estadual" /></label>
+        <label class="client-field">CEP <input [ngModel]="form.cep" (ngModelChange)="aoAlterarCep($event)" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000" /></label>
 
         <p class="cep-feedback span-2" *ngIf="consultandoCep || mensagemCep" role="status">
           {{ consultandoCep ? 'Consultando CEP...' : mensagemCep }}
         </p>
 
-        <mat-form-field appearance="outline" class="span-2">
-          <mat-label>Endereço / rua</mat-label>
-          <mat-icon matPrefix>home</mat-icon>
-          <input matInput [(ngModel)]="form.endereco" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Numero</mat-label>
-          <input matInput [(ngModel)]="form.numero" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Complemento</mat-label>
-          <input matInput [(ngModel)]="form.complemento" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Bairro</mat-label>
-          <input matInput [(ngModel)]="form.bairro" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Cidade</mat-label>
-          <input matInput [(ngModel)]="form.cidade" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>UF</mat-label>
-          <input matInput [(ngModel)]="form.estado" maxlength="2" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="span-2">
-          <mat-label>Observacoes internas</mat-label>
-          <textarea matInput rows="4" [(ngModel)]="form.observacoes"></textarea>
-        </mat-form-field>
+        <label class="client-field span-2">Endereço / rua <input [(ngModel)]="form.endereco" autocomplete="street-address" placeholder="Rua, avenida ou travessa" /></label>
+        <label class="client-field">Número <input [(ngModel)]="form.numero" placeholder="Número" /></label>
+        <label class="client-field">Complemento <input [(ngModel)]="form.complemento" placeholder="Sala, bloco, apto..." /></label>
+        <label class="client-field">Bairro <input [(ngModel)]="form.bairro" placeholder="Bairro" /></label>
+        <label class="client-field">Cidade <input [(ngModel)]="form.cidade" placeholder="Cidade" /></label>
+        <label class="client-field">UF <input [(ngModel)]="form.estado" maxlength="2" placeholder="UF" /></label>
+        <label class="client-field span-2">Observações internas <textarea rows="3" [(ngModel)]="form.observacoes" placeholder="Informações úteis para a equipe"></textarea></label>
       </div>
 
       <div class="editor-footer">

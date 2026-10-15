@@ -23,6 +23,8 @@ import { ViaCepService } from '../shared/viacep.service';
 import { aplicarTema } from '../shared/theme';
 import { ClientesWorkspaceComponent } from '../features/workspace/clientes-workspace/clientes-workspace.component';
 import { DocumentosWorkspaceComponent } from '../features/workspace/documentos-workspace/documentos-workspace.component';
+import { FinanceiroWorkspaceComponent } from '../features/workspace/financeiro-workspace/financeiro-workspace.component';
+import { ApontamentoHoras, LancamentoFinanceiro, ResumoFinanceiro } from '../models/financeiro.model';
 import { AgendaCalendarioComponent } from './agenda-calendario/agenda-calendario.component';
 import {
   AgendaEvento,
@@ -112,7 +114,7 @@ interface ProcessoClienteForm {
   cep: string;
 }
 
-type SidebarSection = 'dashboard' | 'processos' | 'clientes' | 'agenda' | 'documentos';
+type SidebarSection = 'dashboard' | 'processos' | 'clientes' | 'agenda' | 'documentos' | 'financeiro';
 
 @Component({
   selector: 'app-modulo-advogado',
@@ -134,7 +136,8 @@ type SidebarSection = 'dashboard' | 'processos' | 'clientes' | 'agenda' | 'docum
     MatSnackBarModule,
     AgendaCalendarioComponent,
     ClientesWorkspaceComponent,
-    DocumentosWorkspaceComponent
+    DocumentosWorkspaceComponent,
+    FinanceiroWorkspaceComponent
   ],
   providers: [
     { provide: MAT_DATE_LOCALE, useValue: 'pt-BR' },
@@ -150,6 +153,9 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   listaDeProcessosRaw: ProcessoViewModel[] = [];
   listaDeProcessosFiltrada: ProcessoViewModel[] = [];
   agendaEventos: AgendaEvento[] = [];
+  lancamentosFinanceiros: LancamentoFinanceiro[] = [];
+  apontamentosHoras: ApontamentoHoras[] = [];
+  resumoFinanceiro: ResumoFinanceiro | null = null;
   processosPrioritarios: ProcessoViewModel[] = [];
 
   mostrarFiltroAvancado = false;
@@ -196,6 +202,8 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   novoTipo = '';
   novaObservacao = '';
   novoPrazo: Date | null = null;
+  get novoPrazoIso(): string { return this.novoPrazo ? this.formatarDataParaApi(this.novoPrazo) : ''; }
+  definirPrazoIso(valor: string): void { this.novoPrazo = /^\d{4}-\d{2}-\d{2}$/.test(valor) ? new Date(`${valor}T12:00:00`) : null; }
   novoStatus: ProcessoStatusVisual = 'Aguardando An\u00E1lise';
   novaCategoriaCompromisso: CategoriaCompromisso = 'PRAZO';
   novoLocalCompromisso = '';
@@ -242,6 +250,8 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
 
     this.carregarClientes();
     this.carregarDados();
+    this.carregarFinanceiro();
+    this.carregarHoras();
   }
 
   ngOnDestroy(): void {
@@ -300,6 +310,8 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
         return 'Clientes do escritório';
       case 'documentos':
         return 'Documentos do escritório';
+      case 'financeiro':
+        return 'Financeiro do escritório';
       case 'processos':
         return 'Processos do escritório';
       default:
@@ -315,6 +327,8 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
         return 'Encontre, cadastre e atualize os dados de cada cliente.';
       case 'documentos':
         return 'Escolha um modelo e gere documentos com os dados do caso.';
+      case 'financeiro':
+        return 'Controle honorários, despesas, horas trabalhadas e resultado por processo.';
       case 'processos':
         return 'Busque casos, confira prazos e abra ou edite cada processo.';
       default:
@@ -323,7 +337,49 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   }
 
   get proximosCompromissos(): AgendaEvento[] {
-    return this.agendaEventos.slice(0, 5);
+    const hoje = new Date().toISOString().slice(0, 10);
+    return this.agendaEventos.filter((evento) => evento.data >= hoje).slice(0, 5);
+  }
+
+  get horasNoMes(): number {
+    const mes = new Date().toISOString().slice(0, 7);
+    return this.apontamentosHoras.filter((item) => item.data.slice(0, 7) === mes).reduce((total, item) => total + item.minutos, 0) / 60;
+  }
+
+  get resultadoFinanceiroMes(): number {
+    const mes = new Date().toISOString().slice(0, 7);
+    const custoHoras = this.apontamentosHoras.filter((item) => item.data.slice(0, 7) === mes).reduce((total, item) => total + item.minutos / 60 * item.custoHora, 0);
+    return (this.resumoFinanceiro?.recebidoNoMes || 0) - (this.resumoFinanceiro?.despesasNoMes || 0) - custoHoras;
+  }
+
+  get distribuicaoProcessos(): { nome: string; quantidade: number; proporcao: number }[] {
+    const total = Math.max(1, this.listaDeProcessosRaw.length);
+    const grupos = [
+      { nome: 'Aguardando análise', status: 'Aguardando Análise' },
+      { nome: 'Em andamento', status: 'Em Andamento' },
+      { nome: 'Urgentes', status: 'Urgente' },
+      { nome: 'Atrasados', status: 'Atrasado' },
+      { nome: 'Concluídos', status: 'Concluído' }
+    ];
+    return grupos.map((grupo) => {
+      const quantidade = this.listaDeProcessosRaw.filter((item) => item.statusDinamico === grupo.status).length;
+      return { nome: grupo.nome, quantidade, proporcao: quantidade / total * 100 };
+    });
+  }
+
+  get processosMaisHoras(): { id: string; titulo: string; cliente: string; horas: number; custo: number }[] {
+    const grupos = new Map<string, { id: string; titulo: string; cliente: string; horas: number; custo: number }>();
+    for (const item of this.apontamentosHoras) {
+      const atual = grupos.get(item.processoId) || { id: item.processoId, titulo: item.processoTitulo, cliente: item.clienteNome || '', horas: 0, custo: 0 };
+      atual.horas += item.minutos / 60;
+      atual.custo += item.minutos / 60 * item.custoHora;
+      grupos.set(item.processoId, atual);
+    }
+    return [...grupos.values()].sort((a, b) => b.horas - a.horas).slice(0, 5);
+  }
+
+  formatarMoeda(valor: number): string {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
   }
 
   get clientesFiltrados(): ClienteRecord[] {
@@ -389,7 +445,8 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
       value === 'processos' ||
       value === 'clientes' ||
       value === 'agenda' ||
-      value === 'documentos'
+      value === 'documentos' ||
+      value === 'financeiro'
     ) {
       return value;
     }
@@ -678,6 +735,10 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   }
 
   abrirEventoAgenda(evento: AgendaEvento): void {
+    if (evento.fonte === 'FINANCEIRO') {
+      void this.router.navigate(['/advogado/financeiro']);
+      return;
+    }
     this.abrirCaso(evento.processoId);
   }
 
@@ -797,6 +858,24 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
           panelClass: ['snack-error']
         });
       }
+    });
+  }
+
+  private carregarFinanceiro(): void {
+    this.authService.listarLancamentos().subscribe({
+      next: (itens) => { this.lancamentosFinanceiros = itens; this.reconstruirAgenda(); },
+      error: () => { this.lancamentosFinanceiros = []; this.reconstruirAgenda(); }
+    });
+    this.authService.obterResumoFinanceiro().subscribe({
+      next: (resumo) => this.resumoFinanceiro = resumo,
+      error: () => this.resumoFinanceiro = null
+    });
+  }
+
+  private carregarHoras(): void {
+    this.authService.listarApontamentos().subscribe({
+      next: (itens) => this.apontamentosHoras = itens,
+      error: () => this.apontamentosHoras = []
     });
   }
 
@@ -952,10 +1031,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     this.notificacoesNaoLidas = this.notificacoes.filter((notificacao) => !notificacao.lida).length;
     this.atualizarResumoDiario();
 
-    this.agendaEventos = this.listaDeProcessosRaw
-      .map((processo) => processarAgendaEvento(processo))
-      .filter((evento): evento is AgendaEvento => !!evento)
-      .sort((primeiro, segundo) => primeiro.data.localeCompare(segundo.data));
+    this.reconstruirAgenda();
 
     this.processosPrioritarios = [...this.listaDeProcessosRaw]
       .filter(
@@ -977,6 +1053,32 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     }
 
     this.executarFiltros(false);
+  }
+
+  private reconstruirAgenda(): void {
+    const processos = this.listaDeProcessosRaw
+      .map((processo) => processarAgendaEvento(processo))
+      .filter((evento): evento is AgendaEvento => !!evento);
+    const hoje = new Date().toISOString().slice(0, 10);
+    const financeiro: AgendaEvento[] = this.lancamentosFinanceiros
+      .filter((item) => item.statusEfetivo !== 'PAGO' && item.statusEfetivo !== 'CANCELADO' && !!item.vencimento)
+      .map((item) => ({
+        id: `financeiro-${item.id}`,
+        processoId: item.processoId || '',
+        lancamentoId: item.id,
+        fonte: 'FINANCEIRO',
+        data: item.vencimento,
+        titulo: item.descricao,
+        subtitulo: item.clienteNome || item.processoTitulo || 'Lançamento sem processo',
+        tipo: 'EVENTO' as const,
+        tipoLabel: item.tipo === 'DESPESA' ? 'Despesa' : 'Recebimento',
+        status: item.vencimento < hoje ? 'Atrasado' as const : 'Em Andamento' as const,
+        statusLabel: item.vencimento < hoje ? 'Atrasado' : 'Pendente',
+        icon: item.tipo === 'DESPESA' ? 'payments' : 'account_balance_wallet',
+        detalhe: this.formatarMoeda(item.valor),
+        localCompromisso: null
+      }));
+    this.agendaEventos = [...processos, ...financeiro].sort((a, b) => a.data.localeCompare(b.data));
   }
 
   private gerarNotificacao(proc: ProcessoViewModel): Notificacao | null {

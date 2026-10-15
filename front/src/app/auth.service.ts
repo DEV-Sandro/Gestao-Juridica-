@@ -16,6 +16,7 @@ import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
 import { environment } from '../environments/environment';
 import { AppUser, ConviteMembroPayload, UserRole } from './models/app-user.model';
 import { ClientePayload, ClienteRecord } from './models/client.model';
+import { ApontamentoHoras, LancamentoFinanceiro, LancamentoTipo, ResumoFinanceiro } from './models/financeiro.model';
 import {
   InviteAcceptancePayload,
   InviteAcceptanceResult,
@@ -187,6 +188,38 @@ export class AuthService {
 
   pegarTabelasOAB() {
     return this.http.get<Record<string, string>>(`${this.apiUrl}/api/honorarios`);
+  }
+
+  listarLancamentos() {
+    return this.http.get<LancamentoFinanceiro[]>(`${this.apiUrl}/api/lancamentos`);
+  }
+
+  obterResumoFinanceiro() {
+    return this.http.get<ResumoFinanceiro>(`${this.apiUrl}/api/financeiro/resumo`);
+  }
+
+  criarLancamento(payload: { descricao: string; tipo: LancamentoTipo; valor: number; vencimento: string; parcelas: number; processoId: string | null; formaPagamento: string | null }) {
+    return this.http.post<LancamentoFinanceiro[]>(`${this.apiUrl}/api/lancamentos`, payload);
+  }
+
+  atualizarLancamento(id: string, payload: Record<string, unknown>) {
+    return this.http.put<LancamentoFinanceiro>(`${this.apiUrl}/api/lancamentos/${id}`, payload);
+  }
+
+  excluirLancamento(id: string) {
+    return this.http.delete(`${this.apiUrl}/api/lancamentos/${id}`);
+  }
+
+  listarApontamentos() {
+    return this.http.get<ApontamentoHoras[]>(`${this.apiUrl}/api/apontamentos`);
+  }
+
+  criarApontamento(payload: { processoId: string; descricao: string; data: string; minutos: number; valorHora: number; custoHora: number }) {
+    return this.http.post<ApontamentoHoras>(`${this.apiUrl}/api/apontamentos`, payload);
+  }
+
+  excluirApontamento(id: string) {
+    return this.http.delete(`${this.apiUrl}/api/apontamentos/${id}`);
   }
 
   listarClientes() {

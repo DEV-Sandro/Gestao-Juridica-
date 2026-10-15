@@ -1,0 +1,97 @@
+<div class="site-page">
+  <header class="site-header">
+    <div class="site-container header-inner">
+      <a class="brand" routerLink="/" aria-label="JustaPro, página inicial" (click)="fecharMenu()">
+        <img src="assets/justapro-mark.svg" alt="" width="37" height="42" />
+        <span>Justa<span>Pro</span></span>
+      </a>
+
+      <button class="menu-toggle" type="button" (click)="menuAberto = !menuAberto" [attr.aria-expanded]="menuAberto" aria-controls="site-navigation" [attr.aria-label]="menuAberto ? 'Fechar menu' : 'Abrir menu'">
+        <mat-icon aria-hidden="true">{{ menuAberto ? 'close' : 'menu' }}</mat-icon>
+      </button>
+
+      <nav id="site-navigation" class="site-nav" [class.is-open]="menuAberto" aria-label="Navegação principal">
+        <a href="#funcionalidades" (click)="fecharMenu()">Funcionalidades</a>
+        <a href="#sobre" (click)="fecharMenu()">Sobre</a>
+        <a href="#assinatura" (click)="fecharMenu()">Assinatura</a>
+        <a href="#contato" (click)="fecharMenu()">Contato</a>
+        <a class="nav-login" routerLink="/login" (click)="fecharMenu()">Entrar no sistema <mat-icon aria-hidden="true">arrow_forward</mat-icon></a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero site-container" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <span class="eyebrow"><span class="eyebrow-dot"></span> Gestão jurídica para o dia a dia</span>
+        <h1 id="hero-title">Mais clareza para cuidar dos seus <em>processos e clientes.</em></h1>
+        <p>Organize prazos, audiências, documentos, horas e financeiro em um lugar simples de usar. Você vê o que precisa fazer e encontra os detalhes quando precisa.</p>
+        <div class="hero-actions">
+          <a class="button-primary" routerLink="/login">Acessar o JustaPro <mat-icon aria-hidden="true">arrow_forward</mat-icon></a>
+          <a class="button-secondary" href="#funcionalidades">Conhecer funcionalidades</a>
+        </div>
+        <div class="hero-note"><mat-icon aria-hidden="true">verified_user</mat-icon> Acesso por conta autorizada pelo escritório</div>
+      </div>
+
+      <div class="product-preview" aria-label="Exemplo ilustrativo das áreas do sistema">
+        <div class="preview-topline"><span class="preview-mark"><img src="assets/justapro-mark.svg" alt="" /> JustaPro</span><span class="preview-caption">Visão ilustrativa</span></div>
+        <div class="preview-content">
+          <div class="preview-tabs" role="group" aria-label="Escolha uma área para visualizar">
+            <button type="button" [class.active]="visaoAtiva === 'processos'" [attr.aria-pressed]="visaoAtiva === 'processos'" (click)="selecionarVisao('processos')"><mat-icon aria-hidden="true">folder_open</mat-icon> Processos</button>
+            <button type="button" [class.active]="visaoAtiva === 'agenda'" [attr.aria-pressed]="visaoAtiva === 'agenda'" (click)="selecionarVisao('agenda')"><mat-icon aria-hidden="true">event</mat-icon> Agenda</button>
+            <button type="button" [class.active]="visaoAtiva === 'financeiro'" [attr.aria-pressed]="visaoAtiva === 'financeiro'" (click)="selecionarVisao('financeiro')"><mat-icon aria-hidden="true">account_balance_wallet</mat-icon> Financeiro</button>
+          </div>
+
+          @if (visaoAtiva === 'processos') {
+            <div class="preview-panel">
+              <div class="panel-heading"><div><small>ORGANIZAÇÃO</small><strong>Processos sob controle</strong></div><span class="panel-badge">Visão geral</span></div>
+              <div class="preview-row"><span class="row-icon blue"><mat-icon aria-hidden="true">description</mat-icon></span><span><strong>Acompanhe cada etapa</strong><small>Cliente, compromisso e prazo em um só lugar</small></span><mat-icon aria-hidden="true">chevron_right</mat-icon></div>
+              <div class="preview-row"><span class="row-icon amber"><mat-icon aria-hidden="true">schedule</mat-icon></span><span><strong>Priorize o que vence primeiro</strong><small>Identifique o próximo compromisso com clareza</small></span><mat-icon aria-hidden="true">chevron_right</mat-icon></div>
+              <div class="preview-row"><span class="row-icon green"><mat-icon aria-hidden="true">person_outline</mat-icon></span><span><strong>Dados do cliente à mão</strong><small>Cadastro e documentos conectados ao trabalho</small></span><mat-icon aria-hidden="true">chevron_right</mat-icon></div>
+            </div>
+          } @else if (visaoAtiva === 'agenda') {
+            <div class="preview-panel">
+              <div class="panel-heading"><div><small>PLANEJAMENTO</small><strong>Agenda organizada</strong></div><span class="panel-badge">Por categoria</span></div>
+              <div class="preview-row"><span class="row-icon blue"><mat-icon aria-hidden="true">calendar_today</mat-icon></span><span><strong>Prazos processuais</strong><small>Veja os vencimentos no calendário</small></span><mat-icon aria-hidden="true">chevron_right</mat-icon></div>
+              <div class="preview-row"><span class="row-icon amber"><mat-icon aria-hidden="true">gavel</mat-icon></span><span><strong>Audiências e compromissos</strong><small>Separe agendas por tipo de evento</small></span><mat-icon aria-hidden="true">chevron_right</mat-icon></div>
+              <div class="preview-row"><span class="row-icon green"><mat-icon aria-hidden="true">payments</mat-icon></span><span><strong>Vencimentos financeiros</strong><small>Encontre as contas no mesmo calendário</small></span><mat-icon aria-hidden="true">chevron_right</mat-icon></div>
+            </div>
+          } @else {
+            <div class="preview-panel">
+              <div class="panel-heading"><div><small>RESULTADOS</small><strong>Financeiro com contexto</strong></div><span class="panel-badge">Por processo</span></div>
+              <div class="preview-row"><span class="row-icon blue"><mat-icon aria-hidden="true">receipt_long</mat-icon></span><span><strong>Receitas e despesas</strong><small>Registre lançamentos e acompanhe o período</small></span><mat-icon aria-hidden="true">chevron_right</mat-icon></div>
+              <div class="preview-row"><span class="row-icon amber"><mat-icon aria-hidden="true">timer</mat-icon></span><span><strong>Horas trabalhadas</strong><small>Relacione tempo e custo aos processos</small></span><mat-icon aria-hidden="true">chevron_right</mat-icon></div>
+              <div class="preview-row"><span class="row-icon green"><mat-icon aria-hidden="true">insights</mat-icon></span><span><strong>Visão do resultado</strong><small>Compare esforço, recebimentos e custos</small></span><mat-icon aria-hidden="true">chevron_right</mat-icon></div>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <section id="funcionalidades" class="features-section">
+      <div class="site-container">
+        <div class="section-heading"><span class="section-kicker">FUNCIONALIDADES</span><h2>O essencial do escritório, sem complicar sua rotina.</h2><p>Áreas bem definidas, tarefas claras e acesso rápido ao que importa.</p></div>
+        <div class="feature-grid">
+          <article class="feature-card"><span class="feature-icon"><mat-icon aria-hidden="true">folder_open</mat-icon></span><h3>Processos e clientes</h3><p>Organize processos, partes e dados de contato. O endereço pode ser preenchido pelo CEP e o cadastro aceita CPF ou CNPJ.</p></article>
+          <article class="feature-card"><span class="feature-icon"><mat-icon aria-hidden="true">event_available</mat-icon></span><h3>Agenda por tipo</h3><p>Filtre prazos, audiências, outros compromissos e vencimentos financeiros para enxergar sua semana com clareza.</p></article>
+          <article class="feature-card"><span class="feature-icon"><mat-icon aria-hidden="true">account_balance_wallet</mat-icon></span><h3>Financeiro e horas</h3><p>Registre receitas, despesas e tempo de trabalho. Analise custos e resultados associados a cada processo.</p></article>
+          <article class="feature-card"><span class="feature-icon"><mat-icon aria-hidden="true">article</mat-icon></span><h3>Documentos</h3><p>Reúna informações do cadastro em modelos de documentos e revise o conteúdo antes de usar.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="sobre" class="about-section site-container">
+      <div class="about-emblem"><img src="assets/justapro-mark.svg" alt="" /><span>JustaPro</span></div>
+      <div class="about-copy"><span class="section-kicker">SOBRE O SISTEMA</span><h2>Feito para acompanhar o trabalho jurídico de perto.</h2><p>O JustaPro reúne a operação do escritório em uma navegação direta: veja as prioridades no painel, abra os processos, consulte a agenda e acompanhe o financeiro. A interface tem modos claro e escuro e se adapta ao celular.</p><a routerLink="/login" class="text-link">Já tem acesso? Entre no sistema <mat-icon aria-hidden="true">arrow_forward</mat-icon></a></div>
+    </section>
+
+    <section class="commercial-section" aria-label="Assinatura e contato">
+      <div class="site-container commercial-grid">
+        <article id="assinatura" class="commercial-card"><span class="section-kicker">ASSINATURA</span><h2>Informações de planos em preparação.</h2><p>Os valores, condições e formas de contratação ainda serão definidos. Esta página será atualizada quando houver uma oferta disponível.</p><span class="status-note"><mat-icon aria-hidden="true">info</mat-icon> Sem preço publicado no momento</span></article>
+        <article id="contato" class="commercial-card"><span class="section-kicker">CONTATO</span><h2>Um canal direto está a caminho.</h2><p>O contato comercial e o responsável pelo serviço ainda serão informados aqui. Se você já recebeu um convite de um escritório, pode concluir seu acesso pela página de entrada.</p><a class="button-secondary" routerLink="/login">Ir para entrada <mat-icon aria-hidden="true">arrow_forward</mat-icon></a></article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer"><div class="site-container footer-inner"><a class="brand" routerLink="/" aria-label="JustaPro, página inicial"><img src="assets/justapro-mark.svg" alt="" width="30" height="34" /><span>Justa<span>Pro</span></span></a><div class="footer-links"><a routerLink="/politica-de-privacidade">Política de Privacidade</a><a href="#sobre">Sobre</a><a href="#contato">Contato</a></div><button type="button" class="theme-toggle" (click)="alternarTema()" [attr.aria-label]="temaAtual === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro'"><mat-icon aria-hidden="true">{{ temaAtual === 'light' ? 'dark_mode' : 'light_mode' }}</mat-icon><span>{{ temaAtual === 'light' ? 'Modo escuro' : 'Modo claro' }}</span></button></div></footer>
+</div>

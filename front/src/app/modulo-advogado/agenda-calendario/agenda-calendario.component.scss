@@ -8,6 +8,11 @@
   gap: 24px;
 }
 
+.agenda-filter { display: flex; flex-wrap: wrap; gap: 8px; }
+.agenda-filter button { min-height: 40px; padding: 8px 14px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--bg-surface); color: var(--text-main); font: inherit; font-weight: 700; cursor: pointer; }
+.agenda-filter button:hover, .agenda-filter button.active { border-color: var(--brand-primary); background: color-mix(in srgb, var(--brand-primary) 12%, var(--bg-surface)); color: var(--brand-primary); }
+.agenda-filter button:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 2px; }
+
 .agenda-header,
 .agenda-meta {
   display: flex;

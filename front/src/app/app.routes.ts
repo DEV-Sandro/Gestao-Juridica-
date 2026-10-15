@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './login/login';
+import { ApresentacaoComponent } from './apresentacao/apresentacao.component';
 import { AjudaComponent } from './ajuda/ajuda';
 import { DetalhesProcessoComponent } from './detalhes-processo/detalhes-processo';
 import { ModuloAdvogadoComponent } from './modulo-advogado/modulo-advogado';
@@ -9,7 +10,7 @@ import { PoliticaPrivacidadeComponent } from './politica-privacidade/politica-pr
 import { authGuard, roleGuard } from './guards/role.guard';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: '', component: ApresentacaoComponent, pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
   { path: 'convite/aceitar', component: AcceptInviteComponent },
   { path: 'ajuda', component: AjudaComponent },
@@ -46,6 +47,12 @@ export const routes: Routes = [
     component: ModuloAdvogadoComponent,
     canActivate: [authGuard],
     data: { sidebarSection: 'documentos' }
+  },
+  {
+    path: 'advogado/financeiro',
+    component: ModuloAdvogadoComponent,
+    canActivate: [authGuard],
+    data: { sidebarSection: 'financeiro' }
   },
   { path: 'cliente', component: ModuloClienteComponent, canActivate: [authGuard] },
   { path: 'processo/:id', component: DetalhesProcessoComponent, canActivate: [authGuard] },

@@ -69,6 +69,10 @@
         <mat-icon>description</mat-icon>
         <span>Documentos</span>
       </a>
+
+      <a class="nav-item" routerLink="/advogado/financeiro" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <mat-icon>account_balance_wallet</mat-icon><span>Financeiro</span>
+      </a>
     </nav>
 
     <div class="sidebar-bottom">
@@ -115,7 +119,7 @@
           <span class="icon-badge" *ngIf="notificacoesNaoLidas > 0">{{ notificacoesNaoLidas }}</span>
         </button>
 
-        <button mat-button class="theme-trigger" [matMenuTriggerFor]="temaMenu" type="button">
+        <button mat-button class="theme-trigger" [matMenuTriggerFor]="temaMenu" type="button" aria-label="Escolher tema claro ou escuro">
           <mat-icon>palette</mat-icon>
           {{ temaAtualLabel }}
         </button>
@@ -219,6 +223,7 @@
         <mat-icon>description</mat-icon>
         <span>Docs</span>
       </a>
+      <a class="quick-link" routerLink="/advogado/financeiro" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"><mat-icon>account_balance_wallet</mat-icon><span>Financeiro</span></a>
     </nav>
 
     <section class="jp-workspace" *ngIf="activeSidebarSection === 'dashboard'">
@@ -263,6 +268,34 @@
           <strong>{{ kpi.valor }}</strong>
           <small>{{ kpi.apoio }} · Ver lista</small>
         </button>
+      </section>
+
+      <section class="card-glass dashboard-finance">
+        <div class="panel-header"><div><span class="eyebrow">Finanças e produtividade</span><h3 class="font-heading">Panorama do mês</h3></div><a routerLink="/advogado/financeiro">Abrir análise completa <mat-icon>arrow_forward</mat-icon></a></div>
+        <div class="dashboard-finance-grid">
+          <div><span>Recebido</span><strong>{{ formatarMoeda(resumoFinanceiro?.recebidoNoMes || 0) }}</strong></div>
+          <div><span>A receber</span><strong>{{ formatarMoeda(resumoFinanceiro?.aReceber || 0) }}</strong></div>
+          <div><span>Em atraso</span><strong>{{ formatarMoeda(resumoFinanceiro?.atrasado || 0) }}</strong></div>
+          <div><span>Horas registradas</span><strong>{{ horasNoMes | number:'1.0-1' }} h</strong></div>
+          <div><span>Resultado estimado</span><strong>{{ formatarMoeda(resultadoFinanceiroMes) }}</strong></div>
+        </div>
+        <p>Resultado = recebimentos baixados − despesas pagas − custo das horas registradas.</p>
+      </section>
+
+      <section class="dashboard-insights">
+        <article class="card-glass dashboard-insight">
+          <span class="eyebrow">Carteira de processos</span>
+          <h3 class="font-heading">Distribuição por situação</h3>
+          <p *ngIf="listaDeProcessosRaw.length === 0">Cadastre processos para acompanhar a carteira.</p>
+          <div class="distribution-row" *ngFor="let grupo of distribuicaoProcessos"><span>{{ grupo.nome }}</span><div class="distribution-track"><i [style.width.%]="grupo.proporcao"></i></div><strong>{{ grupo.quantidade }}</strong></div>
+        </article>
+        <article class="card-glass dashboard-insight">
+          <span class="eyebrow">Esforço da equipe</span>
+          <h3 class="font-heading">Processos com mais horas</h3>
+          <p *ngIf="processosMaisHoras.length === 0">Registre horas no Financeiro para descobrir quais casos exigem mais trabalho.</p>
+          <div class="effort-row" *ngFor="let item of processosMaisHoras"><div><strong>{{ item.titulo }}</strong><small>{{ item.cliente }}</small></div><div><strong>{{ item.horas | number:'1.0-1' }} h</strong><small>Custo {{ formatarMoeda(item.custo) }}</small></div></div>
+          <a routerLink="/advogado/financeiro">Registrar horas <mat-icon>arrow_forward</mat-icon></a>
+        </article>
       </section>
 
       <section class="overview-grid dashboard-grid">
@@ -380,6 +413,10 @@
 
     <section class="jp-workspace" *ngIf="activeSidebarSection === 'documentos'">
       <app-documentos-workspace></app-documentos-workspace>
+    </section>
+
+    <section class="jp-workspace" *ngIf="activeSidebarSection === 'financeiro'">
+      <app-financeiro-workspace></app-financeiro-workspace>
     </section>
 
     <section class="jp-workspace" *ngIf="activeSidebarSection === 'processos'">
@@ -673,11 +710,7 @@
           <p>Se o cliente ja existir, vinculamos. Se nao existir, o cadastro e criado automaticamente.</p>
         </div>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Localizar cliente</mat-label>
-          <mat-icon matPrefix>search</mat-icon>
-          <input matInput [(ngModel)]="buscaCliente" placeholder="Nome, CPF, CNPJ ou e-mail" />
-        </mat-form-field>
+        <label class="drawer-field">Localizar cliente <input [(ngModel)]="buscaCliente" placeholder="Nome ou documento" /></label>
         <div class="client-search-panel" *ngIf="!clienteSelecionadoId">
           <div class="client-search-helper" *ngIf="!buscaCliente.trim()">
             Digite nome, CPF/CNPJ ou e-mail para localizar um cadastro existente antes de seguir com o preenchimento manual.
@@ -719,64 +752,22 @@
         </div>
 
         <div class="drawer-grid">
-          <mat-form-field appearance="outline">
-            <mat-label>Nome do cliente</mat-label>
-            <input matInput [(ngModel)]="clienteForm.nome" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>CPF ou CNPJ</mat-label>
-            <input matInput [(ngModel)]="clienteForm.cpfCnpj" inputmode="text" maxlength="18" placeholder="CPF ou CNPJ" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Telefone</mat-label>
-            <input matInput [(ngModel)]="clienteForm.telefone" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>E-mail</mat-label>
-            <input matInput [(ngModel)]="clienteForm.email" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>CEP</mat-label>
-            <input matInput [ngModel]="clienteForm.cep" (ngModelChange)="aoAlterarCepCliente($event)" inputmode="numeric" maxlength="9" placeholder="00000-000" />
-          </mat-form-field>
+          <label class="drawer-field">Nome do cliente <input [(ngModel)]="clienteForm.nome" placeholder="Nome completo ou razão social" /></label>
+          <label class="drawer-field">CPF ou CNPJ <input [(ngModel)]="clienteForm.cpfCnpj" inputmode="text" maxlength="18" placeholder="Documento do cliente" /></label>
+          <label class="drawer-field">Telefone <input type="tel" [(ngModel)]="clienteForm.telefone" placeholder="(11) 99999-9999" /></label>
+          <label class="drawer-field">E-mail <input type="email" [(ngModel)]="clienteForm.email" placeholder="cliente@exemplo.com" /></label>
+          <label class="drawer-field">CEP <input [ngModel]="clienteForm.cep" (ngModelChange)="aoAlterarCepCliente($event)" inputmode="numeric" maxlength="9" placeholder="00000-000" /></label>
 
           <div class="cep-feedback drawer-span-2" *ngIf="consultandoCepCliente || mensagemCepCliente" role="status">
             {{ consultandoCepCliente ? 'Consultando CEP...' : mensagemCepCliente }}
           </div>
 
-          <mat-form-field appearance="outline" class="drawer-span-2">
-            <mat-label>Endereco</mat-label>
-            <input matInput [(ngModel)]="clienteForm.endereco" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Numero</mat-label>
-            <input matInput [(ngModel)]="clienteForm.numero" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Complemento</mat-label>
-            <input matInput [(ngModel)]="clienteForm.complemento" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Bairro</mat-label>
-            <input matInput [(ngModel)]="clienteForm.bairro" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Cidade</mat-label>
-            <input matInput [(ngModel)]="clienteForm.cidade" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>UF</mat-label>
-            <input matInput [(ngModel)]="clienteForm.estado" maxlength="2" />
-          </mat-form-field>
+          <label class="drawer-field drawer-span-2">Endereço / rua <input [(ngModel)]="clienteForm.endereco" placeholder="Rua ou avenida" /></label>
+          <label class="drawer-field">Número <input [(ngModel)]="clienteForm.numero" placeholder="Número" /></label>
+          <label class="drawer-field">Complemento <input [(ngModel)]="clienteForm.complemento" placeholder="Sala, bloco, apto..." /></label>
+          <label class="drawer-field">Bairro <input [(ngModel)]="clienteForm.bairro" placeholder="Bairro" /></label>
+          <label class="drawer-field">Cidade <input [(ngModel)]="clienteForm.cidade" placeholder="Cidade" /></label>
+          <label class="drawer-field">UF <input [(ngModel)]="clienteForm.estado" maxlength="2" placeholder="UF" /></label>
 
         </div>
       </section>
@@ -788,46 +779,16 @@
           <p>Organize o fluxo com tipo, compromisso, prioridade e contexto interno do caso.</p>
         </div>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Processo ou assunto</mat-label>
-            <input matInput [(ngModel)]="novoTipo" />
-          </mat-form-field>
+        <label class="drawer-field">Processo ou assunto <input [(ngModel)]="novoTipo" placeholder="Ex.: ação de cobrança, inventário..." /></label>
 
         <div class="drawer-grid">
-          <mat-form-field appearance="outline">
-            <mat-label>Status base</mat-label>
-            <mat-select [(ngModel)]="novoStatus">
-              <mat-option value="Aguardando Análise">Aguardando análise</mat-option>
-              <mat-option value="Em Andamento">Em andamento</mat-option>
-              <mat-option value="Concluído">Concluído</mat-option>
-              <mat-option value="Cancelado">Cancelado</mat-option>
-              <mat-option value="Indeferido">Indeferido</mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Tipo de compromisso</mat-label>
-            <mat-select [(ngModel)]="novaCategoriaCompromisso">
-              <mat-option value="PRAZO">Prazo</mat-option>
-              <mat-option value="AUDIENCIA">Audiência</mat-option>
-              <mat-option value="EVENTO">Evento</mat-option>
-              <mat-option value="DOCUMENTO">Documento</mat-option>
-            </mat-select>
-          </mat-form-field>
+          <label class="drawer-field">Status <select [(ngModel)]="novoStatus"><option value="Aguardando Análise">Aguardando análise</option><option value="Em Andamento">Em andamento</option><option value="Concluído">Concluído</option><option value="Cancelado">Cancelado</option><option value="Indeferido">Indeferido</option></select></label>
+          <label class="drawer-field">Tipo de compromisso <select [(ngModel)]="novaCategoriaCompromisso"><option value="PRAZO">Prazo</option><option value="AUDIENCIA">Audiência</option><option value="EVENTO">Evento</option><option value="DOCUMENTO">Documento</option></select></label>
         </div>
 
         <div class="drawer-grid">
-          <mat-form-field appearance="outline">
-            <mat-label>Data do compromisso</mat-label>
-            <input matInput [matDatepicker]="pickerDrawer" [(ngModel)]="novoPrazo" />
-            <mat-datepicker-toggle matIconSuffix [for]="pickerDrawer"></mat-datepicker-toggle>
-            <mat-datepicker #pickerDrawer></mat-datepicker>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Local ou referencia</mat-label>
-            <input matInput [(ngModel)]="novoLocalCompromisso" placeholder="Forum central, videoconferencia, cliente..." />
-          </mat-form-field>
+          <label class="drawer-field">Data do compromisso <input type="date" [ngModel]="novoPrazoIso" (ngModelChange)="definirPrazoIso($event)" /></label>
+          <label class="drawer-field">Local ou referência <input [(ngModel)]="novoLocalCompromisso" placeholder="Fórum, videochamada..." /></label>
         </div>
 
         <label class="urgent-toggle">
@@ -837,10 +798,7 @@
           <span>Quando ativada, o caso permanece urgente até você remover essa marcação.</span>
         </label>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Observacao interna</mat-label>
-          <textarea matInput [(ngModel)]="novaObservacao" rows="5"></textarea>
-        </mat-form-field>
+        <label class="drawer-field">Observação interna <textarea [(ngModel)]="novaObservacao" rows="4" placeholder="Contexto útil para a equipe"></textarea></label>
       </section>
     </div>
 

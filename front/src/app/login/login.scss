@@ -6,6 +6,20 @@
   width: 100%; max-width: 440px; padding: 28px; display: flex; flex-direction: column; gap: 18px;
 }
 
+.presentation-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: flex-start;
+  color: var(--brand-primary);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.presentation-link mat-icon { font-size: 18px; width: 18px; height: 18px; }
+.presentation-link:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 3px; }
+
 .login-theme {
   align-self: flex-end;
   display: inline-flex;

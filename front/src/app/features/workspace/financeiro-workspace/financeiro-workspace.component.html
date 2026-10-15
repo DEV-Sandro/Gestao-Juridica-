@@ -1,0 +1,76 @@
+<section class="financeiro-page">
+  <header class="fin-hero card-glass">
+    <div><span class="eyebrow">Gestão financeira</span><h2 class="font-heading">Receitas, custos e horas em um só lugar</h2><p>Confira o resultado real, acompanhe vencimentos e descubra quais processos consomem mais tempo.</p></div>
+    <label class="periodo-field">Mês de análise <input type="month" [(ngModel)]="periodo" aria-label="Mês de análise" /></label>
+  </header>
+
+  <div class="resumo-grid">
+    <article class="card-glass resumo-card"><span>Recebido no mês</span><strong class="valor-positivo">{{ formatarMoeda(recebidoPeriodo) }}</strong><small>Pagamentos com baixa registrada</small></article>
+    <article class="card-glass resumo-card"><span>Despesas pagas</span><strong>{{ formatarMoeda(despesasPeriodo) }}</strong><small>Saídas registradas no mês</small></article>
+    <article class="card-glass resumo-card"><span>Custo de horas</span><strong>{{ formatarMoeda(custoHorasPeriodo) }}</strong><small>{{ formatarHoras(horasTotaisPeriodo) }} registradas</small></article>
+    <article class="card-glass resumo-card"><span>Resultado estimado</span><strong [class.valor-negativo]="resultadoPeriodo < 0" [class.valor-positivo]="resultadoPeriodo >= 0">{{ formatarMoeda(resultadoPeriodo) }}</strong><small>Recebido − despesas pagas − custo de horas</small></article>
+  </div>
+  <div class="resumo-grid" *ngIf="resumo">
+    <article class="card-glass resumo-card secondary"><span>A receber</span><strong>{{ formatarMoeda(resumo.aReceber) }}</strong><small>{{ resumo.totalPendentes }} lançamento(s) em aberto</small></article>
+    <article class="card-glass resumo-card secondary"><span>Em atraso</span><strong class="valor-negativo">{{ formatarMoeda(resumo.atrasado) }}</strong><small>{{ resumo.totalAtrasados }} vencido(s)</small></article>
+    <article class="card-glass resumo-card secondary"><span>Previsto no mês atual</span><strong>{{ formatarMoeda(resumo.previstoNoMes) }}</strong><small>Receitas pendentes que vencem no mês</small></article>
+    <article class="card-glass resumo-card secondary"><span>Valor das horas no mês</span><strong>{{ formatarMoeda(valorHorasPeriodo) }}</strong><small>Potencial pelo valor/hora informado</small></article>
+  </div>
+
+  <div class="insights-grid">
+    <article class="card-glass insights-card">
+      <div class="panel-header"><div><span class="eyebrow">Fluxo realizado</span><h3 class="font-heading">Últimos seis meses</h3></div><span class="chart-legend"><i></i> Recebido <i class="expense"></i> Despesa</span></div>
+      <p class="chart-note">Valores pela data da baixa. Meses sem pagamentos aparecem zerados.</p>
+      <div class="month-chart" role="img" aria-label="Comparativo mensal de recebimentos e despesas">
+        <div class="month-column" *ngFor="let item of serieMensal" [attr.title]="item.mes + ': recebido ' + formatarMoeda(item.recebido) + ', despesa ' + formatarMoeda(item.despesas)">
+          <div class="bar-track"><span class="bar income" [style.height.%]="item.recebido / item.escala * 100"></span><span class="bar expense" [style.height.%]="item.despesas / item.escala * 100"></span></div>
+          <strong>{{ item.mes }}</strong><small>{{ formatarMoeda(item.recebido) }}</small>
+        </div>
+      </div>
+    </article>
+    <article class="card-glass insights-card">
+      <div class="panel-header"><div><span class="eyebrow">Análise por processo</span><h3 class="font-heading">Tempo, custo e resultado</h3></div></div>
+      <p class="chart-note">Pagamentos baixados e horas registradas no mês selecionado.</p>
+      <div class="empty-state" *ngIf="analiseProcessos.length === 0">Ainda não há dados vinculados a processos neste mês.</div>
+      <div class="process-insight" *ngFor="let item of analiseProcessos">
+        <div><strong>{{ item.nome }}</strong><small>{{ item.cliente || 'Cliente não informado' }}</small></div>
+        <div class="process-insight-values"><span>{{ formatarHoras(item.horas) }}</span><span>Recebido {{ formatarMoeda(item.recebido) }}</span><span>Custos {{ formatarMoeda(item.despesas + item.custoHoras) }}</span><strong [class.valor-negativo]="item.resultado < 0">{{ formatarMoeda(item.resultado) }}</strong></div>
+      </div>
+    </article>
+  </div>
+
+  <article class="card-glass form-card">
+    <div class="panel-header"><div><span class="eyebrow">Controle de tempo</span><h3 class="font-heading">Registrar horas de trabalho</h3></div></div>
+    <p class="form-help">Vincule a atividade a um processo. O valor/hora mostra o potencial faturável; o custo/hora entra no resultado estimado.</p>
+    <div class="native-form-grid">
+      <label class="field span-2">Processo <select [(ngModel)]="horaProcessoId"><option value="">Selecione um processo</option><option *ngFor="let processo of processos" [value]="processo.id">{{ processo.titulo }} · {{ processo.clienteNome || 'Sem cliente' }}</option></select></label>
+      <label class="field span-2">Atividade realizada <input [(ngModel)]="horaDescricao" maxlength="240" placeholder="Ex.: preparação da audiência" /></label>
+      <label class="field">Data <input type="date" [(ngModel)]="horaData" /></label>
+      <label class="field">Horas trabalhadas <input type="number" min="0.1" max="24" step="0.1" [(ngModel)]="horaQuantidade" placeholder="Ex.: 1,5" /></label>
+      <label class="field">Valor por hora (R$) <input type="number" min="0" step="0.01" [(ngModel)]="horaValor" placeholder="0,00" /></label>
+      <label class="field">Custo interno por hora (R$) <input type="number" min="0" step="0.01" [(ngModel)]="horaCusto" placeholder="0,00" /></label>
+    </div>
+    <div class="form-footer"><button mat-flat-button class="btn-premium" type="button" (click)="salvarHoras()" [disabled]="salvandoHoras"><mat-icon>schedule</mat-icon>{{ salvandoHoras ? 'Salvando...' : 'Registrar horas' }}</button></div>
+    <div class="hours-list" *ngIf="apontamentos.length"><div class="hour-row" *ngFor="let item of apontamentos | slice:0:8"><div><strong>{{ item.descricao }}</strong><small>{{ item.processoTitulo }} · {{ item.data | date:'dd/MM/yyyy' }} · {{ item.advogadoNome }}</small></div><span>{{ formatarHoras(item.minutos / 60) }}</span><button mat-icon-button type="button" (click)="excluirHoras(item)" aria-label="Remover registro de horas"><mat-icon>delete_outline</mat-icon></button></div></div>
+  </article>
+
+  <article class="card-glass lista-card">
+    <div class="panel-header"><div><span class="eyebrow">Contas e honorários</span><h3 class="font-heading">Lançamentos</h3></div><div class="header-actions"><label class="field filter-field">Status <select [(ngModel)]="filtroStatus"><option value="Todos">Todos</option><option value="PENDENTE">Pendentes</option><option value="ATRASADO">Atrasados</option><option value="PAGO">Pagos</option></select></label><button mat-flat-button class="btn-premium" type="button" (click)="alternarFormulario()"><mat-icon>{{ mostrarFormulario ? 'close' : 'add' }}</mat-icon>{{ mostrarFormulario ? 'Fechar' : 'Novo lançamento' }}</button></div></div>
+    <div class="launch-form" *ngIf="mostrarFormulario">
+      <p class="form-help">Preencha o valor total. Ao parcelar, o sistema cria vencimentos mensais.</p>
+      <div class="native-form-grid">
+        <label class="field span-2">Descrição <input [(ngModel)]="novoDescricao" placeholder="Ex.: honorários contratuais" /></label>
+        <label class="field">Tipo <select [(ngModel)]="novoTipo"><option value="HONORARIO">Honorário</option><option value="DESPESA">Despesa</option><option value="REEMBOLSO">Reembolso</option></select></label>
+        <label class="field">Valor total (R$) <input type="number" min="0.01" step="0.01" [(ngModel)]="novoValor" placeholder="0,00" /></label>
+        <label class="field">Primeiro vencimento <input type="date" [(ngModel)]="novoVencimento" /></label>
+        <label class="field">Parcelas <input type="number" min="1" max="60" step="1" [(ngModel)]="novoParcelas" /></label>
+        <label class="field">Processo <select [(ngModel)]="novoProcessoId"><option value="">Sem vínculo</option><option *ngFor="let processo of processos" [value]="processo.id">{{ processo.titulo }}</option></select></label>
+        <label class="field">Forma de pagamento <input [(ngModel)]="novoFormaPagamento" placeholder="PIX, boleto..." /></label>
+      </div>
+      <div class="form-footer"><button mat-flat-button class="btn-premium" type="button" (click)="salvarLancamento()" [disabled]="salvando"><mat-icon>save</mat-icon>{{ salvando ? 'Salvando...' : 'Salvar lançamento' }}</button></div>
+    </div>
+    <div class="loading" *ngIf="carregando">Carregando lançamentos...</div>
+    <div class="empty-state" *ngIf="!carregando && lancamentosFiltrados.length === 0">Nenhum lançamento encontrado. Use “Novo lançamento” para começar.</div>
+    <div class="table-scroll" *ngIf="!carregando && lancamentosFiltrados.length"><table class="fin-table"><thead><tr><th>Descrição</th><th>Tipo</th><th>Vencimento</th><th class="align-right">Valor</th><th>Status</th><th class="align-right">Ações</th></tr></thead><tbody><tr *ngFor="let item of lancamentosFiltrados"><td><strong>{{ item.descricao }}</strong><small>{{ item.clienteNome || item.processoTitulo || 'Sem processo vinculado' }}</small></td><td>{{ tipoLabel(item.tipo) }}</td><td>{{ item.vencimento | date:'dd/MM/yyyy' }}</td><td class="align-right">{{ formatarMoeda(item.valor) }}</td><td><span class="status-chip" [ngClass]="statusClasse(item.statusEfetivo)">{{ statusLabel(item.statusEfetivo) }}</span></td><td class="align-right acoes"><button mat-icon-button type="button" *ngIf="item.statusEfetivo !== 'PAGO'" (click)="darBaixa(item)" aria-label="Registrar pagamento"><mat-icon>check_circle</mat-icon></button><button mat-icon-button type="button" *ngIf="item.statusEfetivo === 'PAGO'" (click)="reabrir(item)" aria-label="Estornar pagamento"><mat-icon>undo</mat-icon></button><button mat-icon-button type="button" (click)="excluir(item)" aria-label="Remover lançamento"><mat-icon>delete_outline</mat-icon></button></td></tr></tbody></table></div>
+  </article>
+</section>

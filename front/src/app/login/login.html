@@ -1,5 +1,6 @@
 <div class="login-wrapper fade-in">
   <div class="login-card card-glass">
+    <a routerLink="/" class="presentation-link"><mat-icon aria-hidden="true">arrow_back</mat-icon> Conhecer o JustaPro</a>
     <button class="login-theme" type="button" (click)="alternarTema()" [attr.aria-label]="temaAtual === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro'">
       <mat-icon>{{ temaAtual === 'light' ? 'dark_mode' : 'light_mode' }}</mat-icon>
       {{ temaAtual === 'light' ? 'Modo escuro' : 'Modo claro' }}

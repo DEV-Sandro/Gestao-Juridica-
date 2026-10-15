@@ -1,9 +1,9 @@
 <section class="agenda-shell">
   <header class="agenda-header">
     <div>
-      <span class="agenda-eyebrow">Agenda juridica</span>
-      <h3 class="font-heading">Calendario premium de compromissos</h3>
-      <p>Visual maior, estados criticos destacados e leitura operacional imediata.</p>
+      <span class="agenda-eyebrow">Agenda do escritório</span>
+      <h3 class="font-heading">Calendário de compromissos</h3>
+      <p>Filtre prazos, audiências, tarefas da agenda e vencimentos financeiros.</p>
     </div>
 
     <div class="agenda-controls">
@@ -20,6 +20,14 @@
       </div>
     </div>
   </header>
+
+  <nav class="agenda-filter" aria-label="Filtrar eventos do calendário">
+    <button type="button" [class.active]="filtro === 'TODOS'" [attr.aria-pressed]="filtro === 'TODOS'" (click)="escolherFiltro('TODOS')">Todos</button>
+    <button type="button" [class.active]="filtro === 'PRAZO'" [attr.aria-pressed]="filtro === 'PRAZO'" (click)="escolherFiltro('PRAZO')">Prazos processuais</button>
+    <button type="button" [class.active]="filtro === 'AUDIENCIA'" [attr.aria-pressed]="filtro === 'AUDIENCIA'" (click)="escolherFiltro('AUDIENCIA')">Audiências</button>
+    <button type="button" [class.active]="filtro === 'AGENDA'" [attr.aria-pressed]="filtro === 'AGENDA'" (click)="escolherFiltro('AGENDA')">Outras agendas</button>
+    <button type="button" [class.active]="filtro === 'FINANCEIRO'" [attr.aria-pressed]="filtro === 'FINANCEIRO'" (click)="escolherFiltro('FINANCEIRO')">Financeiro</button>
+  </nav>
 
   <div class="agenda-meta">
     <div class="agenda-kpis">

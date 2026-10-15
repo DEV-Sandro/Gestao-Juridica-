@@ -171,6 +171,11 @@
   gap: 18px;
 }
 
+.client-field { display: flex; flex-direction: column; gap: 7px; min-width: 0; color: var(--text-main); font-size: 13px; font-weight: 700; }
+.client-field input, .client-field textarea { box-sizing: border-box; width: 100%; min-height: 46px; padding: 11px 13px; border: 1px solid var(--border-strong); border-radius: 11px; background: var(--bg-surface); color: var(--text-main); font: inherit; font-weight: 500; resize: vertical; }
+.client-field input:focus, .client-field textarea:focus { outline: 2px solid var(--brand-primary); outline-offset: 1px; }
+.client-field input::placeholder, .client-field textarea::placeholder { color: var(--text-muted); opacity: .75; }
+
 .span-2 {
   grid-column: span 2;
 }
@@ -205,4 +210,15 @@
   .span-2 {
     grid-column: auto;
   }
+}
+
+@media (max-width: 720px) {
+  .clientes-page { gap: 14px; }
+  .clientes-hero { padding: 18px; gap: 10px; }
+  .clientes-hero h2 { font-size: 1.25rem; }
+  .clientes-hero p { margin-top: 6px; line-height: 1.45; }
+  .clientes-list, .cliente-editor { padding: 18px; }
+  .clientes-list { min-height: 0; max-height: 360px; overflow-y: auto; }
+  .cliente-card { padding: 12px; border-radius: 12px; }
+  .form-grid { gap: 13px; }
 }

@@ -76,6 +76,8 @@ export interface AgendaEvento {
   icon: string;
   detalhe: string;
   localCompromisso: string | null;
+  fonte?: 'PROCESSO' | 'FINANCEIRO';
+  lancamentoId?: string;
 }
 
 export interface HistoricoRegistroApi {

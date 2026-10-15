@@ -536,3 +536,110 @@ textarea.mat-mdc-input-element {
   background: rgba(239, 68, 68, 0.94) !important;
   color: #fff !important;
 }
+@media (max-width: 720px) {
+  body .jp-layout .jp-main {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+
+  body .jp-layout .jp-topbar {
+    padding: 16px 16px 14px;
+    gap: 12px;
+  }
+
+  body .jp-layout .topbar-copy h1 { font-size: 1.35rem; }
+  body .jp-layout .topbar-description { margin-top: 4px; font-size: 13px; line-height: 1.35; }
+  body .jp-layout .topbar-actions { display: flex; width: auto; gap: 8px; align-items: center; }
+  body .jp-layout .topbar-user { width: auto; min-height: 42px; padding: 4px; }
+  body .jp-layout .user-texts { display: none; }
+  body .jp-layout .avatar { width: 32px; height: 32px; }
+  body .jp-layout .theme-trigger { min-width: 42px; min-height: 42px; padding: 0 8px !important; font-size: 0; }
+  body .jp-layout .theme-trigger mat-icon { font-size: 21px; }
+  body .jp-layout .icon-action { width: 42px; height: 42px; }
+  body .jp-layout .workspace-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 12px 16px 0; }
+  body .jp-layout .workspace-actions > button { width: 100%; min-width: 0; padding: 0 8px; font-size: 12px; }
+  body .jp-layout .workspace-actions > button:nth-child(3) { display: none; }
+  body .jp-layout .jp-workspace { padding: 16px 16px 24px; gap: 16px; }
+
+  body .jp-layout .mobile-quick-nav {
+    position: fixed;
+    z-index: 500;
+    inset: auto 0 0;
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+    gap: 2px;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border-strong);
+    background: var(--bg-surface);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, .12);
+    overflow: visible;
+  }
+
+  body .jp-layout .quick-link {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 54px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    padding: 4px 0;
+    border: 0;
+    border-radius: 10px;
+    font-size: 9px;
+    line-height: 1.1;
+    text-align: center;
+  }
+
+  body .jp-layout .quick-link mat-icon { width: 21px; height: 21px; font-size: 21px; }
+  body .jp-layout .quick-link.active { color: var(--brand-primary); background: color-mix(in srgb, var(--brand-primary) 12%, var(--bg-surface)); }
+  body .jp-layout .dashboard-finance-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  body .jp-layout .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  body .jp-layout .stat-card { min-width: 0; padding: 14px; gap: 10px; }
+  body .jp-layout .stat-card strong { font-size: 1.6rem; }
+  body .jp-layout .stat-card small { font-size: 11px; }
+  body .jp-layout .stat-topline { gap: 4px; font-size: 12px; }
+  body .jp-layout .stat-icon { width: 30px; height: 30px; border-radius: 9px; flex: 0 0 auto; }
+  body .jp-layout .stat-icon mat-icon { width: 18px; height: 18px; font-size: 18px; }
+  body .jp-layout .dashboard-finance, body .jp-layout .dashboard-insight { padding: 18px; }
+  body .jp-layout .dashboard-finance .panel-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  body .jp-layout .dashboard-finance .panel-header a { white-space: nowrap; font-size: 13px; }
+  body .jp-layout .dashboard-insights { grid-template-columns: 1fr; gap: 12px; }
+  body .jp-layout .distribution-row { grid-template-columns: minmax(112px, 1fr) minmax(52px, 1fr) 20px; }
+
+  body .jp-layout .table-toolbar { padding: 18px; }
+  body .jp-layout .toolbar-actions { grid-template-columns: minmax(0, 1fr); min-width: 0; }
+  body .jp-layout .filter-pills { grid-column: 1; width: 100%; max-width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; }
+  body .jp-layout .filter-toggle { grid-column: 1; width: 100%; }
+  body .jp-layout .table-scroll { overflow: visible; padding: 0 14px 14px; }
+  body .jp-layout .saas-table thead { display: none; }
+  body .jp-layout .saas-table tbody { display: grid; gap: 12px; }
+  body .jp-layout .saas-table tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; padding: 16px; border: 1px solid var(--border-subtle); border-radius: 14px; background: var(--bg-surface); }
+  body .jp-layout .saas-table td { display: block; min-width: 0; padding: 0; border: 0; text-align: left; overflow-wrap: anywhere; }
+  body .jp-layout .saas-table td:nth-child(1), body .jp-layout .saas-table td:nth-child(2), body .jp-layout .saas-table td:nth-child(6) { grid-column: 1 / -1; }
+  body .jp-layout .saas-table td:nth-child(1) .table-primary { font-size: 15px; }
+  body .jp-layout .saas-table td:nth-child(2) { color: var(--text-muted); font-size: 13px; }
+  body .jp-layout .saas-table td:nth-child(6) { padding-top: 8px; border-top: 1px solid var(--border-subtle); }
+  body .jp-layout .row-actions { display: flex; justify-content: space-between; }
+
+  body .jp-layout .agenda-dedicated-card { padding: 14px; }
+  body .agenda-shell { gap: 14px; }
+  body .agenda-shell .agenda-header { display: block; }
+  body .agenda-shell .agenda-header h3 { font-size: 1.3rem; }
+  body .agenda-shell .agenda-header p { margin: 5px 0 12px; line-height: 1.4; font-size: 13px; }
+  body .agenda-shell .agenda-controls { justify-content: space-between; }
+  body .agenda-shell .agenda-filter { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  body .agenda-shell .agenda-filter button { min-height: 38px; padding: 6px; font-size: 11px; }
+  body .agenda-shell .agenda-filter button:first-child { grid-column: 1 / -1; }
+  body .agenda-shell .agenda-legend { display: none; }
+  body .agenda-shell .agenda-layout { display: block; }
+  body .agenda-shell .calendar-card { border-radius: 14px; }
+  body .agenda-shell .weekday-row span { padding: 10px 0; letter-spacing: 0; font-size: 10px; }
+  body .agenda-shell .day-cell { min-height: 58px; padding: 5px; }
+  body .agenda-shell .day-head { margin-bottom: 4px; }
+  body .agenda-shell .day-number { min-width: 22px; height: 22px; font-size: 11px; }
+  body .agenda-shell .event-count { min-width: 14px; height: 14px; padding: 0; font-size: 9px; }
+  body .agenda-shell .day-events { flex-direction: row; flex-wrap: wrap; gap: 2px; }
+  body .agenda-shell .event-chip { width: 7px; height: 7px; padding: 0; border-radius: 50%; font-size: 0; }
+  body .agenda-shell .event-chip mat-icon, body .agenda-shell .more-events { display: none; }
+  body .agenda-shell .day-panel { margin-top: 14px; border-radius: 14px; }
+}

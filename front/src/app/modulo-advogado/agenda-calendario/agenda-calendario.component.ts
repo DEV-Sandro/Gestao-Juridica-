@@ -34,13 +34,24 @@ export class AgendaCalendarioComponent implements OnChanges {
 
   days: CalendarDay[] = [];
   eventosSelecionados: AgendaEvento[] = [];
+  filtro: 'TODOS' | 'PRAZO' | 'AUDIENCIA' | 'AGENDA' | 'FINANCEIRO' = 'TODOS';
+
+  get eventosVisiveis(): AgendaEvento[] {
+    return this.eventos.filter((evento) => {
+      if (this.filtro === 'TODOS') return true;
+      if (this.filtro === 'FINANCEIRO') return evento.fonte === 'FINANCEIRO';
+      if (evento.fonte === 'FINANCEIRO') return false;
+      if (this.filtro === 'AGENDA') return evento.tipo === 'EVENTO' || evento.tipo === 'DOCUMENTO';
+      return evento.tipo === this.filtro;
+    });
+  }
+
+  escolherFiltro(filtro: typeof this.filtro): void {
+    this.filtro = filtro;
+    this.rebuildCalendar();
+  }
 
   ngOnChanges(_: SimpleChanges): void {
-    if (!this.existeData(this.selectedDateIso) && this.eventos.length > 0) {
-      this.selectedDateIso = this.eventos[0]!.data;
-      this.visibleMonth = this.startOfMonth(this.parseIsoDate(this.selectedDateIso));
-    }
-
     this.rebuildCalendar();
   }
 
@@ -140,7 +151,7 @@ export class AgendaCalendarioComponent implements OnChanges {
   }
 
   private get eventosDoMes(): AgendaEvento[] {
-    return this.eventos.filter((evento) => {
+    return this.eventosVisiveis.filter((evento) => {
       const data = this.parseIsoDate(evento.data);
       return (
         data.getMonth() === this.visibleMonth.getMonth() &&
@@ -178,7 +189,7 @@ export class AgendaCalendarioComponent implements OnChanges {
   }
 
   private listarEventosDoDia(iso: string): AgendaEvento[] {
-    return this.eventos
+    return this.eventosVisiveis
       .filter((evento) => evento.data === iso)
       .sort(
         (primeiro, segundo) =>
@@ -198,10 +209,6 @@ export class AgendaCalendarioComponent implements OnChanges {
       default:
         return 2;
     }
-  }
-
-  private existeData(iso: string): boolean {
-    return this.eventos.some((evento) => evento.data === iso);
   }
 
   private startOfMonth(base: Date): Date {

@@ -31,6 +31,14 @@ function errorMiddleware(error, req, res, next) {
     });
   }
 
+  if (error.message === 'LANCAMENTO_NAO_ENCONTRADO' || error.message === 'APONTAMENTO_NAO_ENCONTRADO') {
+    return res.status(404).json({ mensagem: 'Registro financeiro não encontrado.' });
+  }
+
+  if (error.message === 'VALIDACAO_LANCAMENTO' || error.message === 'VALIDACAO_APONTAMENTO') {
+    return res.status(400).json({ mensagem: 'Confira os dados financeiros e tente novamente.' });
+  }
+
   if (error.message === 'ACESSO_NEGADO') {
     return res.status(403).json({
       mensagem: 'Acesso negado'
