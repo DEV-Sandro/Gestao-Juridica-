@@ -1,0 +1,24 @@
+<div class="support-page">
+  <header class="support-header"><div class="support-container header-inner"><a class="brand" routerLink="/" aria-label="JustaPro, página inicial"><img src="assets/justapro-mark.svg" alt="" width="30" height="35" />Justa<span>Pro</span></a><a class="back-link" routerLink="/advogado/dashboard">← Voltar ao escritório</a></div></header>
+  <main class="support-container">
+    <div class="page-intro"><span class="eyebrow">SUPORTE DO JUSTAPRO</span><h1>Como podemos ajudar?</h1><p>Conte o que aconteceu. Você pode anexar uma imagem ou PDF para facilitar a análise. Evite incluir dados de clientes ou processos que não sejam necessários para explicar o problema.</p></div>
+    <div class="support-grid">
+      <section class="support-card" aria-labelledby="new-ticket-title"><h2 id="new-ticket-title">Abrir chamado</h2><p>Os dados ficam registrados para a equipe responsável pelo software.</p>
+        <form (ngSubmit)="enviar()" #chamadoForm="ngForm">
+          <div class="field"><label for="suporte-tipo">Tipo de pedido</label><select id="suporte-tipo" name="tipo" [(ngModel)]="tipo"><option value="BUG">Reportar um problema</option><option value="DUVIDA">Dúvida de uso</option><option value="SUGESTAO">Sugestão</option></select></div>
+          <div class="field"><label for="suporte-assunto">Assunto</label><input id="suporte-assunto" name="assunto" [(ngModel)]="assunto" required minlength="5" maxlength="120" placeholder="Ex.: Não consigo salvar um processo" /></div>
+          <div class="field"><label for="suporte-descricao">Descreva o que aconteceu</label><textarea id="suporte-descricao" name="descricao" [(ngModel)]="descricao" required minlength="20" maxlength="4000" rows="6" placeholder="O que você tentou fazer? O que apareceu na tela? Qual era o resultado esperado?"></textarea><small>Quanto mais claro o passo a passo, mais fácil investigar.</small></div>
+          <div class="field"><label for="suporte-pagina">Área do sistema (opcional)</label><input id="suporte-pagina" name="pagina" [(ngModel)]="pagina" maxlength="300" placeholder="Ex.: Clientes, Agenda, Financeiro" /></div>
+          <div class="field"><label for="suporte-anexo">Anexo (opcional)</label><input id="suporte-anexo" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp" (change)="selecionarArquivo($event)" #anexoInput /><small>PDF, PNG, JPG ou WEBP, até 2,5 MB.</small><div class="file-selected" *ngIf="arquivo"><span>{{ arquivo.name }}</span><button type="button" (click)="removerArquivo(anexoInput)">Remover</button></div></div>
+          <p class="feedback error" role="alert" *ngIf="erro">{{ erro }}</p><p class="feedback success" role="status" *ngIf="sucesso">{{ sucesso }}</p>
+          <button class="submit-button" type="submit" [disabled]="enviando || chamadoForm.invalid">{{ enviando ? 'Enviando...' : 'Enviar chamado' }}</button>
+        </form>
+      </section>
+      <section class="support-card history-card" aria-labelledby="history-title"><h2 id="history-title">Meus chamados</h2><p>Acompanhe os pedidos enviados pela sua conta.</p>
+        <div class="empty-state" *ngIf="carregando">Carregando chamados...</div>
+        <div class="empty-state" *ngIf="!carregando && !chamados.length">Você ainda não abriu chamados.</div>
+        <article class="ticket" *ngFor="let chamado of chamados"><div class="ticket-top"><span class="ticket-type">{{ chamado.tipo === 'BUG' ? 'Problema' : chamado.tipo === 'DUVIDA' ? 'Dúvida' : 'Sugestão' }}</span><span class="ticket-status">{{ chamado.status === 'ABERTO' ? 'Aberto' : chamado.status }}</span></div><h3>{{ chamado.assunto }}</h3><time>{{ chamado.criadoEm | date:'dd/MM/yyyy HH:mm' }}</time><p>{{ chamado.descricao }}</p><button type="button" *ngIf="chamado.anexo" (click)="baixarAnexo(chamado)">Baixar anexo: {{ chamado.anexo.nome }}</button></article>
+      </section>
+    </div>
+  </main>
+</div>

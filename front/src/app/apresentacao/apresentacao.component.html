@@ -86,10 +86,28 @@
       <div class="about-copy"><span class="section-kicker">SOBRE O SISTEMA</span><h2>Feito para acompanhar o trabalho jurídico de perto.</h2><p>O JustaPro reúne a operação do escritório em uma navegação direta: veja as prioridades no painel, abra os processos, consulte a agenda e acompanhe o financeiro. A interface tem modos claro e escuro e se adapta ao celular.</p><a routerLink="/login" class="text-link">Já tem acesso? Entre no sistema <mat-icon aria-hidden="true">arrow_forward</mat-icon></a></div>
     </section>
 
-    <section class="commercial-section" aria-label="Assinatura e contato">
-      <div class="site-container commercial-grid">
-        <article id="assinatura" class="commercial-card"><span class="section-kicker">ASSINATURA</span><h2>Informações de planos em preparação.</h2><p>Os valores, condições e formas de contratação ainda serão definidos. Esta página será atualizada quando houver uma oferta disponível.</p><span class="status-note"><mat-icon aria-hidden="true">info</mat-icon> Sem preço publicado no momento</span></article>
-        <article id="contato" class="commercial-card"><span class="section-kicker">CONTATO</span><h2>Um canal direto está a caminho.</h2><p>O contato comercial e o responsável pelo serviço ainda serão informados aqui. Se você já recebeu um convite de um escritório, pode concluir seu acesso pela página de entrada.</p><a class="button-secondary" routerLink="/login">Ir para entrada <mat-icon aria-hidden="true">arrow_forward</mat-icon></a></article>
+    <section id="assinatura" class="commercial-section" aria-labelledby="pricing-title">
+      <div class="site-container">
+        <div class="section-heading pricing-heading"><span class="section-kicker">PLANOS PARA O ESCRITÓRIO</span><h2 id="pricing-title">Escolha o ritmo que combina com seu escritório.</h2><p>Os valores abaixo são por escritório. Veja o custo completo de cada opção antes de decidir.</p></div>
+        <div class="pricing-grid">
+          <article class="plan-card" aria-labelledby="monthly-title">
+            <div class="plan-heading"><span class="plan-icon"><mat-icon aria-hidden="true">calendar_month</mat-icon></span><div><span class="plan-eyebrow">Flexibilidade</span><h3 id="monthly-title">Mensal</h3></div></div>
+            <p class="plan-intro">Uma forma de começar com investimento inicial menor.</p>
+            <div class="price-block"><span class="price-label">Primeiro mês de novos assinantes</span><strong>R$ 79,99</strong><span class="price-suffix">no primeiro mês</span></div>
+            <div class="plan-renewal"><mat-icon aria-hidden="true">info</mat-icon><span>Depois, <strong>R$ 189,99 por mês</strong>.</span></div>
+            <ul class="plan-features"><li><mat-icon aria-hidden="true">check_circle</mat-icon> Processos, clientes e agenda</li><li><mat-icon aria-hidden="true">check_circle</mat-icon> Financeiro e controle de horas</li><li><mat-icon aria-hidden="true">check_circle</mat-icon> Uso no computador e no celular</li></ul>
+          </article>
+          <article class="plan-card plan-card-featured" aria-labelledby="annual-title">
+            <span class="plan-highlight">Economia no ano</span>
+            <div class="plan-heading"><span class="plan-icon"><mat-icon aria-hidden="true">savings</mat-icon></span><div><span class="plan-eyebrow">Para planejar o ano</span><h3 id="annual-title">Anual</h3></div></div>
+            <p class="plan-intro">O menor custo mensal equivalente para manter a rotina organizada.</p>
+            <div class="price-block"><span class="price-label">Equivalente mensal</span><strong>R$ 151,99<span class="price-unit">/mês</span></strong><span class="price-suffix">R$ 1.823,88 em uma parcela anual</span></div>
+            <div class="plan-renewal"><mat-icon aria-hidden="true">verified</mat-icon><span>Economize <strong>R$ 456,00 no ano</strong> em comparação a 12 meses pelo preço mensal regular.</span></div>
+            <ul class="plan-features"><li><mat-icon aria-hidden="true">check_circle</mat-icon> Processos, clientes e agenda</li><li><mat-icon aria-hidden="true">check_circle</mat-icon> Financeiro e controle de horas</li><li><mat-icon aria-hidden="true">check_circle</mat-icon> Uso no computador e no celular</li></ul>
+          </article>
+        </div>
+        <p class="pricing-disclaimer"><mat-icon aria-hidden="true">info</mat-icon><span>Preços informativos por escritório. A contratação e o pagamento ainda não estão disponíveis pelo site. A promoção mensal vale apenas para o primeiro mês de novos assinantes; a partir do segundo, aplica-se R$ 189,99/mês.</span></p>
+        <div id="contato" class="commercial-contact"><div><span class="section-kicker">CONTATO</span><h2>Precisa de ajuda para conhecer o sistema?</h2><p>O canal comercial será publicado aqui em breve. Se você já tem acesso pelo seu escritório, entre no sistema ou consulte a Central de Ajuda.</p></div><div class="contact-actions"><a class="button-secondary" routerLink="/ajuda">Central de Ajuda</a><a class="button-primary" routerLink="/login">Entrar no sistema <mat-icon aria-hidden="true">arrow_forward</mat-icon></a></div></div>
       </div>
     </section>
   </main>

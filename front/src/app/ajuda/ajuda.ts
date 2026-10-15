@@ -1,8 +1,9 @@
-import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { CommonModule, Location } from '@angular/common';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { voltarOuIrParaInicio } from '../shared/voltar-navegacao';
 
 interface TopicoAjuda {
   categoria: string;
@@ -18,6 +19,8 @@ interface TopicoAjuda {
   styleUrl: './ajuda.scss'
 })
 export class AjudaComponent {
+  private location = inject(Location);
+  private router = inject(Router);
   busca = '';
 
   readonly topicos: TopicoAjuda[] = [
@@ -69,7 +72,7 @@ export class AjudaComponent {
     {
       categoria: 'Conta',
       pergunta: 'Não recebi acesso. Com quem falo?',
-      resposta: 'Peça ao administrador do seu escritório que confira o convite e o e-mail usado no cadastro. O canal público de suporte do JustaPro ainda será divulgado na página inicial.'
+      resposta: 'Peça ao administrador do seu escritório que confira o convite e o e-mail usado no cadastro. Se você já é advogado ou administrador e precisa reportar um problema, abra um chamado na área do sistema.'
     }
   ];
 
@@ -83,6 +86,10 @@ export class AjudaComponent {
 
   limparBusca(): void {
     this.busca = '';
+  }
+
+  voltar(): void {
+    voltarOuIrParaInicio(this.location, this.router);
   }
 
   private normalizar(valor: string): string {

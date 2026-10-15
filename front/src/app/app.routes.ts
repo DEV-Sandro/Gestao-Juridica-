@@ -15,6 +15,11 @@ export const routes: Routes = [
   { path: 'convite/aceitar', component: AcceptInviteComponent },
   { path: 'ajuda', component: AjudaComponent },
   { path: 'politica-de-privacidade', component: PoliticaPrivacidadeComponent },
+  {
+    path: 'suporte',
+    canActivate: [roleGuard('ADMIN', 'ADVOGADO')],
+    loadComponent: () => import('./suporte/suporte').then((m) => m.SuporteComponent)
+  },
 
   // Rotas da Jornada
   { path: 'advogado', redirectTo: 'advogado/dashboard', pathMatch: 'full' },

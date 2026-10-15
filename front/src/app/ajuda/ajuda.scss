@@ -9,6 +9,8 @@
 nav { display: flex; align-items: center; gap: 22px; }
 nav a { color: var(--text-muted); text-decoration: none; font-size: 13px; font-weight: 700; white-space: nowrap; }
 nav a:hover { color: var(--brand-primary); }
+.back-nav { padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: 8px; color: var(--brand-primary); background: var(--bg-surface); font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.back-nav:hover { border-color: var(--brand-primary); }
 nav .header-login { padding: 10px 15px; border-radius: 9px; color: #fff; background: #1458bd; }
 nav .header-login:hover { color: #fff; background: #0b438f; }
 .help-hero { padding: 65px 0 48px; text-align: center; }
