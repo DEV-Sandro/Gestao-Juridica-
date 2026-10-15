@@ -1,36 +1,32 @@
-<div style="padding: 50px; max-width: 800px; margin: auto;">
-  
-  <h1 style="color: #3f51b5; font-family: Roboto, sans-serif;">
-    🎓 Central de Ajuda - AdvogaFlow
-  </h1>
-  <p style="color: #666; margin-bottom: 30px;">
-    Tire suas dúvidas sobre o funcionamento do sistema jurídico.
-  </p>
+<div class="help-page">
+  <header class="help-header">
+    <div class="help-container header-inner">
+      <a class="brand" routerLink="/" aria-label="JustaPro, página inicial"><img src="assets/justapro-mark.svg" alt="" width="33" height="38" /> Justa<span>Pro</span></a>
+      <nav aria-label="Navegação da ajuda"><a routerLink="/">Página inicial</a><a routerLink="/politica-de-privacidade">Privacidade</a><a class="header-login" routerLink="/login">Entrar</a></nav>
+    </div>
+  </header>
 
-  <mat-accordion>
-    
-    <mat-expansion-panel *ngFor="let item of baseConhecimento">
-      
-      <mat-expansion-panel-header>
-        <mat-panel-title style="font-weight: bold;">
-          {{ item.title }}
-        </mat-panel-title>
-        <mat-panel-description>
-          {{ item.id }}
-        </mat-panel-description>
-      </mat-expansion-panel-header>
+  <main class="help-container">
+    <section class="help-hero" aria-labelledby="help-title">
+      <span class="eyebrow">CENTRAL DE AJUDA</span>
+      <h1 id="help-title">Como podemos ajudar?</h1>
+      <p>Encontre respostas práticas para usar o JustaPro no dia a dia do escritório.</p>
+      <div class="search-field"><mat-icon aria-hidden="true">search</mat-icon><label class="sr-only" for="help-search">Pesquisar na ajuda</label><input id="help-search" type="search" [(ngModel)]="busca" placeholder="Busque por cliente, agenda, financeiro..." autocomplete="off" /><button *ngIf="busca" type="button" (click)="limparBusca()" aria-label="Limpar busca"><mat-icon aria-hidden="true">close</mat-icon></button></div>
+    </section>
 
-      <p style="line-height: 1.6; color: #444;">
-        {{ item.canonical_answer }}
-      </p>
+    <section class="help-content" aria-labelledby="faq-title">
+      <div class="section-title"><div><span class="eyebrow">RESPOSTAS RÁPIDAS</span><h2 id="faq-title">Dúvidas frequentes</h2></div><span class="count">{{ topicosFiltrados.length }} tópico(s)</span></div>
+      <div class="faq-list" *ngIf="topicosFiltrados.length; else semResultado">
+        <details *ngFor="let topico of topicosFiltrados">
+          <summary><span class="topic-copy"><small>{{ topico.categoria }}</small><strong>{{ topico.pergunta }}</strong></span><mat-icon aria-hidden="true">expand_more</mat-icon></summary>
+          <p>{{ topico.resposta }}</p>
+        </details>
+      </div>
+      <ng-template #semResultado><div class="empty-state"><mat-icon aria-hidden="true">search_off</mat-icon><strong>Nenhum tópico encontrado</strong><p>Tente uma palavra mais curta ou veja todas as perguntas.</p><button type="button" (click)="limparBusca()">Ver todos os tópicos</button></div></ng-template>
+    </section>
 
-    </mat-expansion-panel>
+    <section class="access-note" aria-labelledby="access-title"><div class="note-icon"><mat-icon aria-hidden="true">help_outline</mat-icon></div><div><h2 id="access-title">Precisa entrar no sistema?</h2><p>Use sua conta ou finalize o convite recebido do administrador do escritório.</p></div><a routerLink="/login">Ir para entrada <mat-icon aria-hidden="true">arrow_forward</mat-icon></a></section>
+  </main>
 
-  </mat-accordion>
-
-  <br><br>
-  <a href="/dashboard" style="text-decoration: none; color: #3f51b5; font-weight: bold;">
-    ⬅ Voltar para o Escritório
-  </a>
-
+  <footer class="help-footer"><div class="help-container"><span>JustaPro · Central de Ajuda</span><a routerLink="/">Voltar à página inicial</a></div></footer>
 </div>

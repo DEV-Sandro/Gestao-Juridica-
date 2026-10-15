@@ -77,6 +77,10 @@
 
     <div class="sidebar-bottom">
       <span class="sidebar-section-label">Conta e ajustes</span>
+      <a class="nav-item" routerLink="/ajuda">
+        <mat-icon>help_outline</mat-icon>
+        <span>Central de Ajuda</span>
+      </a>
       <a class="nav-item" routerLink="/perfil" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
         <mat-icon>person</mat-icon>
         <span>Meu perfil</span>
@@ -146,6 +150,10 @@
         </button>
 
         <mat-menu #perfilMenu="matMenu">
+          <button mat-menu-item type="button" routerLink="/ajuda">
+            <mat-icon>help_outline</mat-icon>
+            Central de Ajuda
+          </button>
           <button mat-menu-item type="button" routerLink="/perfil">
             <mat-icon>person</mat-icon>
             Meu perfil

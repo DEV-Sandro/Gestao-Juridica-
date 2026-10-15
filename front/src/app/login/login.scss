@@ -111,6 +111,7 @@
   .forgot-link { font-size: 14px; font-weight: 500; text-decoration: none; color: var(--brand-primary); }
 }
 
+.login-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 20px; }
 .privacy-link { color: var(--brand-primary); text-decoration: none; text-align: center; font-size: 13px; font-weight: 700; }
 
 @media (max-width: 480px) {

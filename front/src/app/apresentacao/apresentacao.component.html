@@ -13,6 +13,7 @@
       <nav id="site-navigation" class="site-nav" [class.is-open]="menuAberto" aria-label="Navegação principal">
         <a href="#funcionalidades" (click)="fecharMenu()">Funcionalidades</a>
         <a href="#sobre" (click)="fecharMenu()">Sobre</a>
+        <a routerLink="/ajuda" (click)="fecharMenu()">Ajuda</a>
         <a href="#assinatura" (click)="fecharMenu()">Assinatura</a>
         <a href="#contato" (click)="fecharMenu()">Contato</a>
         <a class="nav-login" routerLink="/login" (click)="fecharMenu()">Entrar no sistema <mat-icon aria-hidden="true">arrow_forward</mat-icon></a>
@@ -93,5 +94,5 @@
     </section>
   </main>
 
-  <footer class="site-footer"><div class="site-container footer-inner"><a class="brand" routerLink="/" aria-label="JustaPro, página inicial"><img src="assets/justapro-mark.svg" alt="" width="30" height="34" /><span>Justa<span>Pro</span></span></a><div class="footer-links"><a routerLink="/politica-de-privacidade">Política de Privacidade</a><a href="#sobre">Sobre</a><a href="#contato">Contato</a></div><button type="button" class="theme-toggle" (click)="alternarTema()" [attr.aria-label]="temaAtual === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro'"><mat-icon aria-hidden="true">{{ temaAtual === 'light' ? 'dark_mode' : 'light_mode' }}</mat-icon><span>{{ temaAtual === 'light' ? 'Modo escuro' : 'Modo claro' }}</span></button></div></footer>
+  <footer class="site-footer"><div class="site-container footer-inner"><a class="brand" routerLink="/" aria-label="JustaPro, página inicial"><img src="assets/justapro-mark.svg" alt="" width="30" height="34" /><span>Justa<span>Pro</span></span></a><div class="footer-links"><a routerLink="/ajuda">Central de Ajuda</a><a routerLink="/politica-de-privacidade">Política de Privacidade</a><a href="#sobre">Sobre</a><a href="#contato">Contato</a></div><button type="button" class="theme-toggle" (click)="alternarTema()" [attr.aria-label]="temaAtual === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro'"><mat-icon aria-hidden="true">{{ temaAtual === 'light' ? 'dark_mode' : 'light_mode' }}</mat-icon><span>{{ temaAtual === 'light' ? 'Modo escuro' : 'Modo claro' }}</span></button></div></footer>
 </div>
