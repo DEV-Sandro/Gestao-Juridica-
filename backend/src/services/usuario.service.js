@@ -4,6 +4,7 @@ const { z } = require('zod');
 const { admin, bucket, defaultBucketName, projectId, sanitizeBucketName } = require('../config/firebase');
 const usuarioRepository = require('../repositories/usuario.repository');
 const conviteService = require('./convite.service');
+const { escritorioDoUsuario } = require('./escritorio.service');
 
 const ROLES_VALIDOS = ['ADMIN', 'ADVOGADO', 'CLIENT'];
 const urlFotoPermitida = /^(https:\/\/|http:\/\/).+/i;
@@ -296,19 +297,23 @@ async function removerMeuAvatar(user) {
   return obterPerfil(user);
 }
 
-async function listarEquipe() {
+async function listarEquipe(user) {
   const membros = await usuarioRepository.listarTodos();
-  return membros.map((membro) => sanitizarMembro(membro));
+  const doEscritorio = await Promise.all(membros.map(async (membro) =>
+    (await escritorioDoUsuario(membro.uid)) === user.escritorioId ? membro : null));
+  return doEscritorio.filter(Boolean).map((membro) => sanitizarMembro(membro));
 }
 
 async function convidarMembro(adminUser, payload) {
   return conviteService.convidarMembro(adminUser, payload);
 }
 
-async function atualizarRole(uid, novoRole) {
+async function atualizarRole(uid, novoRole, adminUser) {
   if (!ROLES_VALIDOS.includes(novoRole)) {
     throw new Error('VALIDACAO_FALHOU');
   }
+  if (!(await usuarioRepository.buscarPorId(uid))) throw new Error('ACESSO_NEGADO');
+  if ((await escritorioDoUsuario(uid)) !== adminUser.escritorioId) throw new Error('ACESSO_NEGADO');
 
   await usuarioRepository.atualizar(uid, {
     role: novoRole,
@@ -323,6 +328,8 @@ async function removerMembro(uid, adminUser) {
   if (uid === adminUser.uid) {
     throw new Error('NAO_PODE_REMOVER_A_SI_MESMO');
   }
+  if (!(await usuarioRepository.buscarPorId(uid))) throw new Error('ACESSO_NEGADO');
+  if ((await escritorioDoUsuario(uid)) !== adminUser.escritorioId) throw new Error('ACESSO_NEGADO');
 
   await usuarioRepository.desativar(uid);
 

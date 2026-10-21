@@ -32,6 +32,7 @@ export interface ProcessoOrcamento {
 
 export interface ProcessoApiModel {
   id: string;
+  numeroCnj?: string | null;
   titulo?: string | null;
   tipo?: string | null;
   descricao?: string | null;

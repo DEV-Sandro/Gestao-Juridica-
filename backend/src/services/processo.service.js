@@ -4,6 +4,7 @@ const etapaRepository = require('../repositories/etapa.repository');
 const auditoriaRepository = require('../repositories/auditoria.repository');
 const auditoriaService = require('./auditoria.service');
 const clienteRepository = require('../repositories/cliente.repository');
+const { escritorioDoUsuario, pertenceAoEscritorio, exigirMesmoEscritorio } = require('./escritorio.service');
 const {
   calcularStatusInteligente,
   normalizarCategoriaCompromisso
@@ -346,6 +347,7 @@ function montarOrcamentoResposta(orcamento) {
 
 const CAMPOS_AUDITORIA_LABEL = {
   titulo: 'Titulo do processo',
+  numeroCnj: 'Numero CNJ',
   descricao: 'Descricao',
   prazo: 'Prazo principal',
   status: 'Status',
@@ -428,7 +430,8 @@ async function obterProcessoComAcesso(processoId, user, motivoAcessoNegado) {
     throw new Error('PROCESSO_NAO_ENCONTRADO');
   }
 
-  if (user.role === 'CLIENT' && processo.clienteId !== user.uid) {
+  if ((user.role === 'CLIENT' && processo.clienteId !== user.uid) ||
+      (user.role !== 'CLIENT' && !(await pertenceAoEscritorio(processo, user)))) {
     await registrarAcessoNegado(processoId, user, motivoAcessoNegado);
     throw new Error('ACESSO_NEGADO');
   }
@@ -438,6 +441,20 @@ async function obterProcessoComAcesso(processoId, user, motivoAcessoNegado) {
 
 function montarPayloadProcesso(dados, processoAtual = null) {
   const payload = {};
+
+  if (dados.numeroCnj !== undefined) {
+    if (dados.numeroCnj === null || dados.numeroCnj === '') {
+      payload.numeroCnj = null;
+    } else {
+      const digitos = String(dados.numeroCnj).replace(/\D/g, '');
+      if (digitos.length !== 20) throw new Error('VALIDACAO_FALHOU');
+      const base = digitos.slice(0, 7) + digitos.slice(9) + '00';
+      let resto = 0;
+      for (const digito of base) resto = (resto * 10 + Number(digito)) % 97;
+      if (98 - resto !== Number(digitos.slice(7, 9))) throw new Error('VALIDACAO_FALHOU');
+      payload.numeroCnj = `${digitos.slice(0, 7)}-${digitos.slice(7, 9)}.${digitos.slice(9, 13)}.${digitos.slice(13, 14)}.${digitos.slice(14, 16)}.${digitos.slice(16)}`;
+    }
+  }
 
   const titulo =
     normalizarTexto(dados.titulo, 160) ??
@@ -685,28 +702,33 @@ function montarPayloadClientePersistencia(cliente) {
   };
 }
 
-async function carregarClientesMap() {
+async function carregarClientesMap(user) {
   const clientes = await clienteRepository.listarTodos();
-  return new Map(clientes.map((cliente) => [cliente.id, cliente]));
+  const permitidos = await Promise.all(clientes.map(async (cliente) =>
+    (await pertenceAoEscritorio(cliente, user)) ? cliente : null));
+  return new Map(permitidos.filter(Boolean).map((cliente) => [cliente.id, cliente]));
 }
 
-async function encontrarClienteExistente(clienteInformado) {
+async function encontrarClienteExistente(clienteInformado, user) {
   if (clienteInformado.id) {
     const encontrado = await clienteRepository.buscarPorId(clienteInformado.id);
     if (!encontrado || encontrado.ativo === false) {
       throw new Error('CLIENTE_NAO_ENCONTRADO');
     }
+    await exigirMesmoEscritorio(encontrado, user);
 
     return encontrado;
   }
 
   const clientes = await clienteRepository.listarTodos();
+  const acessiveis = (await Promise.all(clientes.map(async (cliente) =>
+    (await pertenceAoEscritorio(cliente, user)) ? cliente : null))).filter(Boolean);
   const documento = clienteInformado.cpfCnpj || null;
   const email = clienteInformado.email || null;
   const nomeNormalizado = normalizarNomeComparavel(clienteInformado.nome);
 
   return (
-    clientes.find((cliente) => {
+    acessiveis.find((cliente) => {
       const docCliente = normalizarDocumento(cliente.cpf || cliente.cnpj || cliente.documentoSecundario);
       const emailCliente = normalizarEmail(cliente.email);
       const nomeCliente = normalizarNomeComparavel(cliente.nome);
@@ -739,6 +761,7 @@ async function resolverClienteDoProcesso(dados, user, processoAtual = null) {
   ) {
     try {
       const clientePorId = await clienteRepository.buscarPorId(clienteInformado.id);
+      if (clientePorId) await exigirMesmoEscritorio(clientePorId, user);
       if (clientePorId && clientePorId.ativo !== false) {
         clienteInformado.nome = clientePorId.nome || null;
       } else {
@@ -746,12 +769,13 @@ async function resolverClienteDoProcesso(dados, user, processoAtual = null) {
         clienteInformado.id = null;
       }
     } catch (error) {
+      if (error.message === 'ACESSO_NEGADO') throw error;
       clienteInformado.nome = clienteInformado.id;
       clienteInformado.id = null;
     }
   }
 
-  let clienteExistente = await encontrarClienteExistente(clienteInformado);
+  let clienteExistente = await encontrarClienteExistente(clienteInformado, user);
 
   if (clienteExistente) {
     const atualizacao = {};
@@ -821,6 +845,7 @@ async function resolverClienteDoProcesso(dados, user, processoAtual = null) {
     ativo: true,
     criadoEm: agora,
     criadoPor: user.uid,
+    escritorioId: user.escritorioId,
     atualizadoEm: agora,
     atualizadoPor: user.uid
   });
@@ -831,7 +856,7 @@ async function resolverClienteDoProcesso(dados, user, processoAtual = null) {
   };
 }
 
-async function enriquecerProcessoComCliente(processo, clientesMap = null) {
+async function enriquecerProcessoComCliente(processo, clientesMap = null, user = null) {
   if (processo.clienteNome) {
     return processo;
   }
@@ -840,7 +865,7 @@ async function enriquecerProcessoComCliente(processo, clientesMap = null) {
     clientesMap?.get(processo.clienteId) ||
     (processo.clienteId ? await clienteRepository.buscarPorId(processo.clienteId) : null);
 
-  if (cliente?.nome) {
+  if (cliente?.nome && (!user || await pertenceAoEscritorio(cliente, user))) {
     return {
       ...processo,
       clienteNome: cliente.nome
@@ -869,7 +894,7 @@ function determinarAcaoPrincipal(camposAtualizados, payload, processoAtual) {
 async function listarProcessos(query, user) {
   const processos = await processoRepository.buscarTodos();
   const dias = await obterDiasArquivamento();
-  const clientesMap = await carregarClientesMap();
+  const clientesMap = await carregarClientesMap(user);
 
   const lista = [];
   const updates = [];
@@ -878,8 +903,9 @@ async function listarProcessos(query, user) {
   for (const processo of processos) {
     if (processo.deletado) continue;
     if (user.role === 'CLIENT' && processo.clienteId !== user.uid) continue;
+    if (user.role !== 'CLIENT' && !(await pertenceAoEscritorio(processo, user))) continue;
 
-    const processoComCliente = await enriquecerProcessoComCliente(processo, clientesMap);
+    const processoComCliente = await enriquecerProcessoComCliente(processo, clientesMap, user);
     const processoResposta = montarProcessoResposta(processoComCliente, dias);
 
     if (
@@ -934,7 +960,7 @@ async function buscarPorId(id, user) {
     'Cliente tentou acessar processo de outro usuario'
   );
   const dias = await obterDiasArquivamento();
-  const processoComCliente = await enriquecerProcessoComCliente(processo);
+  const processoComCliente = await enriquecerProcessoComCliente(processo, null, user);
 
   return montarProcessoResposta(processoComCliente, dias);
 }
@@ -942,6 +968,9 @@ async function buscarPorId(id, user) {
 async function criarProcesso(dados, user) {
   const agora = new Date().toISOString();
   const payload = montarPayloadProcesso(dados);
+  if (payload.advogadoId && (await escritorioDoUsuario(payload.advogadoId)) !== user.escritorioId) {
+    throw new Error('ACESSO_NEGADO');
+  }
   const cliente = await resolverClienteDoProcesso(dados, user);
 
   const novo = {
@@ -953,6 +982,7 @@ async function criarProcesso(dados, user) {
     deletado: false,
     criadoEm: agora,
     criadoPor: user.uid,
+    escritorioId: user.escritorioId,
     atualizadoEm: agora,
     atualizadoPor: user.uid
   };
@@ -1002,6 +1032,9 @@ async function atualizarProcesso(id, dados, user) {
   }
 
   const payload = montarPayloadProcesso(dados, processoAtual);
+  if (payload.advogadoId && (await escritorioDoUsuario(payload.advogadoId)) !== user.escritorioId) {
+    throw new Error('ACESSO_NEGADO');
+  }
   const clienteVinculado = await resolverClienteDoProcesso(dados, user, processoAtual);
   if (clienteVinculado) {
     Object.assign(payload, clienteVinculado);

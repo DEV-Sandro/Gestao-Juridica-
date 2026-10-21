@@ -3,6 +3,7 @@ const { z } = require('zod');
 const { admin } = require('../config/firebase');
 const conviteRepository = require('../repositories/convite.repository');
 const usuarioRepository = require('../repositories/usuario.repository');
+const { escritorioDoUsuario } = require('./escritorio.service');
 
 const ROLES_VALIDOS = ['ADMIN', 'ADVOGADO', 'CLIENT'];
 const STATUS_CONVITE = {
@@ -112,6 +113,10 @@ async function convidarMembro(adminUser, payload) {
     if (usuarioExistente && !usuarioExistente.disabled) {
       throw new Error('EMAIL_JA_EXISTE');
     }
+    if (usuarioExistente &&
+        (await escritorioDoUsuario(usuarioExistente.uid)) !== adminUser.escritorioId) {
+      throw new Error('EMAIL_JA_EXISTE');
+    }
   } catch (err) {
     if (err.message === 'EMAIL_JA_EXISTE') {
       throw err;
@@ -139,7 +144,8 @@ async function convidarMembro(adminUser, payload) {
     criadoEm: agora.toISOString(),
     atualizadoEm: agora.toISOString(),
     expiresAt,
-    convidadoPor: adminUser.uid
+    convidadoPor: adminUser.uid,
+    escritorioId: adminUser.escritorioId
   });
 
   return {
@@ -222,6 +228,8 @@ async function aceitarConvite(payload) {
   }
 
   const email = convite.email;
+  const escritorioId = convite.escritorioId || await escritorioDoUsuario(convite.convidadoPor);
+  if (!escritorioId) throw new Error('CONVITE_INVALIDO');
   const displayName = validado.data.displayName.trim();
   const telefone = validado.data.telefone?.trim() || null;
   const cargo = validado.data.cargo?.trim() || convite.cargo || null;
@@ -231,6 +239,8 @@ async function aceitarConvite(payload) {
 
   try {
     authUser = await admin.auth().getUserByEmail(email);
+    const escritorioAnterior = await escritorioDoUsuario(authUser.uid);
+    if (escritorioAnterior !== escritorioId) throw new Error('CONVITE_INVALIDO');
     await admin.auth().updateUser(authUser.uid, {
       password: validado.data.password,
       displayName,
@@ -263,7 +273,8 @@ async function aceitarConvite(payload) {
     ativo: true,
     criadoEm: perfilExistente?.criadoEm || agora,
     atualizadoEm: agora,
-    conviteAceitoEm: agora
+    conviteAceitoEm: agora,
+    escritorioId
   });
 
   await conviteRepository.atualizar(tokenHash, {

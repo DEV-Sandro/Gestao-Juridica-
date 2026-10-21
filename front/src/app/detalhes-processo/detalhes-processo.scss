@@ -35,6 +35,11 @@
   font-weight: 700;
 }
 
+.details-nav { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.details-nav a { display: inline-flex; align-items: center; min-height: 40px; padding: 0 12px; border-radius: 10px; color: var(--brand-primary); text-decoration: none; font-weight: 700; }
+.details-nav a:hover { background: var(--surface-soft); }
+@media (max-width: 720px) { .details-nav { justify-content: space-between; } .details-nav .back-link { width: 100%; justify-content: flex-start; } .details-nav a { font-size: 13px; } }
+
 .overlay {
   position: fixed;
   inset: 0;

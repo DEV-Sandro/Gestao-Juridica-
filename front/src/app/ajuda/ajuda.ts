@@ -60,6 +60,21 @@ export class AjudaComponent {
       resposta: 'É uma visão gerencial do período: valores recebidos menos despesas pagas e custo das horas registradas. Confira os lançamentos e critérios do escritório antes de usar esse número para decisões contábeis ou fiscais.'
     },
     {
+      categoria: 'Calculadoras',
+      pergunta: 'Como uso a calculadora de prazos?',
+      resposta: 'Abra Calculadoras e OAB, informe a data inicial e a quantidade de dias úteis. O sistema tenta carregar feriados nacionais pela BrasilAPI; inclua feriados locais, recesso e suspensões manualmente. A data é uma estimativa e precisa ser conferida nas intimações e regras do tribunal.'
+    },
+    {
+      categoria: 'Calculadoras',
+      pergunta: 'Onde encontro a tabela da OAB?',
+      resposta: 'Na aba Calculadoras e OAB, escolha Tabela OAB. A publicação oficial da OAB/PR está disponível; outras seccionais aparecem quando seus links são configurados. Confira a vigência diretamente na seccional.'
+    },
+    {
+      categoria: 'Financeiro',
+      pergunta: 'Como marco um lançamento como pago?',
+      resposta: 'No Financeiro, localize o lançamento e escolha Registrar pagamento. Confira o valor integral, informe a data e a forma de pagamento e confirme a baixa. O lançamento passa a compor o fluxo realizado no mês da data registrada.'
+    },
+    {
       categoria: 'Documentos',
       pergunta: 'Como preparo um documento?',
       resposta: 'Abra Documentos, escolha um modelo e selecione os dados disponíveis do cliente e do escritório. Revise cuidadosamente o arquivo gerado, sobretudo qualificações, valores e cláusulas, antes de utilizá-lo.'

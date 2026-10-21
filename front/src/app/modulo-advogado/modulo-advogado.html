@@ -73,24 +73,27 @@
       <a class="nav-item" routerLink="/advogado/financeiro" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
         <mat-icon>account_balance_wallet</mat-icon><span>Financeiro</span>
       </a>
+      <a class="nav-item" routerLink="/advogado/calculadoras" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <mat-icon>calculate</mat-icon><span>Calculadoras e OAB</span>
+      </a>
     </nav>
 
     <div class="sidebar-bottom">
       <span class="sidebar-section-label">Conta e ajustes</span>
-      <a class="nav-item" routerLink="/ajuda">
+      <a class="nav-item" routerLink="/ajuda" [state]="{ returnTo: rotaAtual }">
         <mat-icon>help_outline</mat-icon>
         <span>Central de Ajuda</span>
       </a>
-      <a class="nav-item" routerLink="/suporte">
+      <a class="nav-item" routerLink="/suporte" [state]="{ returnTo: rotaAtual }">
         <mat-icon>support_agent</mat-icon>
         <span>Abrir chamado</span>
       </a>
-      <a class="nav-item" routerLink="/perfil" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+      <a class="nav-item" routerLink="/perfil" [state]="{ returnTo: rotaAtual }" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
         <mat-icon>person</mat-icon>
         <span>Meu perfil</span>
       </a>
 
-      <a class="nav-item" routerLink="/politica-de-privacidade">
+      <a class="nav-item" routerLink="/politica-de-privacidade" [state]="{ returnTo: rotaAtual }">
         <mat-icon>policy</mat-icon>
         <span>Privacidade</span>
       </a>
@@ -98,6 +101,7 @@
       <a
         class="nav-item"
         routerLink="/equipe"
+        [state]="{ returnTo: rotaAtual }"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
         *ngIf="currentUser?.role === 'ADMIN'"
@@ -154,16 +158,16 @@
         </button>
 
         <mat-menu #perfilMenu="matMenu">
-          <button mat-menu-item type="button" routerLink="/ajuda">
+          <button mat-menu-item type="button" routerLink="/ajuda" [state]="{ returnTo: rotaAtual }">
             <mat-icon>help_outline</mat-icon>
             Central de Ajuda
           </button>
-          <button mat-menu-item type="button" routerLink="/perfil">
+          <button mat-menu-item type="button" routerLink="/perfil" [state]="{ returnTo: rotaAtual }">
             <mat-icon>person</mat-icon>
             Meu perfil
           </button>
 
-          <button mat-menu-item type="button" routerLink="/equipe" *ngIf="currentUser?.role === 'ADMIN'">
+          <button mat-menu-item type="button" routerLink="/equipe" [state]="{ returnTo: rotaAtual }" *ngIf="currentUser?.role === 'ADMIN'">
             <mat-icon>groups</mat-icon>
             Gestão da equipe
           </button>
@@ -214,7 +218,7 @@
       </button>
     </section>
 
-    <nav class="mobile-quick-nav" aria-label="Navegacao principal">
+    <nav class="mobile-quick-nav" aria-label="Navegação principal">
       <a class="quick-link" routerLink="/advogado/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
         <mat-icon>dashboard</mat-icon>
         <span>Dashboard</span>
@@ -236,6 +240,27 @@
         <span>Docs</span>
       </a>
       <a class="quick-link" routerLink="/advogado/financeiro" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"><mat-icon>account_balance_wallet</mat-icon><span>Financeiro</span></a>
+      <a class="quick-link" routerLink="/advogado/calculadoras" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"><mat-icon>calculate</mat-icon><span>Calculadoras</span></a>
+    </nav>
+
+    <nav class="mobile-bottom-nav" aria-label="Navegação do celular">
+      <a routerLink="/advogado/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"><mat-icon>dashboard</mat-icon><span>Início</span></a>
+      <a routerLink="/advogado/processos" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"><mat-icon>folder_special</mat-icon><span>Processos</span></a>
+      <a routerLink="/advogado/agenda" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"><mat-icon>calendar_month</mat-icon><span>Agenda</span></a>
+      <button type="button" [class.active]="menuCelularAberto || activeSidebarSection === 'clientes' || activeSidebarSection === 'documentos' || activeSidebarSection === 'financeiro' || activeSidebarSection === 'calculadoras'" [attr.aria-expanded]="menuCelularAberto" aria-controls="menu-celular" (click)="menuCelularAberto = !menuCelularAberto"><mat-icon>{{ menuCelularAberto ? 'close' : 'apps' }}</mat-icon><span>Mais</span></button>
+    </nav>
+    <div class="mobile-menu-backdrop" *ngIf="menuCelularAberto" (click)="menuCelularAberto = false"></div>
+    <nav id="menu-celular" class="mobile-menu-panel" *ngIf="menuCelularAberto" aria-label="Outras áreas">
+      <strong>Outras áreas</strong>
+      <a routerLink="/advogado/clientes"><mat-icon>people</mat-icon> Clientes</a>
+      <a routerLink="/advogado/documentos"><mat-icon>description</mat-icon> Documentos</a>
+      <a routerLink="/advogado/financeiro"><mat-icon>account_balance_wallet</mat-icon> Financeiro</a>
+      <a routerLink="/advogado/calculadoras"><mat-icon>calculate</mat-icon> Calculadoras e OAB</a>
+      <a routerLink="/ajuda" [state]="{ returnTo: rotaAtual }"><mat-icon>help_outline</mat-icon> Ajuda</a>
+      <a routerLink="/suporte" [state]="{ returnTo: rotaAtual }"><mat-icon>support_agent</mat-icon> Suporte</a>
+      <a routerLink="/perfil" [state]="{ returnTo: rotaAtual }"><mat-icon>person</mat-icon> Meu perfil</a>
+      <a routerLink="/equipe" [state]="{ returnTo: rotaAtual }" *ngIf="currentUser?.role === 'ADMIN'"><mat-icon>groups</mat-icon> Equipe</a>
+      <button type="button" (click)="sair()"><mat-icon>logout</mat-icon> Sair</button>
     </nav>
 
     <section class="jp-workspace" *ngIf="activeSidebarSection === 'dashboard'">
@@ -431,6 +456,10 @@
       <app-financeiro-workspace></app-financeiro-workspace>
     </section>
 
+    <section class="jp-workspace" *ngIf="activeSidebarSection === 'calculadoras'">
+      <app-calculadoras-workspace></app-calculadoras-workspace>
+    </section>
+
     <section class="jp-workspace" *ngIf="activeSidebarSection === 'processos'">
       <section class="card-glass table-card" id="section-processos">
         <div class="table-toolbar">
@@ -557,12 +586,15 @@
             <tbody>
               <tr *ngFor="let proc of processosPaginados; trackBy: trackByProcesso">
                 <td>
+                  <span class="mobile-cell-label">Cliente</span>
                   <div class="table-primary">{{ proc.cliente }}</div>
                   <div class="table-secondary" *ngIf="proc.localCompromisso">{{ proc.localCompromisso }}</div>
                 </td>
 
                 <td>
+                  <span class="mobile-cell-label">Processo</span>
                   <div class="table-primary">{{ proc.tipo }}</div>
+                  <div class="table-secondary" *ngIf="proc.numeroCnj">CNJ {{ proc.numeroCnj }}</div>
                   <div class="table-secondary">{{ proc.descricao || 'Sem observações adicionais.' }}</div>
                 </td>
 
@@ -581,6 +613,7 @@
                 </td>
 
                 <td>
+                  <span class="mobile-cell-label">Prazo</span>
                   <div class="table-primary">{{ proc.prazo ? (proc.prazo | date: 'dd/MM/yyyy') : '--' }}</div>
                   <div class="table-secondary" [ngClass]="statusTextClass(proc.statusDinamico)">
                     {{ formatarResumoPrazo(proc) }}
@@ -792,6 +825,7 @@
         </div>
 
         <label class="drawer-field">Processo ou assunto <input [(ngModel)]="novoTipo" placeholder="Ex.: ação de cobrança, inventário..." /></label>
+        <label class="drawer-field">Número CNJ (opcional) <input [(ngModel)]="novoNumeroCnj" inputmode="numeric" maxlength="25" placeholder="0000000-00.0000.0.00.0000" /><span class="drawer-help">Validamos o dígito antes de salvar. Deixe vazio para casos sem numeração CNJ.</span></label>
 
         <div class="drawer-grid">
           <label class="drawer-field">Status <select [(ngModel)]="novoStatus"><option value="Aguardando Análise">Aguardando análise</option><option value="Em Andamento">Em andamento</option><option value="Concluído">Concluído</option><option value="Cancelado">Cancelado</option><option value="Indeferido">Indeferido</option></select></label>

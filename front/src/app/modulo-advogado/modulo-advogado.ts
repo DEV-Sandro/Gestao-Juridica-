@@ -20,10 +20,12 @@ import { AuthService } from '../auth.service';
 import { AppUser } from '../models/app-user.model';
 import { ClienteRecord } from '../models/client.model';
 import { ViaCepService } from '../shared/viacep.service';
+import { formatarNumeroCnj, numeroCnjValido } from '../shared/numero-cnj';
 import { aplicarTema } from '../shared/theme';
 import { ClientesWorkspaceComponent } from '../features/workspace/clientes-workspace/clientes-workspace.component';
 import { DocumentosWorkspaceComponent } from '../features/workspace/documentos-workspace/documentos-workspace.component';
 import { FinanceiroWorkspaceComponent } from '../features/workspace/financeiro-workspace/financeiro-workspace.component';
+import { CalculadorasWorkspaceComponent } from '../features/workspace/calculadoras-workspace/calculadoras-workspace.component';
 import { ApontamentoHoras, LancamentoFinanceiro, ResumoFinanceiro } from '../models/financeiro.model';
 import { AgendaCalendarioComponent } from './agenda-calendario/agenda-calendario.component';
 import {
@@ -114,7 +116,7 @@ interface ProcessoClienteForm {
   cep: string;
 }
 
-type SidebarSection = 'dashboard' | 'processos' | 'clientes' | 'agenda' | 'documentos' | 'financeiro';
+type SidebarSection = 'dashboard' | 'processos' | 'clientes' | 'agenda' | 'documentos' | 'financeiro' | 'calculadoras';
 
 @Component({
   selector: 'app-modulo-advogado',
@@ -137,14 +139,15 @@ type SidebarSection = 'dashboard' | 'processos' | 'clientes' | 'agenda' | 'docum
     AgendaCalendarioComponent,
     ClientesWorkspaceComponent,
     DocumentosWorkspaceComponent,
-    FinanceiroWorkspaceComponent
+    FinanceiroWorkspaceComponent,
+    CalculadorasWorkspaceComponent
   ],
   providers: [
     { provide: MAT_DATE_LOCALE, useValue: 'pt-BR' },
     { provide: MAT_DATE_FORMATS, useValue: MEU_FORMATO_BR }
   ],
   templateUrl: './modulo-advogado.html',
-  styleUrls: ['./modulo-advogado.scss']
+  styleUrls: ['./modulo-advogado.scss', './mobile-nav.scss']
 })
 export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   readonly themeOptions = THEME_OPTIONS;
@@ -200,6 +203,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   buscaCliente = '';
 
   novoTipo = '';
+  novoNumeroCnj = '';
   novaObservacao = '';
   novoPrazo: Date | null = null;
   get novoPrazoIso(): string { return this.novoPrazo ? this.formatarDataParaApi(this.novoPrazo) : ''; }
@@ -217,6 +221,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   temaAtual: ThemeOption['value'] = 'light';
   currentUser: AppUser | null = null;
   activeSidebarSection: SidebarSection = 'dashboard';
+  menuCelularAberto = false;
 
   private userSub?: Subscription;
   private filtroSub?: Subscription;
@@ -240,8 +245,11 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
       this.currentUser = user;
     });
 
-    this.routeDataSub = this.route.data.subscribe((data) => {
-      this.activeSidebarSection = this.mapSidebarSection(data['sidebarSection']);
+    this.routeDataSub = this.route.paramMap.subscribe((parametros) => {
+      const proximaSecao = this.mapSidebarSection(parametros.get('secao'));
+      if (this.activeSidebarSection !== proximaSecao) window.scrollTo({ top: 0, behavior: 'auto' });
+      this.activeSidebarSection = proximaSecao;
+      this.menuCelularAberto = false;
     });
 
     this.filtroSub = this.filtroSubject
@@ -302,6 +310,8 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     return this.themeOptions.find((option) => option.value === this.temaAtual)?.label || 'Tema';
   }
 
+  get rotaAtual(): string { return this.router.url; }
+
   get topbarTitulo(): string {
     switch (this.activeSidebarSection) {
       case 'agenda':
@@ -312,6 +322,8 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
         return 'Documentos do escritório';
       case 'financeiro':
         return 'Financeiro do escritório';
+      case 'calculadoras':
+        return 'Calculadoras jurídicas';
       case 'processos':
         return 'Processos do escritório';
       default:
@@ -329,6 +341,8 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
         return 'Escolha um modelo e gere documentos com os dados do caso.';
       case 'financeiro':
         return 'Controle honorários, despesas, horas trabalhadas e resultado por processo.';
+      case 'calculadoras':
+        return 'Simule prazos e honorários e consulte a tabela da OAB.';
       case 'processos':
         return 'Busque casos, confira prazos e abra ou edite cada processo.';
       default:
@@ -446,7 +460,8 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
       value === 'clientes' ||
       value === 'agenda' ||
       value === 'documentos' ||
-      value === 'financeiro'
+      value === 'financeiro' ||
+      value === 'calculadoras'
     ) {
       return value;
     }
@@ -552,6 +567,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   prepararEdicao(proc: ProcessoViewModel): void {
     this.idEmEdicao = proc.id;
     this.novoTipo = proc.tipo || proc.titulo || '';
+    this.novoNumeroCnj = proc.numeroCnj || '';
     this.novaObservacao = proc.descricao || '';
     this.novoPrazo = proc.prazo ? new Date(`${proc.prazo}T12:00:00`) : null;
     this.novoStatus = proc.statusBase;
@@ -588,6 +604,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     this.mensagemCepCliente = '';
     this.idEmEdicao = null;
     this.novoTipo = '';
+    this.novoNumeroCnj = '';
     this.novaObservacao = '';
     this.novoPrazo = null;
     this.novoStatus = 'Aguardando An\u00E1lise';
@@ -609,6 +626,11 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.novoNumeroCnj.trim() && !numeroCnjValido(this.novoNumeroCnj)) {
+      this.snack.open('Número CNJ inválido. Confira os 20 dígitos e o dígito verificador.', 'OK', { duration: 4500, panelClass: ['snack-error'] });
+      return;
+    }
+
     const documento = this.normalizarDocumentoBusca(this.clienteForm.cpfCnpj).toUpperCase();
     if (documento && !/^\d{11}$|^[A-Z0-9]{12}\d{2}$/.test(documento)) {
       this.snack.open('Informe um CPF ou CNPJ no formato válido.', 'OK', { duration: 3600 });
@@ -619,6 +641,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
 
     const payload = {
       titulo: this.novoTipo.trim(),
+      numeroCnj: this.novoNumeroCnj.trim() ? formatarNumeroCnj(this.novoNumeroCnj) : null,
       descricao: this.novaObservacao.trim(),
       prazo: this.novoPrazo ? this.formatarDataParaApi(this.novoPrazo) : null,
       status: this.novoStatus,
@@ -731,7 +754,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   }
 
   abrirCaso(id: string): void {
-    void this.router.navigate(['/processo', id]);
+    void this.router.navigate(['/processo', id], { state: { returnTo: this.router.url } });
   }
 
   abrirEventoAgenda(evento: AgendaEvento): void {
@@ -1206,7 +1229,8 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
       const termoBusca = this.normalizarTextoBusca(this.filtroNomeCliente);
       const passaNome =
         !termoBusca ||
-        this.normalizarTextoBusca(`${proc.cliente} ${proc.tipo} ${proc.descricao}`).includes(termoBusca);
+        this.normalizarTextoBusca(`${proc.cliente} ${proc.tipo} ${proc.descricao} ${proc.numeroCnj || ''}`).includes(termoBusca) ||
+        !!(proc.numeroCnj && this.normalizarDocumentoBusca(this.filtroNomeCliente) && this.normalizarDocumentoBusca(proc.numeroCnj).includes(this.normalizarDocumentoBusca(this.filtroNomeCliente)));
 
       const passaTipo =
         !this.filtroTipoAcao ||

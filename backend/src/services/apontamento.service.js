@@ -1,6 +1,7 @@
 const { db } = require('../config/firebase');
 const processoRepository = require('../repositories/processo.repository');
 const auditoriaService = require('./auditoria.service');
+const { pertenceAoEscritorio, exigirMesmoEscritorio } = require('./escritorio.service');
 
 const COLLECTION = 'apontamentos_horas';
 
@@ -16,15 +17,13 @@ function dinheiro(valor) {
   return Math.round(numero * 100) / 100;
 }
 
-function visivelPara(item, user) {
-  return user.role === 'ADMIN' || item.advogadoId === user.uid;
-}
-
 async function listar(query, user) {
   const snapshot = await db.collection(COLLECTION).get();
-  return snapshot.docs
-    .map((doc) => ({ id: doc.id, ...doc.data() }))
-    .filter((item) => !item.deletado && visivelPara(item, user))
+  const itens = await Promise.all(snapshot.docs.map(async (doc) => {
+    const item = { id: doc.id, ...doc.data() };
+    return !item.deletado && await pertenceAoEscritorio(item, user) ? item : null;
+  }));
+  return itens.filter(Boolean)
     .filter((item) => !query.processoId || item.processoId === query.processoId)
     .sort((a, b) => b.data.localeCompare(a.data) || b.criadoEm.localeCompare(a.criadoEm));
 }
@@ -40,6 +39,7 @@ async function criar(dados, user) {
 
   const processo = await processoRepository.buscarPorId(processoId);
   if (!processo || processo.deletado) throw new Error('PROCESSO_NAO_ENCONTRADO');
+  await exigirMesmoEscritorio(processo, user);
 
   const agora = new Date().toISOString();
   const item = {
@@ -52,6 +52,8 @@ async function criar(dados, user) {
     valorHora: dinheiro(dados.valorHora ?? 0),
     custoHora: dinheiro(dados.custoHora ?? 0),
     advogadoId: user.uid,
+    criadoPor: user.uid,
+    escritorioId: user.escritorioId,
     advogadoNome: user.displayName || user.email || 'Equipe',
     criadoEm: agora,
     atualizadoEm: agora,
@@ -66,7 +68,7 @@ async function excluir(id, user) {
   const ref = db.collection(COLLECTION).doc(id);
   const snapshot = await ref.get();
   if (!snapshot.exists || snapshot.data().deletado) throw new Error('APONTAMENTO_NAO_ENCONTRADO');
-  if (!visivelPara(snapshot.data(), user)) throw new Error('ACESSO_NEGADO');
+  if (!(await pertenceAoEscritorio(snapshot.data(), user))) throw new Error('ACESSO_NEGADO');
   await ref.update({ deletado: true, deletadoEm: new Date().toISOString(), atualizadoEm: new Date().toISOString() });
   await auditoriaService.registrarEvento({ acao: 'DELETAR_SOFT', entidade: 'APONTAMENTO_HORAS', entidadeId: id, usuario: user, detalhes: { processoId: snapshot.data().processoId } });
 }

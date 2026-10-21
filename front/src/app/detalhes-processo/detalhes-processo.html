@@ -1,8 +1,9 @@
 <div class="details-page fade-in">
-  <button mat-button type="button" class="back-link" (click)="voltar()">
-    <mat-icon>arrow_back</mat-icon>
-    Voltar para processos
-  </button>
+  <div class="details-nav">
+    <button mat-button type="button" class="back-link" (click)="voltar()"><mat-icon>arrow_back</mat-icon>{{ textoVoltar }}</button>
+    <a routerLink="/advogado/dashboard">Painel</a>
+    <a routerLink="/advogado/processos">Todos os processos</a>
+  </div>
 
   <ng-container *ngIf="processo; else carregandoTpl">
     <section class="hero-card card-glass">
@@ -21,6 +22,7 @@
 
         <h1 class="font-heading">{{ processo.tipo }}</h1>
         <p>{{ processo.cliente }}</p>
+        <p *ngIf="processo.numeroCnj">Número CNJ: {{ processo.numeroCnj }}</p>
 
         <div class="hero-highlights">
           <div>

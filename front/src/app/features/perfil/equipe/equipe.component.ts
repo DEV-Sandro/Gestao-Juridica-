@@ -12,6 +12,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../auth.service';
 import { AppUser, UserRole } from '../../../models/app-user.model';
 import { ConvidarMembroDialogComponent } from './convidar-membro-dialog.component';
+import { rotaDeRetornoAoEscritorio } from '../../../shared/voltar-navegacao';
 
 @Component({
   selector: 'app-equipe',
@@ -29,6 +30,7 @@ import { ConvidarMembroDialogComponent } from './convidar-membro-dialog.componen
   styleUrls: ['./equipe.component.scss']
 })
 export class EquipeComponent implements OnInit, OnDestroy {
+  readonly voltarRota = rotaDeRetornoAoEscritorio();
   private authService = inject(AuthService);
   private dialog = inject(MatDialog);
   private snack = inject(MatSnackBar);

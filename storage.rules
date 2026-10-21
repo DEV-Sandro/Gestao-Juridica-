@@ -8,7 +8,7 @@ service firebase.storage {
     // ============================================================
     // Path: /avatars/{uid}/{nome-do-arquivo}
     match /avatars/{uid}/{arquivo=**} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null && request.auth.uid == uid;
       allow write: if request.auth != null
         && request.auth.uid == uid
         && request.resource.size < 5 * 1024 * 1024 // 5MB max
@@ -19,7 +19,7 @@ service firebase.storage {
     // TEMPLATES (Feature 2 — futuro) — só admin escreve
     // ============================================================
     match /templates/{templateId}/{arquivo=**} {
-      allow read: if request.auth != null;
+      allow read: if false;
       allow write: if false; // Apenas via Admin SDK no backend
     }
 

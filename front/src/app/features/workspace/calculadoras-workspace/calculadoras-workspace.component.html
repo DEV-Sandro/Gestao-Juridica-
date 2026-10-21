@@ -1,0 +1,51 @@
+<section class="calc-page">
+  <header class="calc-intro card-glass">
+    <span class="eyebrow">Ferramentas do dia a dia</span>
+    <h2 class="font-heading">Cálculos e referência de honorários</h2>
+    <p>Planeje prazos, simule honorários e consulte a tabela oficial da OAB. Os resultados não alteram processos ou lançamentos automaticamente.</p>
+  </header>
+
+  <nav class="calc-tabs" aria-label="Tipos de cálculo">
+    <button type="button" [class.active]="aba === 'prazo'" [attr.aria-current]="aba === 'prazo' ? 'page' : null" (click)="aba = 'prazo'">Prazo em dias úteis</button>
+    <button type="button" [class.active]="aba === 'honorarios'" [attr.aria-current]="aba === 'honorarios' ? 'page' : null" (click)="aba = 'honorarios'">Honorários</button>
+    <button type="button" [class.active]="aba === 'oab'" [attr.aria-current]="aba === 'oab' ? 'page' : null" (click)="aba = 'oab'">Tabela OAB</button>
+  </nav>
+
+  <article class="calc-card card-glass" *ngIf="aba === 'prazo'">
+    <div class="calc-heading"><h3 class="font-heading">Estimativa de prazo</h3><p>Conta a partir do dia seguinte à data informada e ignora sábados, domingos e feriados carregados.</p></div>
+    <div class="calc-grid">
+      <label>Data inicial <input type="date" [(ngModel)]="dataInicial" (ngModelChange)="carregarFeriados()" /></label>
+      <label>Dias úteis <input type="number" min="1" max="365" step="1" inputmode="numeric" [(ngModel)]="dias" /></label>
+      <label class="wide">Outros dias sem expediente, separados por vírgula <input type="text" [(ngModel)]="feriadosExtras" placeholder="Ex.: 2026-12-20, 2026-12-21" /><small>Inclua feriados locais, suspensão de expediente e recesso do tribunal.</small></label>
+    </div>
+    <div class="calc-result" aria-live="polite"><span>Data estimada</span><strong>{{ formatarData(dataFinal) }}</strong><small *ngIf="!dataFinal">Informe uma data válida e de 1 a 365 dias úteis.</small></div>
+    <p class="source-status" [class.warning]="estadoFeriados !== 'ok'">{{ estadoFeriados === 'ok' ? 'Datas do calendário carregadas pela BrasilAPI.' : estadoFeriados === 'carregando' ? 'Consultando datas de feriados...' : 'Consulta de feriados indisponível. Resultado considera apenas fins de semana e datas informadas manualmente.' }} <a href="https://brasilapi.com.br/docs" target="_blank" rel="noopener noreferrer">Fonte da consulta</a></p>
+    <div class="holiday-list" *ngIf="feriadosNoIntervalo.length"><strong>Confira as datas retornadas</strong><p>Desmarque as datas em que o tribunal tem expediente. A BrasilAPI inclui observâncias que podem variar por local.</p><label *ngFor="let feriado of feriadosNoIntervalo"><input type="checkbox" [checked]="!feriadosIgnorados.has(feriado.date)" (change)="alternarFeriado(feriado.date, $any($event.target).checked)" />{{ formatarData(feriado.date) }} · {{ feriado.name }}</label></div>
+    <p class="calc-note"><strong>Confira antes de usar:</strong> esta é uma estimativa para prazos em dias úteis. O termo inicial, intimações, regras do tribunal, feriados locais e suspensões precisam ser confirmados no processo. Referência: <a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13105.htm" target="_blank" rel="noopener noreferrer">CPC, arts. 219 e 224</a>.</p>
+  </article>
+
+  <article class="calc-card card-glass" *ngIf="aba === 'honorarios'">
+    <div class="calc-heading"><h3 class="font-heading">Simular honorários e parcelas</h3><p>Use um percentual sobre a base e veja quanto sobra após a entrada.</p></div>
+    <div class="calc-grid">
+      <label>Base de cálculo (R$) <input type="number" min="0" step="0.01" inputmode="decimal" [(ngModel)]="base" /></label>
+      <label>Percentual (%) <input type="number" min="0" max="100" step="0.01" inputmode="decimal" [(ngModel)]="percentual" /></label>
+      <label>Entrada (R$) <input type="number" min="0" step="0.01" inputmode="decimal" [(ngModel)]="entrada" /></label>
+      <label>Número de parcelas <input type="number" min="1" max="60" step="1" inputmode="numeric" [(ngModel)]="parcelas" /></label>
+    </div>
+    <div class="calc-result" *ngIf="resultadoHonorarios as resultado" aria-live="polite">
+      <span>Honorários simulados</span><strong>{{ moeda(resultado.total) }}</strong>
+      <div class="calc-summary"><span>Entrada: <b>{{ moeda(resultado.entrada) }}</b></span><span>Saldo: <b>{{ moeda(resultado.restante) }}</b></span><span>{{ resultado.parcelas.length }} parcela(s): <b>{{ moeda(resultado.parcelas[0]) }}</b><small *ngIf="resultado.parcelas.some(valor => valor !== resultado.parcelas[0])">Ajuste de centavos nas primeiras parcelas.</small></span></div>
+    </div>
+    <p class="calc-note" *ngIf="!resultadoHonorarios">Preencha valores válidos. A entrada não pode superar os honorários calculados.</p>
+    <p class="calc-note">Simulação aritmética, sem correção monetária, juros ou tributos. Consulte a tabela da sua seccional antes de definir a proposta.</p>
+    <a class="calc-action" routerLink="/advogado/financeiro">Abrir controle financeiro <span aria-hidden="true">→</span></a>
+  </article>
+
+  <article class="calc-card card-glass" *ngIf="aba === 'oab'">
+    <div class="calc-heading"><h3 class="font-heading">Tabela de honorários da OAB</h3><p>Abra a publicação oficial da seccional e confira o item aplicável ao serviço.</p></div>
+    <label class="uf-field">Seccional <select [(ngModel)]="uf"><option *ngFor="let estado of ufs" [value]="estado">OAB/{{ estado }}</option></select></label>
+    <a *ngIf="linkOab" class="calc-action" [href]="linkOab" target="_blank" rel="noopener noreferrer">Abrir tabela oficial da OAB/{{ uf }} <span aria-hidden="true">↗</span></a>
+    <p *ngIf="!linkOab" class="calc-note">Link não disponível para esta seccional. Consulte diretamente o portal da OAB local.</p>
+    <p class="calc-note" *ngIf="uf === 'PR'">OAB/PR: tabela 2026, Resolução 13/2026. Para outras seccionais, os links dependem da configuração do escritório e devem ser conferidos no portal oficial.</p>
+  </article>
+</section>

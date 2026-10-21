@@ -20,7 +20,7 @@ async function listarLinksHonorarios() {
   const doc = await db.collection('configuracoes').doc('honorarios').get();
 
   if (!doc.exists) {
-    return {};
+    return { PR: 'https://tabela.oabpr.org.br/' };
   }
 
   const dados = doc.data() || {};
@@ -29,7 +29,7 @@ async function listarLinksHonorarios() {
       ? dados.linksOAB
       : dados;
 
-  return normalizarLinksHonorarios(origemLinks);
+  return { ...normalizarLinksHonorarios(origemLinks), PR: 'https://tabela.oabpr.org.br/' };
 }
 
 module.exports = {

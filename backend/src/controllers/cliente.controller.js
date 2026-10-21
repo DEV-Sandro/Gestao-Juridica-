@@ -2,7 +2,7 @@ const clienteService = require('../services/cliente.service');
 
 async function listarClientes(req, res, next) {
   try {
-    const clientes = await clienteService.listarClientes();
+    const clientes = await clienteService.listarClientes(req.user);
     res.json(clientes);
   } catch (err) {
     next(err);

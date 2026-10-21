@@ -12,6 +12,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AuthService } from '../../../auth.service';
 import { ApontamentoHoras, LancamentoFinanceiro, LancamentoTipo, ResumoFinanceiro } from '../../../models/financeiro.model';
 import { ProcessoApiModel } from '../../../shared/processo-ui';
+import { hojeLocalIso } from '../../../shared/data-local';
 
 @Component({
   selector: 'app-financeiro-workspace',
@@ -43,6 +44,10 @@ export class FinanceiroWorkspaceComponent implements OnInit {
 
   filtroStatus = 'Todos';
   mostrarFormulario = false;
+  lancamentoEmBaixa: LancamentoFinanceiro | null = null;
+  dataBaixa = hojeLocalIso();
+  formaPagamentoBaixa = '';
+  salvandoBaixa = false;
 
   novoDescricao = '';
   novoTipo: LancamentoTipo = 'HONORARIO';
@@ -53,12 +58,12 @@ export class FinanceiroWorkspaceComponent implements OnInit {
   novoFormaPagamento = '';
   horaProcessoId = '';
   horaDescricao = '';
-  horaData = new Date().toISOString().slice(0, 10);
+  horaData = hojeLocalIso();
   horaQuantidade: number | null = null;
   horaValor: number | null = null;
   horaCusto: number | null = null;
   salvandoHoras = false;
-  periodo = new Date().toISOString().slice(0, 7);
+  periodo = hojeLocalIso().slice(0, 7);
 
   ngOnInit(): void {
     this.carregar();
@@ -242,16 +247,29 @@ export class FinanceiroWorkspaceComponent implements OnInit {
   }
 
   darBaixa(lancamento: LancamentoFinanceiro): void {
-    this.authService.atualizarLancamento(lancamento.id, { pago: true }).subscribe({
+    this.lancamentoEmBaixa = lancamento;
+    this.dataBaixa = hojeLocalIso();
+    this.formaPagamentoBaixa = lancamento.formaPagamento || '';
+  }
+
+  confirmarBaixa(): void {
+    const lancamento = this.lancamentoEmBaixa;
+    if (!lancamento || !/^\d{4}-\d{2}-\d{2}$/.test(this.dataBaixa)) return;
+    this.salvandoBaixa = true;
+    this.authService.atualizarLancamento(lancamento.id, { pago: true, pagoEm: this.dataBaixa, valorPago: lancamento.valor, formaPagamento: this.formaPagamentoBaixa.trim() || null }).subscribe({
       next: () => {
+        this.salvandoBaixa = false;
+        this.lancamentoEmBaixa = null;
         this.snack.open('Pagamento registrado.', 'OK', { duration: 2800, panelClass: ['snack-success'] });
         this.carregar();
       },
-      error: (error) =>
+      error: (error) => {
+        this.salvandoBaixa = false;
         this.snack.open(error?.error?.mensagem || 'Erro ao registrar pagamento.', 'Fechar', {
           duration: 4000,
           panelClass: ['snack-error']
-        })
+        });
+      }
     });
   }
 

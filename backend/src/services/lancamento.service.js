@@ -1,6 +1,7 @@
 const lancamentoRepository = require('../repositories/lancamento.repository');
 const processoRepository = require('../repositories/processo.repository');
 const auditoriaService = require('./auditoria.service');
+const { pertenceAoEscritorio, exigirMesmoEscritorio } = require('./escritorio.service');
 
 const TIPOS_PERMITIDOS = new Set(['HONORARIO', 'DESPESA', 'REEMBOLSO']);
 const STATUS_PERMITIDOS = new Set(['PENDENTE', 'PAGO', 'CANCELADO']);
@@ -155,28 +156,26 @@ function montarPayload(dados, atual = null) {
   return payload;
 }
 
-function podeAcessar(lancamento, user) {
-  if (user.role === 'ADMIN') return true;
+async function podeAcessar(lancamento, user) {
   if (user.role === 'CLIENT') return lancamento.clienteId === user.uid;
-  // ADVOGADO: mesma regra dos processos — ve o que e seu; lancamento sem dono
-  // definido (legado) permanece visivel para nao sumir da operacao.
-  return !lancamento.advogadoId || lancamento.advogadoId === user.uid;
+  return pertenceAoEscritorio(lancamento, user);
 }
 
 async function obterComAcesso(id, user) {
   const lancamento = await lancamentoRepository.buscarPorId(id);
   if (!lancamento || lancamento.deletado) throw new Error('LANCAMENTO_NAO_ENCONTRADO');
-  if (!podeAcessar(lancamento, user)) throw new Error('ACESSO_NEGADO');
+  if (!(await podeAcessar(lancamento, user))) throw new Error('ACESSO_NEGADO');
   return lancamento;
 }
 
 // Herda cliente/advogado do processo vinculado, mantendo o padrao de
 // desnormalizacao ja usado no projeto (clienteNome dentro do processo).
-async function resolverVinculoProcesso(processoId) {
+async function resolverVinculoProcesso(processoId, user) {
   if (!processoId) return {};
 
   const processo = await processoRepository.buscarPorId(processoId);
   if (!processo || processo.deletado) throw new Error('PROCESSO_NAO_ENCONTRADO');
+  await exigirMesmoEscritorio(processo, user);
 
   return {
     clienteId: processo.clienteId || null,
@@ -198,10 +197,11 @@ async function listarLancamentos(query, user) {
 
   const lancamentos = await lancamentoRepository.buscar(filtros);
 
-  return lancamentos
+  const visiveis = (await Promise.all(lancamentos.map(async (lancamento) =>
+    (await podeAcessar(lancamento, user)) ? lancamento : null))).filter(Boolean);
+  return visiveis
     .filter((lancamento) => {
       if (lancamento.deletado) return false;
-      if (!podeAcessar(lancamento, user)) return false;
       if (query.de && lancamento.vencimento && lancamento.vencimento < query.de) return false;
       if (query.ate && lancamento.vencimento && lancamento.vencimento > query.ate) return false;
       return true;
@@ -215,7 +215,7 @@ async function criarLancamento(dados, user) {
   if (user.role === 'CLIENT') throw new Error('ACESSO_NEGADO');
 
   const payload = montarPayload(dados);
-  const vinculo = await resolverVinculoProcesso(payload.processoId);
+  const vinculo = await resolverVinculoProcesso(payload.processoId, user);
 
   const totalParcelas = dados.parcelas == null ? 1 : Number(dados.parcelas);
   if (!Number.isInteger(totalParcelas) || totalParcelas < 1 || totalParcelas > MAX_PARCELAS) {
@@ -230,6 +230,7 @@ async function criarLancamento(dados, user) {
     deletado: false,
     criadoEm: agora,
     criadoPor: user.uid,
+    escritorioId: user.escritorioId,
     atualizadoEm: agora,
     atualizadoPor: user.uid
   };
@@ -286,6 +287,10 @@ async function atualizarLancamento(id, dados, user) {
 
   const atual = await obterComAcesso(id, user);
   const payload = montarPayload(dados, atual);
+  if (payload.processoId && payload.processoId !== atual.processoId) {
+    const vinculo = await resolverVinculoProcesso(payload.processoId, user);
+    Object.assign(payload, vinculo);
+  }
 
   if (!Object.keys(payload).length && dados.pago === undefined) {
     throw new Error('VALIDACAO_LANCAMENTO');

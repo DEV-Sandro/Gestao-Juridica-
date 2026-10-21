@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
@@ -53,6 +53,7 @@ interface EtapaViewModel {
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     MatButtonModule,
     MatIconModule,
     MatInputModule,
@@ -211,7 +212,19 @@ export class DetalhesProcessoComponent implements OnInit {
   }
 
   voltar(): void {
-    void this.router.navigate(['/advogado']);
+    void this.router.navigateByUrl(this.rotaVoltar);
+  }
+
+  get rotaVoltar(): string {
+    const origem = window.history.state?.returnTo;
+    return typeof origem === 'string' && /^\/advogado\/(dashboard|processos|clientes|agenda|documentos|financeiro|calculadoras)(\?.*)?$/.test(origem)
+      ? origem : '/advogado/processos';
+  }
+
+  get textoVoltar(): string {
+    const secao = this.rotaVoltar.split('/')[2]?.split('?')[0];
+    const destinos: Record<string, string> = { dashboard: 'Voltar ao painel', processos: 'Voltar aos processos', clientes: 'Voltar aos clientes', agenda: 'Voltar à agenda', documentos: 'Voltar aos documentos', financeiro: 'Voltar ao financeiro', calculadoras: 'Voltar às calculadoras' };
+    return destinos[secao] || 'Voltar aos processos';
   }
 
   alternarTimeline(): void {

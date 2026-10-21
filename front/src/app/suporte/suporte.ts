@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { rotaDeRetornoAoEscritorio } from '../shared/voltar-navegacao';
 
 interface Chamado {
   id: string;
@@ -25,6 +26,7 @@ interface Chamado {
   styleUrl: './suporte.scss'
 })
 export class SuporteComponent implements OnInit {
+  readonly voltarRota = rotaDeRetornoAoEscritorio();
   private readonly http = inject(HttpClient);
   private readonly url = `${environment.apiUrl}/api/suporte/chamados`;
   tipo: Chamado['tipo'] = 'BUG';

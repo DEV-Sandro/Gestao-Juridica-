@@ -15,6 +15,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AuthService } from '../../../auth.service';
 import { AppUser } from '../../../models/app-user.model';
 import { AvatarUploadService } from '../services/avatar-upload.service';
+import { rotaDeRetornoAoEscritorio } from '../../../shared/voltar-navegacao';
 
 interface UploadFeedback {
   tone: 'success' | 'error' | 'info';
@@ -40,6 +41,7 @@ interface UploadFeedback {
   styleUrls: ['./meu-perfil.component.scss']
 })
 export class MeuPerfilComponent implements OnInit, OnDestroy {
+  readonly voltarRota = rotaDeRetornoAoEscritorio();
   private authService = inject(AuthService);
   private avatarUpload = inject(AvatarUploadService);
   private snack = inject(MatSnackBar);

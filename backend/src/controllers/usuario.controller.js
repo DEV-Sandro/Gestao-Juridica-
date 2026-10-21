@@ -42,7 +42,7 @@ async function removerMeuAvatar(req, res, next) {
 
 async function listarEquipe(req, res, next) {
   try {
-    const equipe = await usuarioService.listarEquipe();
+    const equipe = await usuarioService.listarEquipe(req.user);
     res.json(equipe);
   } catch (err) {
     next(err);
@@ -60,7 +60,7 @@ async function convidarMembro(req, res, next) {
 
 async function atualizarRole(req, res, next) {
   try {
-    const atualizado = await usuarioService.atualizarRole(req.params.uid, req.body.role);
+    const atualizado = await usuarioService.atualizarRole(req.params.uid, req.body.role, req.user);
     res.json(atualizado);
   } catch (err) {
     next(err);

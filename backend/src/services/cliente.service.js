@@ -2,6 +2,7 @@ const { z } = require('zod');
 const clienteRepository = require('../repositories/cliente.repository');
 const processoRepository = require('../repositories/processo.repository');
 const auditoriaService = require('./auditoria.service');
+const { pertenceAoEscritorio, exigirMesmoEscritorio } = require('./escritorio.service');
 
 const textoObrigatorio = (max, mensagem) =>
   z.string({ message: mensagem }).trim().min(1, mensagem).max(max, mensagem);
@@ -115,9 +116,11 @@ function validarCliente(dados) {
   };
 }
 
-async function listarClientes() {
+async function listarClientes(user) {
   const clientes = await clienteRepository.listarTodos();
-  return clientes
+  const permitidos = await Promise.all(clientes.map(async (cliente) =>
+    (await pertenceAoEscritorio(cliente, user)) ? cliente : null));
+  return permitidos.filter(Boolean)
     .map(sanitizarCliente)
     .sort((primeiro, segundo) => primeiro.nome.localeCompare(segundo.nome, 'pt-BR'));
 }
@@ -131,6 +134,7 @@ async function criarCliente(dados, user) {
     ativo: true,
     criadoEm: agora,
     criadoPor: user.uid,
+    escritorioId: user.escritorioId,
     atualizadoEm: agora,
     atualizadoPor: user.uid
   });
@@ -144,6 +148,7 @@ async function atualizarCliente(id, dados, user) {
   if (!existente || existente.ativo === false) {
     throw new Error('CLIENTE_NAO_ENCONTRADO');
   }
+  await exigirMesmoEscritorio(existente, user);
 
   const payload = validarCliente({
     ...existente,
@@ -161,10 +166,11 @@ async function atualizarCliente(id, dados, user) {
   return sanitizarCliente(atualizado || { id, ...payload });
 }
 
-async function contarProcessosVinculados(clienteId) {
+async function contarProcessosVinculados(clienteId, user) {
   const processos = await processoRepository.buscarTodos();
-  return processos.filter((processo) => processo.clienteId === clienteId && processo.deletado !== true)
-    .length;
+  const vinculados = processos.filter((processo) => processo.clienteId === clienteId && processo.deletado !== true);
+  const permitidos = await Promise.all(vinculados.map((processo) => pertenceAoEscritorio(processo, user)));
+  return permitidos.filter(Boolean).length;
 }
 
 async function arquivarCliente(id, user) {
@@ -172,8 +178,9 @@ async function arquivarCliente(id, user) {
   if (!existente || existente.ativo === false) {
     throw new Error('CLIENTE_NAO_ENCONTRADO');
   }
+  await exigirMesmoEscritorio(existente, user);
 
-  const totalProcessosVinculados = await contarProcessosVinculados(id);
+  const totalProcessosVinculados = await contarProcessosVinculados(id, user);
   const agora = new Date().toISOString();
 
   await clienteRepository.atualizar(id, {

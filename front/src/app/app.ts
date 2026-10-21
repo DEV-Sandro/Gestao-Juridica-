@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { aplicarTema } from './shared/theme';
 
 @Component({
@@ -15,8 +15,17 @@ import { aplicarTema } from './shared/theme';
 export class AppComponent {
   title = 'front';
 
-  constructor() {
+  constructor(router: Router) {
     this.aplicarTemaSalvo();
+    let rotaAtual = window.location.pathname + window.location.search;
+    sessionStorage.removeItem('justapro-rota-anterior');
+    router.events.subscribe(evento => {
+      if (evento instanceof NavigationEnd) {
+        const proximaRota = evento.urlAfterRedirects;
+        if (proximaRota !== rotaAtual) sessionStorage.setItem('justapro-rota-anterior', rotaAtual);
+        rotaAtual = proximaRota;
+      }
+    });
   }
 
   private aplicarTemaSalvo(): void {

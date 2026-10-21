@@ -23,42 +23,7 @@ export const routes: Routes = [
 
   // Rotas da Jornada
   { path: 'advogado', redirectTo: 'advogado/dashboard', pathMatch: 'full' },
-  {
-    path: 'advogado/dashboard',
-    component: ModuloAdvogadoComponent,
-    canActivate: [authGuard],
-    data: { sidebarSection: 'dashboard' }
-  },
-  {
-    path: 'advogado/processos',
-    component: ModuloAdvogadoComponent,
-    canActivate: [authGuard],
-    data: { sidebarSection: 'processos' }
-  },
-  {
-    path: 'advogado/clientes',
-    component: ModuloAdvogadoComponent,
-    canActivate: [authGuard],
-    data: { sidebarSection: 'clientes' }
-  },
-  {
-    path: 'advogado/agenda',
-    component: ModuloAdvogadoComponent,
-    canActivate: [authGuard],
-    data: { sidebarSection: 'agenda' }
-  },
-  {
-    path: 'advogado/documentos',
-    component: ModuloAdvogadoComponent,
-    canActivate: [authGuard],
-    data: { sidebarSection: 'documentos' }
-  },
-  {
-    path: 'advogado/financeiro',
-    component: ModuloAdvogadoComponent,
-    canActivate: [authGuard],
-    data: { sidebarSection: 'financeiro' }
-  },
+  { path: 'advogado/:secao', component: ModuloAdvogadoComponent, canActivate: [authGuard] },
   { path: 'cliente', component: ModuloClienteComponent, canActivate: [authGuard] },
   { path: 'processo/:id', component: DetalhesProcessoComponent, canActivate: [authGuard] },
 

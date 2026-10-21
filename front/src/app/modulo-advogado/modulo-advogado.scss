@@ -1005,6 +1005,8 @@
   color: var(--text-main);
 }
 
+.mobile-cell-label { display: none; }
+
 .table-secondary {
   margin-top: 6px;
   color: var(--text-muted);
@@ -1720,6 +1722,7 @@
 @media (max-width: 1100px) { .dashboard-finance-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 650px) { .dashboard-finance-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .drawer-field { display: flex; flex-direction: column; gap: 7px; min-width: 0; color: var(--text-main); font-size: 13px; font-weight: 700; }
+.drawer-help { color: var(--text-muted); font-size: 12px; font-weight: 400; }
 .drawer-field input { box-sizing: border-box; width: 100%; min-height: 46px; padding: 10px 13px; border: 1px solid var(--border-strong); border-radius: 11px; background: var(--bg-surface); color: var(--text-main); font: inherit; font-weight: 500; }
 .drawer-field input:focus { outline: 2px solid var(--brand-primary); outline-offset: 1px; }
 .drawer-field select, .drawer-field textarea { box-sizing: border-box; width: 100%; min-height: 46px; padding: 10px 13px; border: 1px solid var(--border-strong); border-radius: 11px; background: var(--bg-surface); color: var(--text-main); font: inherit; font-weight: 500; }

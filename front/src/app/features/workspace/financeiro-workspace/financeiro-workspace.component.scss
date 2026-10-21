@@ -175,6 +175,10 @@
 .header-actions { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; }
 .filter-field { min-width: 155px; }
 .launch-form { margin: 20px 0; padding: 22px; border-radius: 16px; background: var(--surface-soft); }
+.payment-panel { display: grid; gap: 14px; margin: 18px 0; padding: 18px; border: 1px solid var(--brand-primary); border-radius: 15px; background: var(--surface-soft); }
+.payment-panel p { margin: 4px 0 0; color: var(--text-muted); }
+.payment-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.payment-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
 .resumo-card.secondary { box-shadow: none; }
 .resumo-card .valor-negativo, .process-insight .valor-negativo { color: var(--status-overdue); }
 .resumo-card .valor-positivo { color: var(--status-complete); }
@@ -200,6 +204,7 @@
   .insights-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 650px) {
+  .payment-fields { grid-template-columns: 1fr; }
   .native-form-grid { grid-template-columns: 1fr; }
   .native-form-grid .span-2 { grid-column: auto; }
   .month-column small { display: none; }

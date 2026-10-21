@@ -16,6 +16,16 @@ Este projeto pode ser conectado ao repositorio de teste:
 
 ## Deploy
 
+Antes de publicar o frontend, publique as regras de acesso, depois a API. O frontend usa
+somente a API para dados de processos, clientes e financeiro. Registros antigos sao
+atribuidos ao escritorio de quem os criou (incluindo membros que aceitaram convites).
+Registros antigos sem autor identificavel ficam indisponiveis ate revisao manual; nao
+devem ser atribuidos automaticamente a outro escritorio.
+
+```powershell
+firebase deploy --only firestore:rules,storage --project advocacia-sistema-80239
+```
+
 ### 1. Publicar a API no Cloud Run
 
 Use o projeto Firebase/GCP `advocacia-sistema-80239` e publique o backend com o servico `gestao-juridica-api`:
