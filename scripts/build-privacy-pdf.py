@@ -84,7 +84,7 @@ def main():
         Paragraph('Como os dados são utilizados no sistema de gestão jurídica JustaPro.', lead_style),
         Paragraph('Minuta para revisão · 21/10/2026', lead_style),
         Spacer(1, 8),
-        Paragraph('<b>Antes de publicar esta política:</b> preencher a identificação do responsável pelo JustaPro, '
+        Paragraph('<b>Pendências para a versão definitiva:</b> preencher a identificação do responsável pelo JustaPro, '
                   'CNPJ (se houver), canal de contato para pedidos sobre dados e definir formalmente os papéis de '
                   'controlador e operador com cada escritório.', note_style),
     ]
