@@ -25,4 +25,11 @@
 .holiday-list input { width: 20px; height: 20px; accent-color: var(--brand-primary); }
 .calc-action { display: inline-flex; align-items: center; justify-content: center; gap: 12px; align-self: flex-start; min-height: 48px; padding: 0 18px; border-radius: 12px; color: white; background: var(--brand-primary); text-decoration: none; font-weight: 800; }
 .uf-field { max-width: 240px; }
+.law-search { display: grid; gap: 8px; max-width: 650px; font-weight: 700; }
+.law-search input { width: 100%; min-height: 48px; padding: 10px 13px; border: 1px solid var(--border-strong); border-radius: 11px; background: var(--bg-surface); color: var(--text-main); }
+.law-search small { color: var(--text-muted); font-weight: 400; }
+.official-laws { border-top: 1px solid var(--border-subtle); padding-top: 18px; }
+.official-laws h4 { margin: 0 0 10px; }
+.official-laws ul { display: grid; gap: 10px; margin: 0; padding-left: 22px; }
+.official-laws a, .calc-heading a { color: var(--brand-primary); }
 @media (max-width: 640px) { .calc-tabs { display: grid; grid-template-columns: 1fr; } .calc-tabs button { text-align: left; } .calc-grid { grid-template-columns: 1fr; } .calc-grid .wide { grid-column: auto; } .calc-action { align-self: stretch; } }

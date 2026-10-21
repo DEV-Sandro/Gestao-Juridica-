@@ -1,0 +1,22 @@
+:host { display: block; }
+.legal-page { min-height: 100dvh; background: var(--bg-app); }
+.legal-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 1120px; margin: auto; padding: 16px 24px; }
+.brand { display: inline-flex; align-items: center; gap: 9px; color: var(--text-main); font-size: 19px; font-weight: 800; text-decoration: none; }
+.legal-header button { min-height: 44px; padding: 0 16px; border: 1px solid var(--border-strong); border-radius: 9px; color: var(--brand-primary); background: var(--bg-surface); cursor: pointer; font-weight: 700; }
+.legal-main { display: grid; grid-template-columns: 220px minmax(0, 780px); gap: 30px; max-width: 1120px; margin: auto; padding: 24px 24px 60px; }
+.legal-nav { display: flex; flex-direction: column; gap: 6px; align-self: start; position: sticky; top: 20px; }
+.legal-nav a { display: flex; align-items: center; min-height: 44px; padding: 8px 14px; color: var(--text-main); text-decoration: none; border-radius: 9px; font-weight: 650; }
+.legal-nav a:hover, .legal-nav a[aria-current='page'] { background: var(--surface-strong); color: var(--brand-primary); }
+article { min-width: 0; padding: clamp(22px, 4vw, 44px); background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 16px; }
+.eyebrow { margin: 0; color: var(--brand-primary); font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+h1 { margin: 10px 0 15px; font-size: clamp(30px, 4vw, 44px); line-height: 1.14; }
+.lead { font-size: 17px; }
+section { padding: 24px 0; border-bottom: 1px solid var(--border-subtle); }
+h2 { margin: 0 0 10px; font-size: 20px; }
+p, li { color: var(--text-muted); line-height: 1.7; }
+ul { padding-left: 22px; }
+a { color: var(--brand-primary); }
+.pending { padding: 16px; border-left: 4px solid #986000; border-radius: 8px; background: #fff4d9; color: #432d0c; line-height: 1.55; }
+.source { font-size: 13px; }
+.legal-footer { display: flex; flex-wrap: wrap; gap: 20px; max-width: 1120px; margin: auto; padding: 20px 24px 40px; }
+@media (max-width: 720px) { .legal-header { padding: 12px 16px; } .legal-main { display: block; padding: 12px 16px 40px; } .legal-nav { position: static; flex-direction: row; overflow-x: auto; margin-bottom: 16px; } .legal-nav a { flex: 0 0 auto; } }

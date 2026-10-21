@@ -5,6 +5,7 @@
 .login-card {
   width: 100%; max-width: 440px; padding: 28px; display: flex; flex-direction: column; gap: 18px;
 }
+.login-topline { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 
 .presentation-link {
   display: inline-flex;
@@ -115,8 +116,17 @@
 .privacy-link { color: var(--brand-primary); text-decoration: none; text-align: center; font-size: 13px; font-weight: 700; }
 
 @media (max-width: 480px) {
-  .login-wrapper { padding: 12px; }
-  .login-card { padding: 22px; }
+  .login-wrapper { min-height: 100dvh; align-items: stretch; padding: 0; }
+  .login-card { max-width: none; min-height: 100dvh; padding: max(20px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom)); gap: 20px; border: 0; border-radius: 0; box-shadow: none; justify-content: center; }
+  .login-topline { position: absolute; top: max(20px, env(safe-area-inset-top)); left: 20px; right: 20px; }
+  .login-theme { min-height: 44px; }
+  .brand-header { margin-top: 34px; }
+  .brand-header .logo-shield { width: 78px; height: 82px; }
+  .login-form { gap: 20px; }
+  .login-input { min-height: 56px; }
+  .password-toggle { width: 44px; height: 44px; flex-basis: 44px; }
+  .login-links { margin-top: 8px; }
+  .privacy-link { min-height: 44px; display: inline-flex; align-items: center; }
 }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

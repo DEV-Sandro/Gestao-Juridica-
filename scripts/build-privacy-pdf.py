@@ -10,7 +10,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import BaseDocTemplate, Frame, KeepTogether, PageTemplate, Paragraph, Spacer
+from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate, Paragraph, Spacer
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,10 +26,10 @@ BLUE = colors.HexColor('#245a78')
 MUTED = colors.HexColor('#596b7f')
 
 title_style = ParagraphStyle('title', fontName='ArialBold', fontSize=25, leading=32, textColor=NAVY, spaceAfter=10)
-lead_style = ParagraphStyle('lead', fontName='Arial', fontSize=11, leading=17, textColor=MUTED, spaceAfter=8)
-note_style = ParagraphStyle('note', fontName='Arial', fontSize=9.5, leading=14, textColor=colors.HexColor('#6d501d'), spaceAfter=14, borderColor=colors.HexColor('#efd59c'), borderWidth=1, borderPadding=10, backColor=colors.HexColor('#fff8e7'))
-heading_style = ParagraphStyle('heading', fontName='ArialBold', fontSize=13, leading=18, textColor=NAVY, spaceBefore=20, spaceAfter=10)
-body_style = ParagraphStyle('body', fontName='Arial', fontSize=9.5, leading=15, textColor=MUTED, spaceAfter=9, alignment=TA_LEFT)
+lead_style = ParagraphStyle('lead', fontName='Arial', fontSize=10.5, leading=15, textColor=MUTED, spaceAfter=6)
+note_style = ParagraphStyle('note', fontName='Arial', fontSize=9, leading=13, textColor=colors.HexColor('#6d501d'), spaceAfter=10, borderColor=colors.HexColor('#efd59c'), borderWidth=1, borderPadding=9, backColor=colors.HexColor('#fff8e7'))
+heading_style = ParagraphStyle('heading', fontName='ArialBold', fontSize=12, leading=16, textColor=NAVY, spaceBefore=13, spaceAfter=6, keepWithNext=True)
+body_style = ParagraphStyle('body', fontName='Arial', fontSize=9.2, leading=13, textColor=MUTED, spaceAfter=6, alignment=TA_LEFT)
 bullet_style = ParagraphStyle('bullet', parent=body_style, leftIndent=14, firstLineIndent=-9, bulletIndent=0)
 
 
@@ -82,8 +82,8 @@ def main():
     story = [
         Paragraph('Política de Privacidade', title_style),
         Paragraph('Como os dados são utilizados no sistema de gestão jurídica JustaPro.', lead_style),
-        Paragraph('Minuta para revisão · 15/10/2026', lead_style),
-        Spacer(1, 12),
+        Paragraph('Minuta para revisão · 21/10/2026', lead_style),
+        Spacer(1, 8),
         Paragraph('<b>Antes de publicar esta política:</b> preencher a identificação do responsável pelo JustaPro, '
                   'CNPJ (se houver), canal de contato para pedidos sobre dados e definir formalmente os papéis de '
                   'controlador e operador com cada escritório.', note_style),
@@ -97,7 +97,7 @@ def main():
                 elements.append(Paragraph('• ' + mark_up(item), bullet_style))
             else:
                 elements.append(Paragraph(mark_up(item), body_style))
-        story.append(KeepTogether(elements))
+        story.extend(elements)
 
     DESTINATION.parent.mkdir(parents=True, exist_ok=True)
     PolicyDoc(str(DESTINATION)).build(story)

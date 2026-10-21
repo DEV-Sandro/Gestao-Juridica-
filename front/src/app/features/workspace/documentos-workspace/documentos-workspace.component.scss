@@ -93,6 +93,26 @@
   }
 }
 
+.custom-heading { border-top: 1px solid var(--border-subtle); padding-top: 18px; }
+.custom-heading h3 { margin: 0 0 4px; font-size: 17px; }
+.custom-heading span, .model-feedback { color: var(--text-muted); font-size: 13px; }
+.model-feedback { margin: 0; }
+.custom-template { display: flex; align-items: center; gap: 8px; }
+.custom-template .template-card { flex: 1; min-width: 0; border-radius: 12px; }
+.remove-template { min-height: 44px; padding: 8px; border: 1px solid var(--border-strong); border-radius: 8px; color: var(--status-overdue); background: var(--bg-surface); font-weight: 700; cursor: pointer; }
+.add-template, .save-template { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 48px; padding: 10px 14px; border: 1px solid var(--brand-primary); border-radius: 10px; color: var(--brand-primary); background: var(--bg-surface); font-weight: 750; cursor: pointer; }
+.add-template { width: 100%; color: #fff; background: var(--brand-secondary); border-color: var(--brand-secondary); }
+.model-group-heading { margin: 6px 0 0; font-size: 16px; }
+.save-template { width: 100%; color: #fff; background: var(--brand-secondary); border-color: var(--brand-secondary); }
+.save-template:disabled { opacity: .55; cursor: not-allowed; }
+.new-template { display: grid; gap: 14px; padding: 18px; border: 1px solid var(--border-subtle); border-radius: 12px; background: var(--surface-soft); }
+.new-template label { display: grid; gap: 6px; color: var(--text-main); font-size: 13px; font-weight: 700; }
+.new-template input { width: 100%; min-width: 0; min-height: 44px; padding: 10px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--bg-surface); color: var(--text-main); }
+.new-template small, .new-template details { color: var(--text-muted); font-size: 12px; font-weight: 400; line-height: 1.5; }
+.new-template summary { min-height: 40px; padding: 10px 0; color: var(--brand-primary); font-weight: 700; cursor: pointer; }
+.new-template p { margin: 4px 0 8px; overflow-wrap: anywhere; }
+.new-template code { color: var(--text-main); }
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -190,3 +210,4 @@
     grid-column: auto;
   }
 }
+@media (max-width: 480px) { .custom-template { flex-direction: column; align-items: stretch; } .remove-template { align-self: flex-end; } }

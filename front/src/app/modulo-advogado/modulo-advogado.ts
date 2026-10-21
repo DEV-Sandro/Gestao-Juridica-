@@ -239,9 +239,8 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.mudarTema(aplicarTema(localStorage.getItem('justapro-theme')));
-    this.iniciarInteligenciaNotificacoes();
-
     this.userSub = this.authService.currentUser$.subscribe((user) => {
+      if (user?.uid && user.uid !== this.currentUser?.uid) this.iniciarInteligenciaNotificacoes(user.uid);
       this.currentUser = user;
     });
 
@@ -787,7 +786,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     this.idsNotificacoesLidas = Array.from(
       new Set(this.notificacoes.map((notificacao) => notificacao.id))
     );
-    localStorage.setItem('justapro-notif-lidas', JSON.stringify(this.idsNotificacoesLidas));
+    sessionStorage.setItem(this.chaveNotificacoesLidas(), JSON.stringify(this.idsNotificacoesLidas));
     this.notificacoesNaoLidas = 0;
     this.notificacoesAgrupadas = this.agruparNotificacoes(this.notificacoes);
     this.notificacaoAtiva = false;
@@ -851,7 +850,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   }
 
   fecharResumoDiario(): void {
-    localStorage.setItem('justapro-resumo-data', this.dataLocalIso());
+    sessionStorage.setItem(this.chaveResumoData(), this.dataLocalIso());
     this.resumoDiario.visivel = false;
   }
 
@@ -864,6 +863,10 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
   }
 
   sair(): void {
+    const uid = this.currentUser?.uid;
+    if (uid) Object.keys(sessionStorage)
+      .filter((key) => key.startsWith(`justapro-notif-${uid}-`) || key === `justapro-resumo-data-${uid}` || key.startsWith(`justapro-alerta-dispensado-${uid}-`))
+      .forEach((key) => sessionStorage.removeItem(key));
     void this.authService.logout();
   }
 
@@ -1127,13 +1130,13 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
     }
 
     const prioridade = status === 'Atrasado' ? 0 : 1;
-    const cacheKey = `justapro-notif-${proc.id}-${status}`;
+    const cacheKey = `${this.prefixoNotificacao()}${proc.id}-${status}`;
     const tsKey = `${cacheKey}-ts`;
-    const timestampSalvo = localStorage.getItem(tsKey);
+    const timestampSalvo = sessionStorage.getItem(tsKey);
     const timestamp = timestampSalvo ? Number(timestampSalvo) : Date.now();
 
     if (!timestampSalvo) {
-      localStorage.setItem(tsKey, String(timestamp));
+      sessionStorage.setItem(tsKey, String(timestamp));
     }
 
     const id = `${proc.id}-${status}`;
@@ -1213,7 +1216,7 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
       this.resumoDiario.texto = `Voce possui ${partes.join(', ')} e ${ultimo}.`;
     }
 
-    const resumoVistoEm = localStorage.getItem('justapro-resumo-data');
+    const resumoVistoEm = sessionStorage.getItem(this.chaveResumoData());
     this.resumoDiario.visivel = resumoVistoEm !== this.dataLocalIso();
   }
 
@@ -1288,32 +1291,41 @@ export class ModuloAdvogadoComponent implements OnInit, OnDestroy {
 
     notificacao.lida = true;
     this.idsNotificacoesLidas = Array.from(new Set([...this.idsNotificacoesLidas, notificacao.id]));
-    localStorage.setItem('justapro-notif-lidas', JSON.stringify(this.idsNotificacoesLidas));
+    sessionStorage.setItem(this.chaveNotificacoesLidas(), JSON.stringify(this.idsNotificacoesLidas));
     this.notificacoesNaoLidas = this.notificacoes.filter((item) => !item.lida).length;
   }
 
-  private iniciarInteligenciaNotificacoes(): void {
+  private iniciarInteligenciaNotificacoes(uid: string): void {
+    // Remove os antigos indicadores globais que podiam sobreviver à troca de conta no navegador.
+    ['justapro-notif-lidas', 'justapro-notif-data', 'justapro-resumo-data'].forEach((key) => localStorage.removeItem(key));
+    Object.keys(localStorage).filter((key) => key.startsWith('justapro-notif-') && key.endsWith('-ts'))
+      .forEach((key) => localStorage.removeItem(key));
     const hoje = this.dataLocalIso();
-    const dataSalva = localStorage.getItem('justapro-notif-data');
+    const dataSalva = sessionStorage.getItem(`justapro-notif-${uid}-data`);
 
     if (dataSalva !== hoje) {
-      localStorage.setItem('justapro-notif-data', hoje);
-      localStorage.removeItem('justapro-notif-lidas');
-      Object.keys(localStorage)
-        .filter((key) => key.startsWith('justapro-notif-') && key.endsWith('-ts'))
-        .forEach((key) => localStorage.removeItem(key));
+      sessionStorage.setItem(`justapro-notif-${uid}-data`, hoje);
+      sessionStorage.removeItem(`justapro-notif-${uid}-lidas`);
+      Object.keys(sessionStorage)
+        .filter((key) => key.startsWith(`justapro-notif-${uid}-`) && key.endsWith('-ts'))
+        .forEach((key) => sessionStorage.removeItem(key));
       this.idsNotificacoesLidas = [];
       this.toastJaMostradoSessao = false;
       return;
     }
 
-    const lidas = localStorage.getItem('justapro-notif-lidas');
-    this.idsNotificacoesLidas = lidas ? (JSON.parse(lidas) as string[]) : [];
+    const lidas = sessionStorage.getItem(`justapro-notif-${uid}-lidas`);
+    try { this.idsNotificacoesLidas = lidas ? (JSON.parse(lidas) as string[]) : []; }
+    catch { this.idsNotificacoesLidas = []; }
   }
 
   private chaveAvisoDispensado(): string {
-    return `justapro-alerta-dispensado-${this.dataLocalIso()}`;
+    return `justapro-alerta-dispensado-${this.currentUser?.uid || 'anonimo'}-${this.dataLocalIso()}`;
   }
+
+  private prefixoNotificacao(): string { return `justapro-notif-${this.currentUser?.uid || 'anonimo'}-`; }
+  private chaveNotificacoesLidas(): string { return `${this.prefixoNotificacao()}lidas`; }
+  private chaveResumoData(): string { return `justapro-resumo-data-${this.currentUser?.uid || 'anonimo'}`; }
 
 
   private formatarDataParaApi(data: Date): string {

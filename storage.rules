@@ -16,7 +16,7 @@ service firebase.storage {
     }
 
     // ============================================================
-    // TEMPLATES (Feature 2 — futuro) — só admin escreve
+    // Modelos DOCX do escritório: a API autentica e isola por escritório.
     // ============================================================
     match /templates/{templateId}/{arquivo=**} {
       allow read: if false;

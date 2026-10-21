@@ -71,11 +71,14 @@ service cloud.firestore {
     }
 
     // ============================================================
-    // TEMPLATES (Feature 2 — gerador de documentos, futuro)
+    // Modelos DOCX do escritório: acesso somente pela API com isolamento por escritório.
     // ============================================================
     match /templates/{templateId} {
       allow read: if false;
       allow write: if false;
+    }
+    match /modelosDocumento/{modeloId} {
+      allow read, write: if false;
     }
 
     // ============================================================

@@ -1,5 +1,5 @@
 import { ApplicationConfig, provideZoneChangeDetection, inject } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import {
   provideHttpClient,
   withInterceptors,
@@ -47,7 +47,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideAnimations(),
-    provideRouter(routes),
+    provideRouter(routes, withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' })),
     {
       provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
       useValue: {

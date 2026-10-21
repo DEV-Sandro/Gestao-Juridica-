@@ -9,6 +9,7 @@
     <button type="button" [class.active]="aba === 'prazo'" [attr.aria-current]="aba === 'prazo' ? 'page' : null" (click)="aba = 'prazo'">Prazo em dias úteis</button>
     <button type="button" [class.active]="aba === 'honorarios'" [attr.aria-current]="aba === 'honorarios' ? 'page' : null" (click)="aba = 'honorarios'">Honorários</button>
     <button type="button" [class.active]="aba === 'oab'" [attr.aria-current]="aba === 'oab' ? 'page' : null" (click)="aba = 'oab'">Tabela OAB</button>
+    <button type="button" [class.active]="aba === 'legislacao'" [attr.aria-current]="aba === 'legislacao' ? 'page' : null" (click)="aba = 'legislacao'">Legislação</button>
   </nav>
 
   <article class="calc-card card-glass" *ngIf="aba === 'prazo'">
@@ -47,5 +48,19 @@
     <a *ngIf="linkOab" class="calc-action" [href]="linkOab" target="_blank" rel="noopener noreferrer">Abrir tabela oficial da OAB/{{ uf }} <span aria-hidden="true">↗</span></a>
     <p *ngIf="!linkOab" class="calc-note">Link não disponível para esta seccional. Consulte diretamente o portal da OAB local.</p>
     <p class="calc-note" *ngIf="uf === 'PR'">OAB/PR: tabela 2026, Resolução 13/2026. Para outras seccionais, os links dependem da configuração do escritório e devem ser conferidos no portal oficial.</p>
+  </article>
+
+  <article class="calc-card card-glass" *ngIf="aba === 'legislacao'">
+    <div class="calc-heading"><h3 class="font-heading">Pesquisa de legislação</h3><p>Consulte textos organizados pelo projeto aberto <a href="https://github.com/ctresb/leis" target="_blank" rel="noopener noreferrer">ctresb/leis</a> e confirme a versão vigente na fonte oficial antes de citar ou aplicar.</p></div>
+    <label class="law-search">Número, tema ou palavra da lei <input type="search" [(ngModel)]="pesquisaLei" maxlength="100" placeholder="Ex.: Lei 13.709, consumidor, processo civil" autocomplete="off" /><small>Não inclua nomes de clientes nem informações sigilosas: a pesquisa abre o GitHub.</small></label>
+    <a class="calc-action" [href]="linkPesquisaLei" target="_blank" rel="noopener noreferrer">Pesquisar no acervo <span aria-hidden="true">↗</span></a>
+    <div class="official-laws"><h4>Textos oficiais mais usados</h4><ul>
+      <li><a href="https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm" target="_blank" rel="noopener noreferrer">Constituição Federal</a></li>
+      <li><a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13105.htm" target="_blank" rel="noopener noreferrer">Código de Processo Civil</a></li>
+      <li><a href="https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm" target="_blank" rel="noopener noreferrer">Código Civil</a></li>
+      <li><a href="https://www.planalto.gov.br/ccivil_03/leis/l8078compilado.htm" target="_blank" rel="noopener noreferrer">Código de Defesa do Consumidor</a></li>
+      <li><a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm" target="_blank" rel="noopener noreferrer">LGPD</a></li>
+    </ul></div>
+    <p class="calc-note">O acervo é de terceiros e pode conter versões históricas, conversões ou atualizações pendentes. O link externo abre somente quando selecionado; nenhum dado de processo é enviado pelo JustaPro.</p>
   </article>
 </section>

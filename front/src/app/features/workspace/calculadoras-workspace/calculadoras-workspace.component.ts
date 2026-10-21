@@ -19,7 +19,8 @@ interface Feriado { date: string; name: string }
 export class CalculadorasWorkspaceComponent implements OnInit, OnDestroy {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
-  aba: 'prazo' | 'honorarios' | 'oab' = 'prazo';
+  aba: 'prazo' | 'honorarios' | 'oab' | 'legislacao' = 'prazo';
+  pesquisaLei = '';
   dataInicial = hojeLocalIso();
   dias = 15;
   feriadosExtras = '';
@@ -46,6 +47,10 @@ export class CalculadorasWorkspaceComponent implements OnInit, OnDestroy {
 
   get ufs(): string[] { return Object.keys(this.linksOab).sort(); }
   get linkOab(): string | null { const url = this.linksOab[this.uf]; return url?.startsWith('https://') ? url : null; }
+  get linkPesquisaLei(): string {
+    const termo = this.pesquisaLei.trim().slice(0, 100);
+    return termo ? `https://github.com/ctresb/leis/search?q=${encodeURIComponent(termo)}&type=code` : 'https://github.com/ctresb/leis';
+  }
   get resultadoHonorarios() { return calcularHonorarios(Number(this.base), Number(this.percentual), Number(this.entrada), Number(this.parcelas)); }
   get feriadosManuais(): string[] { return this.feriadosExtras.split(/[\s,;]+/).filter(valor => /^\d{4}-\d{2}-\d{2}$/.test(valor)); }
   get dataFinal(): string | null { return calcularPrazoUtil(this.dataInicial, Number(this.dias), [...this.feriadosNacionais.keys()].filter(data => !this.feriadosIgnorados.has(data)).concat(this.feriadosManuais)); }

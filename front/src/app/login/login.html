@@ -1,10 +1,10 @@
 <div class="login-wrapper fade-in">
   <div class="login-card card-glass">
-    <a routerLink="/" class="presentation-link"><mat-icon aria-hidden="true">arrow_back</mat-icon> Conhecer o JustaPro</a>
+    <div class="login-topline"><a routerLink="/" class="presentation-link"><mat-icon aria-hidden="true">arrow_back</mat-icon> Página inicial</a>
     <button class="login-theme" type="button" (click)="alternarTema()" [attr.aria-label]="temaAtual === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro'">
       <mat-icon>{{ temaAtual === 'light' ? 'dark_mode' : 'light_mode' }}</mat-icon>
       {{ temaAtual === 'light' ? 'Modo escuro' : 'Modo claro' }}
-    </button>
+    </button></div>
     
     <div class="brand-header">
       <div class="logo-shield"><img src="assets/justapro-mark.svg" alt="Escudo e balança da JustaPro" /></div>
@@ -41,7 +41,7 @@
       </button>
     </form>
 
-    <div class="login-links"><a routerLink="/ajuda" class="privacy-link">Central de Ajuda</a><a routerLink="/politica-de-privacidade" class="privacy-link">Política de Privacidade</a></div>
+    <nav class="login-links" aria-label="Informações do site"><a routerLink="/ajuda" class="privacy-link">Ajuda</a><a routerLink="/politica-de-privacidade" class="privacy-link">Privacidade</a><a routerLink="/termos-de-servico" class="privacy-link">Termos</a></nav>
     
   </div>
 </div>

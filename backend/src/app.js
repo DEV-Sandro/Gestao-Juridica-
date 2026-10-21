@@ -16,6 +16,7 @@ const usuarioRoutes = require('./routes/usuario.routes');
 const lancamentoRoutes = require('./routes/lancamento.routes');
 const apontamentoRoutes = require('./routes/apontamento.routes');
 const suporteRoutes = require('./routes/suporte.routes');
+const modelosRoutes = require('./routes/modelos.routes');
 const { notFoundMiddleware, errorMiddleware } = require('./middlewares/error.middleware');
 
 const app = express();
@@ -169,6 +170,7 @@ app.use('/api', honorarioRoutes);
 app.use('/api', lancamentoRoutes);
 app.use('/api', apontamentoRoutes);
 app.use('/api/suporte', suporteRoutes);
+app.use('/api/modelos', modelosRoutes);
 app.use('/api/processos', processoRoutes);
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 

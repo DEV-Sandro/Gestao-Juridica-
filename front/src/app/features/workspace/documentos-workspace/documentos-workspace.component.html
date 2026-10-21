@@ -2,10 +2,10 @@
   <div class="docs-hero card-glass">
     <div>
       <span class="eyebrow">Biblioteca juridica</span>
-      <h2 class="font-heading">Documentos editaveis prontos para fechamento externo</h2>
+      <h2 class="font-heading">Documentos editáveis do escritório</h2>
       <p>
-        Escolha um modelo, selecione o cliente e gere um arquivo DOCX com os dados ja
-        pre-preenchidos para finalizar no editor de sua preferencia.
+        Use um modelo pronto ou inclua o DOCX do seu escritório. Escolha o cliente e baixe
+        uma cópia preenchida para revisar no editor de sua preferência.
       </p>
       <p class="helper-copy">
         Campos ainda nao cadastrados no sistema saem com linha de preenchimento no documento.
@@ -23,20 +23,42 @@
       <div class="panel-header">
         <div>
           <span class="eyebrow">Modelos</span>
-          <h3 class="font-heading">Templates iniciais</h3>
+          <h3 class="font-heading">Biblioteca de modelos</h3>
         </div>
       </div>
+
+      <button type="button" class="add-template" (click)="mostrarNovoModelo = !mostrarNovoModelo" [attr.aria-expanded]="mostrarNovoModelo" aria-controls="form-novo-modelo"><mat-icon aria-hidden="true">add</mat-icon>{{ mostrarNovoModelo ? 'Fechar cadastro' : 'Incluir novo modelo DOCX' }}</button>
+      <div id="form-novo-modelo" class="new-template" *ngIf="mostrarNovoModelo">
+        <label>Nome do modelo <input type="text" [(ngModel)]="tituloModelo" maxlength="100" placeholder="Ex.: Contrato de prestação de serviços" /></label>
+        <label>Descrição (opcional) <input type="text" [(ngModel)]="descricaoModelo" maxlength="240" placeholder="Quando usar este modelo" /></label>
+        <label>Arquivo DOCX <input type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" (change)="selecionarArquivoModelo($event)" /><small>Até 2 MB. Use um arquivo seu ou com autorização de uso.</small></label>
+        <details><summary>Campos que podem ser preenchidos automaticamente</summary><p>Escreva os campos entre chaves no DOCX, por exemplo <code>{{ '{cliente_nome}' }}</code> e <code>{{ '{data_extenso}' }}</code>.</p><p><code>{{ '{cliente_nome}' }}</code>, <code>{{ '{cliente_cpf}' }}</code>, <code>{{ '{cliente_cnpj}' }}</code>, <code>{{ '{cliente_documento}' }}</code>, <code>{{ '{cliente_telefone}' }}</code>, <code>{{ '{cliente_email}' }}</code>, <code>{{ '{cliente_endereco_completo}' }}</code>, <code>{{ '{advogado_nome}' }}</code>, <code>{{ '{advogado_oab}' }}</code>, <code>{{ '{processo_referencia}' }}</code>, <code>{{ '{processo_objeto}' }}</code>, <code>{{ '{local_assinatura}' }}</code>, <code>{{ '{data_extenso}' }}</code>, <code>{{ '{contrato_valor}' }}</code> e <code>{{ '{contrato_valor_extenso}' }}</code>.</p></details>
+        <button type="button" class="save-template" (click)="incluirModelo()" [disabled]="salvandoModelo || !arquivoModelo || tituloModelo.trim().length < 3">{{ salvandoModelo ? 'Enviando modelo...' : 'Salvar modelo para a equipe' }}</button>
+      </div>
+
+      <h4 class="font-heading model-group-heading">Modelos prontos</h4>
 
       <button
         type="button"
         class="template-card"
-        *ngFor="let template of templates"
+        *ngFor="let template of templatesIniciais"
         [class.active]="template.id === templateSelecionado.id"
+        [attr.aria-pressed]="template.id === templateSelecionado.id"
         (click)="selecionarTemplate(template)"
       >
         <strong>{{ template.title }}</strong>
         <span>{{ template.description }}</span>
       </button>
+
+      <div class="custom-heading"><h3 class="font-heading">Modelos do escritório</h3><span>Compartilhados com a equipe</span></div>
+      <p class="model-feedback" *ngIf="carregandoModelos" role="status">Carregando modelos...</p>
+      <p class="model-feedback" *ngIf="!carregandoModelos && !modelosPersonalizados.length">Nenhum modelo próprio cadastrado ainda.</p>
+      <div class="custom-template" *ngFor="let modelo of modelosPersonalizados">
+        <button type="button" class="template-card" [class.active]="modelo.id === templateSelecionado.id" [attr.aria-pressed]="modelo.id === templateSelecionado.id" (click)="selecionarModeloPersonalizado(modelo)"><strong>{{ modelo.titulo }}</strong><span>{{ modelo.descricao || 'Modelo DOCX do escritório' }}</span></button>
+        <button *ngIf="podeRemover(modelo)" type="button" class="remove-template" (click)="removerModelo(modelo)" [disabled]="removendoModeloId === modelo.id" [attr.aria-label]="'Remover modelo ' + modelo.titulo">{{ removendoModeloId === modelo.id ? 'Removendo...' : 'Remover' }}</button>
+      </div>
+
+
     </article>
 
     <article class="card-glass document-panel">
@@ -102,7 +124,7 @@
         </div>
 
         <div class="client-summary" *ngIf="clienteSelecionado as cliente">
-          <p *ngIf="cliente.cnpj" class="document-alert">Os modelos disponíveis usam texto de pessoa física. Revise a qualificação e o documento da pessoa jurídica antes de utilizar o arquivo gerado.</p>
+          <p *ngIf="cliente.cnpj && !templateSelecionado.custom" class="document-alert">Os modelos prontos usam texto de pessoa física. Revise a qualificação e o documento da pessoa jurídica antes de utilizar o arquivo gerado.</p>
           <div class="summary-item">
             <span>Cliente</span>
             <strong>{{ cliente.nome }}</strong>

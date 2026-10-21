@@ -1,17 +1,17 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { rotaDeRetornoAoEscritorio } from '../shared/voltar-navegacao';
+import { voltarOuIrParaInicio } from '../shared/voltar-navegacao';
 
 interface Chamado {
   id: string;
   assunto: string;
   descricao: string;
-  tipo: 'BUG' | 'DUVIDA' | 'SUGESTAO';
+  tipo: 'BUG' | 'DUVIDA' | 'SUGESTAO' | 'PRIVACIDADE';
   pagina: string | null;
   status: string;
   criadoEm: string;
@@ -26,8 +26,10 @@ interface Chamado {
   styleUrl: './suporte.scss'
 })
 export class SuporteComponent implements OnInit {
-  readonly voltarRota = rotaDeRetornoAoEscritorio();
+  private readonly location = inject(Location);
+  private readonly router = inject(Router);
   private readonly http = inject(HttpClient);
+  private readonly route = inject(ActivatedRoute);
   private readonly url = `${environment.apiUrl}/api/suporte/chamados`;
   tipo: Chamado['tipo'] = 'BUG';
   assunto = '';
@@ -41,8 +43,11 @@ export class SuporteComponent implements OnInit {
   sucesso = '';
 
   ngOnInit(): void {
+    if (this.route.snapshot.queryParamMap.get('tipo') === 'PRIVACIDADE') this.tipo = 'PRIVACIDADE';
     void this.carregar();
   }
+
+  voltar(): void { voltarOuIrParaInicio(this.location, this.router); }
 
   async carregar(): Promise<void> {
     try {

@@ -40,10 +40,10 @@
   --radius-lg: 12px;
   --radius-xl: 14px;
 
-  --status-overdue: #ef4444;
-  --status-urgent: #f59e0b;
-  --status-complete: #10b981;
-  --status-progress: #3b82f6;
+  --status-overdue: #b4232f;
+  --status-urgent: #8a5700;
+  --status-complete: #087b50;
+  --status-progress: #175fba;
 
   --bg-app: #f5f8fc;
   --bg-app-rgb: 245, 248, 252;
@@ -54,7 +54,7 @@
 
   --text-main: #142b49;
   --text-muted: #526782;
-  --text-soft: #7287a0;
+  --text-soft: #526782;
 
   --border-subtle: #dce6f2;
   --border-strong: #bacce1;
@@ -75,6 +75,10 @@ body[data-theme='light'] {
 
 body[data-theme='dark'] {
   color-scheme: dark;
+  --status-overdue: #ff858c;
+  --status-urgent: #ffd080;
+  --status-complete: #69dab0;
+  --status-progress: #91bdff;
   --bg-app: #09192d;
   --bg-app-rgb: 9, 25, 45;
   --bg-surface: #102844;
@@ -102,6 +106,30 @@ body[data-theme='dark'] {
 html,
 body {
   min-height: 100%;
+}
+
+/* A keyboard user needs a visible focus marker throughout both themes. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--brand-primary);
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 10000;
+  top: 8px;
+  left: 8px;
+  transform: translateY(-160%);
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: var(--bg-surface);
+  color: var(--text-main);
+  font-weight: 700;
+}
+.skip-link:focus { transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
 
 body {

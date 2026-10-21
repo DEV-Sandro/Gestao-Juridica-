@@ -18,6 +18,7 @@ export interface DocumentTemplateDefinition {
   filePrefix: string;
   assetPath: string;
   sections: DocumentTemplateSection[];
+  custom?: boolean;
 }
 
 export interface DocumentContextExtras {
@@ -104,9 +105,10 @@ export class DocumentGeneratorService {
     template: DocumentTemplateDefinition,
     cliente: ClienteRecord,
     user: AppUser,
-    extras: DocumentContextExtras
+    extras: DocumentContextExtras,
+    sourceBuffer?: ArrayBuffer
   ): Promise<void> {
-    const blob = await this.generate(template, cliente, user, extras);
+    const blob = await this.generate(template, cliente, user, extras, sourceBuffer);
     const slugNome = this.slugify(cliente.nome || 'cliente');
     saveAs(blob, `${template.filePrefix}-${slugNome}.docx`);
   }
@@ -115,9 +117,10 @@ export class DocumentGeneratorService {
     template: DocumentTemplateDefinition,
     cliente: ClienteRecord,
     user: AppUser,
-    extras: DocumentContextExtras
+    extras: DocumentContextExtras,
+    sourceBuffer?: ArrayBuffer
   ): Promise<Blob> {
-    const templateBuffer = await this.loadTemplateBuffer(template.assetPath);
+    const templateBuffer = sourceBuffer || await this.loadTemplateBuffer(template.assetPath);
     const zip = new PizZip(templateBuffer);
     const placeholders = this.buildPlaceholders(cliente, user, extras);
 
@@ -183,6 +186,8 @@ export class DocumentGeneratorService {
     return {
       cliente_nome: this.docValue(cliente.nome),
       cliente_cpf: this.docValue(cliente.cpf),
+      cliente_cnpj: this.docValue(cliente.cnpj),
+      cliente_documento: this.docValue(cliente.cpf || cliente.cnpj),
       cliente_documento_secundario: this.docValue(cliente.documentoSecundario),
       cliente_telefone: this.docValue(cliente.telefone),
       cliente_email: this.docValue(cliente.email),

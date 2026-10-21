@@ -17,7 +17,7 @@ const formatos = {
 const schema = z.object({
   assunto: z.string().trim().min(5).max(120),
   descricao: z.string().trim().min(20).max(4000),
-  tipo: z.enum(['BUG', 'DUVIDA', 'SUGESTAO']),
+  tipo: z.enum(['BUG', 'DUVIDA', 'SUGESTAO', 'PRIVACIDADE']),
   pagina: z.string().trim().max(300).optional(),
   anexo: z.object({
     nome: z.string().trim().min(1).max(180),
@@ -67,7 +67,7 @@ function sanitizar(doc) {
 }
 
 router.use(authMiddleware);
-router.use(roleMiddleware('ADMIN', 'ADVOGADO'));
+router.use(roleMiddleware('ADMIN', 'ADVOGADO', 'CLIENT'));
 
 router.get('/chamados', async (req, res, next) => {
   try {

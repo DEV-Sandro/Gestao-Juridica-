@@ -9,7 +9,7 @@
       <span class="eyebrow">Transparência e dados pessoais</span>
       <h1>Política de Privacidade</h1>
       <p>Como os dados são utilizados no sistema de gestão jurídica JustaPro.</p>
-      <span class="version">Minuta para revisão · 15/10/2026</span>
+      <span class="version">Minuta para revisão · 21/10/2026</span>
       <a class="download-link" href="/assets/politica-de-privacidade.pdf" download>Baixar política em PDF</a>
     </div>
 
@@ -31,6 +31,7 @@
           <li><strong>Conta e equipe:</strong> nome, e-mail, perfil de acesso, cargo, foto opcional e dados de autenticação.</li>
           <li><strong>Clientes:</strong> nome ou razão social, CPF ou CNPJ, contato, endereço e observações informadas pelo escritório.</li>
           <li><strong>Atuação jurídica:</strong> dados de processos e atendimentos, prazos, status, eventos, histórico e documentos criados ou anexados no sistema.</li>
+          <li><strong>Modelos do escritório:</strong> nome, descrição e arquivo DOCX incluído por um membro autorizado da equipe, disponibilizado aos demais membros do mesmo escritório.</li>
           <li><strong>Financeiro e produtividade:</strong> descrições e valores de honorários, despesas e reembolsos, vencimentos, datas e valores de pagamentos, processo e cliente vinculados, atividades, horas registradas, valor e custo por hora e identificação do profissional responsável.</li>
           <li><strong>Operação e segurança:</strong> registros necessários ao funcionamento da conta, controle de acesso, auditoria de alterações e diagnóstico de falhas.</li>
           <li><strong>Suporte:</strong> assunto, descrição do chamado, identificação de quem abriu o pedido e eventual imagem ou PDF anexado pelo usuário.</li>
@@ -51,17 +52,22 @@
 
       <section>
         <h2>5. Guarda e segurança</h2>
-        <p>Os dados são mantidos pelo período necessário à prestação do serviço e às obrigações legais ou ao exercício de direitos. Arquivar um cliente retira o cadastro das listas ativas, mas preserva o histórico jurídico vinculado. Os prazos específicos de retenção e eliminação devem ser definidos pelo responsável e pelo escritório conforme o tipo de dado e o contrato.</p>
-        <p>O JustaPro utiliza autenticação e controle de acesso por perfil. Nenhuma medida elimina integralmente riscos; incidentes serão avaliados e tratados conforme a legislação e os procedimentos aplicáveis.</p>
+        <p>Os dados são mantidos pelo período necessário à prestação do serviço e às obrigações legais ou ao exercício de direitos. Arquivar um cliente retira o cadastro das listas ativas, mas preserva o histórico jurídico vinculado. Um modelo próprio removido pelo autor ou administrador é excluído da biblioteca e do armazenamento ativo. Os prazos específicos de retenção e eliminação, inclusive de cópias de segurança, devem ser definidos pelo responsável e pelo escritório conforme o tipo de dado e o contrato.</p>
+        <p>O JustaPro utiliza autenticação e controle de acesso por perfil e por escritório. Membros convidados para a mesma equipe podem compartilhar registros; outros escritórios não devem ter acesso. Nenhuma medida elimina integralmente riscos; incidentes serão avaliados e tratados conforme a legislação e os procedimentos aplicáveis.</p>
       </section>
 
       <section>
         <h2>6. Direitos dos titulares</h2>
-        <p>Nos termos da LGPD, o titular pode solicitar, conforme o caso, confirmação de tratamento, acesso, correção, informação sobre compartilhamento, portabilidade, anonimização, bloqueio ou eliminação e revisão de decisões automatizadas. Os pedidos relativos aos dados de um cliente devem ser encaminhados ao escritório responsável pelo cadastro. Para dados da conta JustaPro, use o contato de privacidade indicado acima, depois de definido.</p>
+        <p>Nos termos da LGPD, o titular pode solicitar, conforme o caso, confirmação de tratamento, acesso, correção, informação sobre compartilhamento, portabilidade, anonimização, bloqueio ou eliminação e revisão de decisões automatizadas. Os pedidos relativos aos dados de um cliente devem ser encaminhados ao escritório responsável pelo cadastro. Usuários autenticados podem abrir um <a routerLink="/suporte" [queryParams]="{ tipo: 'PRIVACIDADE' }">pedido de privacidade</a> sobre sua própria conta. O canal público de contato do responsável ainda precisa ser definido.</p>
       </section>
 
       <section>
-        <h2>7. Atualizações</h2>
+        <h2>7. Cookies, armazenamento e acompanhamento</h2>
+        <p>O navegador guarda dados necessários à sessão, ao tema escolhido e ao fechamento do aviso de cookies. Esta versão não inclui Google Analytics, pixels de publicidade ou scripts de acompanhamento de marketing. Veja o <a routerLink="/aviso-de-cookies">Aviso de Cookies</a> para detalhes. Se recursos opcionais forem adicionados, a escolha do usuário deverá ser oferecida antes de ativá-los quando exigida pela lei.</p>
+      </section>
+
+      <section>
+        <h2>8. Atualizações</h2>
         <p>Esta política poderá ser atualizada para refletir mudanças no sistema ou nas práticas de tratamento. A versão e a data da atualização serão informadas nesta página. Mudanças que exijam nova comunicação ou consentimento serão tratadas conforme a legislação aplicável.</p>
       </section>
     </article>
@@ -69,6 +75,9 @@
     <footer class="policy-footer">
       <span>JustaPro · Gestão jurídica</span>
       <a routerLink="/">Página inicial</a>
+      <a routerLink="/termos-de-servico">Termos</a>
+      <a routerLink="/aviso-de-cookies">Cookies</a>
+      <a routerLink="/politica-de-reembolso">Reembolso</a>
       <a href="https://www.gov.br/anpd/pt-br/assuntos/titular-de-dados/direito-dos-titulares" target="_blank" rel="noopener noreferrer">Conheça seus direitos na ANPD</a>
     </footer>
   </main>

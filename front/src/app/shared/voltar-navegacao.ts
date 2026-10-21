@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 /** Retorna à rota interna anterior quando ela é conhecida. */
 export function voltarOuIrParaInicio(location: Location, router: Router): void {
   const retornoExplicito = window.history.state?.returnTo;
-  if (typeof retornoExplicito === 'string' && /^\/(?:$|advogado\/(dashboard|processos|clientes|agenda|documentos|financeiro|calculadoras)(\?.*)?$|ajuda$|politica-de-privacidade$)/.test(retornoExplicito) && retornoExplicito !== router.url) {
+  if (typeof retornoExplicito === 'string' && /^\/(?:$|advogado\/(dashboard|processos|clientes|agenda|documentos|financeiro|calculadoras)(\?.*)?$|ajuda$|politica-de-privacidade$|termos-de-servico$|aviso-de-cookies$|politica-de-reembolso$)/.test(retornoExplicito) && retornoExplicito !== router.url) {
     void router.navigateByUrl(retornoExplicito, { replaceUrl: true });
     return;
   }
